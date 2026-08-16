@@ -1,0 +1,502 @@
+     1→'use client'
+     2→
+     3→import React, { useState, useEffect, useCallback } from 'react'
+     4→import { 
+     5→  LayoutDashboard, ShoppingCart, Package, Users, Wallet, FileText, Settings,
+     6→  Menu, X, Plus, Search, Filter, Download, Printer, Eye, Edit2, Trash2,
+     7→  TrendingUp, TrendingDown, DollarSign, AlertCircle, CheckCircle, Clock,
+     8→  ArrowUpRight, ArrowDownLeft, Receipt, Send, BarChart3, PieChart as PieChartIcon,
+     9→  ChevronDown, ChevronLeft, RefreshCw, Save, XCircle, Calendar, Building2,
+    10→  Phone, Mail, MapPin, Hash, Percent, CreditCard, Banknote, Calculator,
+    11→  Lock, User, UserCheck, Shield, LogOut, Bell, AlertTriangle,
+    12→  GitBranch, BookOpen, Landmark, ClipboardList, UserCircle, Briefcase,
+    13→  CalendarDays, Clock3, HandCoins, Plane, FileCheck, FileBarChart,
+    14→  ChevronRight, ChevronUp, ZoomIn, QrCode, Truck, RotateCcw,
+    15→  Star, Award, Target, Activity, PieChart, LineChart, Scissors,
+    16→  Upload, Database, Key, EyeOff, ToggleLeft, ToggleRight, Zap
+    17→} from 'lucide-react'
+    18→import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
+    19→import { Button } from '@/components/ui/button'
+    20→import { Input } from '@/components/ui/input'
+    21→import { Label } from '@/components/ui/label'
+    22→import { Badge } from '@/components/ui/badge'
+    23→import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
+    24→import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog'
+    25→import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
+    26→import { Textarea } from '@/components/ui/textarea'
+    27→import { Separator } from '@/components/ui/separator'
+    28→import { ScrollArea } from '@/components/ui/scroll-area'
+    29→import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table'
+    30→
+    31→// Types
+    32→type ModuleType = 'dashboard' | 'sales' | 'purchases' | 'inventory' | 'accounts' | 'banks' | 'parties' | 'treasury' | 'hr' | 'expenses' | 'reports' | 'settings'
+    33→
+    34→interface Invoice {
+    35→  id: string; invoiceNumber: string; type: 'sale' | 'purchase' | 'sale_return' | 'purchase_return';
+    36→  partyName: string; date: string; total: number; status: 'draft' | 'posted' | 'paid' | 'partial' | 'cancelled';
+    37→  paymentStatus: 'unpaid' | 'partial' | 'paid'; remaining: number
+    38→}
+    39→
+    40→interface Item {
+    41→  id: string; code: string; barcode: string; nameAr: string; category: string; unit: string;
+    42→  costPrice: number; salePrice: number; wholesalePrice?: number; stock: number; minStock: number;
+    43→  warehouse: string; expiryDate?: string
+    44→}
+    45→
+    46→interface Party {
+    47→  id: string; code: string; nameAr: string; type: 'customer' | 'supplier' | 'both';
+    48→  phone: string; email: string; balance: number; city: string; rating?: number
+    49→}
+    50→
+    51→interface Transaction {
+    52→  id: string; type: 'income' | 'expense' | 'payment_received' | 'payment_sent';
+    53→  amount: number; category: string; description: string; date: string; reference?: string
+    54→}
+    55→
+    56→interface Account {
+    57→  id: string; code: string; nameAr: string; type: 'asset' | 'liability' | 'equity' | 'revenue' | 'expense';
+    58→  parentId?: string; balance: number; children?: Account[]
+    59→}
+    60→
+    61→interface Employee {
+    62→  id: string; employeeCode: string; fullNameAr: string; department: string; position: string;
+    63→  phone: string; baseSalary: number; status: 'active' | 'on_leave' | 'suspended' | 'terminated'; hireDate: string
+    64→}
+    65→
+    66→interface Quotation {
+    67→  id: string; quotationNumber: string; partyName: string; date: string; validUntil: string;
+    68→  total: number; status: 'draft' | 'sent' | 'accepted' | 'rejected' | 'expired' | 'converted'
+    69→}
+    70→
+    71→interface PurchaseOrder {
+    72→  id: string; orderNumber: string; supplierName: string; date: string; expectedDelivery: string;
+    73→  total: number; status: 'draft' | 'sent' | 'approved' | 'received' | 'cancelled' | 'converted'
+    74→}
+    75→
+    76→interface JournalEntry {
+    77→  id: string; entryNumber: string; date: string; description: string;
+    78→  totalDebit: number; totalCredit: number; status: 'draft' | 'posted' | 'reversed'
+    79→}
+    80→
+    81→interface BankAccount {
+    82→  id: string; bankName: string; accountNumber: string; accountName: string;
+    83→  type: 'current' | 'savings' | 'investment'; balance: number; currency: string
+    84→}
+    85→
+    86→interface Check {
+    87→  id: string; checkNumber: string; type: 'issued' | 'received'; amount: number;
+    88→  dueDate: string; payeeName?: string; status: 'pending' | 'cleared' | 'bounced' | 'cancelled'
+    89→}
+    90→
+    91→interface SalaryRecord {
+    92→  id: string; employeeName: string; month: number; year: number;
+    93→  baseSalary: number; allowances: number; deductions: number; netSalary: number;
+    94→  status: 'draft' | 'approved' | 'paid'
+    95→}
+    96→
+    97→interface AttendanceRecord {
+    98→  id: string; employeeName: string; date: string; clockIn: string; clockOut: string;
+    99→  workingHours: number; status: 'present' | 'absent' | 'late' | 'leave'
+   100→}
+   101→
+   102→interface Expense {
+   103→  id: string; category: string; subcategory: string; amount: number;
+   104→  date: string; description: string; isRecurring: boolean
+   105→}
+   106→
+   107→// Mock Data
+   108→const mockUsers = [
+   109→  { id: '1', name: 'مدير النظام', email: 'admin@injaz.com', password: 'admin123', role: 'admin', isActive: true },
+   110→  { id: '2', name: 'أحمد محمد', email: 'accountant@injaz.com', password: 'acc123', role: 'accountant', isActive: true },
+   111→  { id: '3', name: 'سارة علي', email: 'cashier@injaz.com', password: 'cash123', role: 'cashier', isActive: true },
+   112→  { id: '4', name: 'خالد عبدالله', email: 'viewer@injaz.com', password: 'view123', role: 'viewer', isActive: true },
+   113→]
+   114→
+   115→const mockAccounts = [
+   116→  { id: '1', code: '1', nameAr: 'الأصول', type: 'asset', balance: 850000, children: [
+   117→    { id: '11', code: '11', nameAr: 'أصول متداولة', type: 'asset', parentId: '1', balance: 405000, children: [
+   118→      { id: '111', code: '111', nameAr: 'الصندوق', type: 'asset', parentId: '11', balance: 50000 },
+   119→      { id: '112', code: '112', nameAr: 'البنوك', type: 'asset', parentId: '11', balance: 250000 },
+   120→      { id: '113', code: '113', nameAr: 'العملاء', type: 'asset', parentId: '11', balance: 85000 },
+   121→      { id: '114', code: '114', nameAr: 'المخزون', type: 'asset', parentId: '11', balance: 120000 },
+   122→    ]},
+   123→    { id: '12', code: '12', nameAr: 'أصول ثابتة', type: 'asset', parentId: '1', balance: 445000, children: [
+   124→      { id: '121', code: '121', nameAr: 'المباني والإنشاءات', type: 'asset', parentId: '12', balance: 300000 },
+   125→      { id: '122', code: '122', nameAr: 'المعدات والأجهزة', type: 'asset', parentId: '12', balance: 80000 },
+   126→      { id: '123', code: '123', nameAr: 'السيارات', type: 'asset', parentId: '12', balance: 65000 },
+   127→    ]},
+   128→  ]},
+   129→  { id: '2', code: '2', nameAr: 'الخصوم', type: 'liability', balance: 185000, children: [
+   130→    { id: '21', code: '21', nameAr: 'خصوم متداولة', type: 'liability', parentId: '2', balance: 85000, children: [
+   131→      { id: '211', code: '211', nameAr: 'الموردون', type: 'liability', parentId: '21', balance: 45000 },
+   132→      { id: '212', code: '212', nameAr: 'مصروفات مستحقة', type: 'liability', parentId: '21', balance: 15000 },
+   133→      { id: '213', code: '213', nameAr: 'أجور مستحقة', type: 'liability', parentId: '21', balance: 25000 },
+   134→    ]},
+   135→    { id: '22', code: '22', nameAr: 'خصوم طويلة الأجل', type: 'liability', parentId: '2', balance: 100000, children: [
+   136→      { id: '221', code: '221', nameAr: 'قروض بنكية', type: 'liability', parentId: '22', balance: 100000 },
+   137→    ]},
+   138→  ]},
+   139→  { id: '3', code: '3', nameAr: 'حقوق الملكية', type: 'equity', balance: 625000, children: [
+   140→    { id: '31', code: '31', nameAr: 'رأس المال', type: 'equity', parentId: '3', balance: 400000 },
+   141→    { id: '32', code: '32', nameAr: 'الأرباح المحتجزة', type: 'equity', parentId: '3', balance: 225000 },
+   142→  ]},
+   143→  { id: '4', code: '4', nameAr: 'الإيرادات', type: 'revenue', balance: 465000, children: [
+   144→    { id: '41', code: '41', nameAr: 'إيرادات المبيعات', type: 'revenue', parentId: '4', balance: 450000 },
+   145→    { id: '42', code: '42', nameAr: 'إيرادات أخرى', type: 'revenue', parentId: '4', balance: 15000 },
+   146→  ]},
+   147→  { id: '5', code: '5', nameAr: 'المصروفات', type: 'expense', balance: 456000, children: [
+   148→    { id: '51', code: '51', nameAr: 'تكلفة المبيعات', type: 'expense', parentId: '5', balance: 280000 },
+   149→    { id: '52', code: '52', nameAr: 'مصروفات الرواتب', type: 'expense', parentId: '5', balance: 95000 },
+   150→    { id: '53', code: '53', nameAr: 'مصروفات إدارية', type: 'expense', parentId: '5', balance: 35000 },
+   151→    { id: '54', code: '54', nameAr: 'مصروفات تشغيلية', type: 'expense', parentId: '5', balance: 28000 },
+   152→    { id: '55', code: '55', nameAr: 'مصروفات تسويقية', type: 'expense', parentId: '5', balance: 18000 },
+   153→  ]},
+   154→]
+   155→
+   156→const mockInvoices = [
+   157→  { id: '1', invoiceNumber: 'INV-2024-001', type: 'sale', partyName: 'شركة النور للتجارة', date: '2024-01-15', total: 15500, status: 'posted', paymentStatus: 'partial', remaining: 5500 },
+   158→  { id: '2', invoiceNumber: 'INV-2024-002', type: 'sale', partyName: 'مؤسسة الأمل', date: '2024-01-16', total: 8750, status: 'posted', paymentStatus: 'paid', remaining: 0 },
+   159→  { id: '3', invoiceNumber: 'INV-2024-003', type: 'purchase', partyName: 'مصنع الخليج', date: '2024-01-17', total: 32000, status: 'posted', paymentStatus: 'unpaid', remaining: 32000 },
+   160→  { id: '4', invoiceNumber: 'INV-2024-004', type: 'sale', partyName: 'شركة الرائد', date: '2024-01-18', total: 22800, status: 'draft', paymentStatus: 'unpaid', remaining: 22800 },
+   161→  { id: '5', invoiceNumber: 'INV-2024-005', type: 'sale_return', partyName: 'شركة النور للتجارة', date: '2024-01-19', total: 2500, status: 'posted', paymentStatus: 'paid', remaining: 0 },
+   162→  { id: '6', invoiceNumber: 'INV-2024-006', type: 'sale', partyName: 'المخازن الذكية', date: '2024-01-20', total: 18500, status: 'posted', paymentStatus: 'partial', remaining: 8500 },
+   163→]
+   164→
+   165→const mockQuotations = [
+   166→  { id: '1', quotationNumber: 'QT-2024-001', partyName: 'شركة المستقبل', date: '2024-01-18', validUntil: '2024-02-18', total: 45000, status: 'sent' },
+   167→  { id: '2', quotationNumber: 'QT-2024-002', partyName: 'مؤسسة التقدم', date: '2024-01-19', validUntil: '2024-02-19', total: 12500, status: 'accepted' },
+   168→  { id: '3', quotationNumber: 'QT-2024-003', partyName: 'شركة الابتكار', date: '2024-01-20', validUntil: '2024-02-20', total: 67800, status: 'draft' },
+   169→  { id: '4', quotationNumber: 'QT-2024-004', partyName: 'المحلات التجارية', date: '2024-01-10', validUntil: '2024-02-10', total: 8900, status: 'expired' },
+   170→]
+   171→
+   172→const mockPurchaseOrders = [
+   173→  { id: '1', orderNumber: 'PO-2024-001', supplierName: 'مصنع الخليج', date: '2024-01-15', expectedDelivery: '2024-01-25', total: 45000, status: 'approved' },
+   174→  { id: '2', orderNumber: 'PO-2024-002', supplierName: 'شركة الشرق للأدوات', date: '2024-01-18', expectedDelivery: '2024-02-01', total: 28500, status: 'sent' },
+   175→  { id: '3', orderNumber: 'PO-2024-003', supplierName: 'مستودعات الرياض', date: '2024-01-20', expectedDelivery: '2024-01-30', total: 32000, status: 'received' },
+   176→]
+   177→
+   178→const mockItems = [
+   179→  { id: '1', code: 'ITM-001', barcode: '6281001901018', nameAr: 'لابتوب ديل XPS 15', category: 'أجهزة إلكترونية', unit: 'قطعة', costPrice: 4500, salePrice: 5200, wholesalePrice: 4900, stock: 25, minStock: 5, warehouse: 'المخزن الرئيسي' },
+   180→  { id: '2', code: 'ITM-002', barcode: '6281001901025', nameAr: 'ماوس لوجيتك MX Master', category: 'إكسسوارات', unit: 'قطعة', costPrice: 180, salePrice: 250, wholesalePrice: 220, stock: 150, minStock: 20, warehouse: 'المخزن الرئيسي' },
+   181→  { id: '3', code: 'ITM-003', barcode: '6281001901032', nameAr: 'كيبورد ميكانيكي RGB', category: 'إكسسوارات', unit: 'قطعة', costPrice: 85, salePrice: 140, wholesalePrice: 120, stock: 8, minStock: 15, warehouse: 'المخزن الفرعي', expiryDate: '2025-06-15' },
+   182→  { id: '4', code: 'ITM-004', barcode: '6281001901049', nameAr: 'شاشة سامسونغ 27 بوصة', category: 'شاشات', unit: 'قطعة', costPrice: 1200, salePrice: 1650, wholesalePrice: 1500, stock: 12, minStock: 3, warehouse: 'المخزن الرئيسي' },
+   183→  { id: '5', code: 'ITM-005', barcode: '6281001901056', nameAr: 'طابعة HP LaserJet', category: 'طابعات', unit: 'قطعة', costPrice: 850, salePrice: 1150, wholesalePrice: 1050, stock: 3, minStock: 5, warehouse: 'المخزن الفرعي' },
+   184→  { id: '6', code: 'ITM-006', barcode: '6281001901063', nameAr: 'USB Flash 64GB', category: 'تخزين', unit: 'قطعة', costPrice: 25, salePrice: 45, wholesalePrice: 35, stock: 200, minStock: 50, warehouse: 'المخزن الرئيسي' },
+   185→  { id: '7', code: 'ITM-007', barcode: '', nameAr: 'كابل HDMI 2 متر', category: 'كابلات', unit: 'قطعة', costPrice: 15, salePrice: 35, wholesalePrice: 25, stock: 2, minStock: 30, warehouse: 'المخزن الرئيسي' },
+   186→  { id: '8', code: 'ITM-008', barcode: '6281001901087', nameAr: 'جوال سامسونغ S24', category: 'جوالات', unit: 'قطعة', costPrice: 3200, salePrice: 3800, wholesalePrice: 3600, stock: 18, minStock: 5, warehouse: 'المخزن الرئيسي' },
+   187→]
+   188→
+   189→const mockParties = [
+   190→  { id: '1', code: 'CUS-001', nameAr: 'شركة النور للتجارة', type: 'customer', phone: '0501234567', email: 'info@alnoor.com', balance: 5500, city: 'الرياض', rating: 5 },
+   191→  { id: '2', code: 'CUS-002', nameAr: 'مؤسسة الأمل', type: 'customer', phone: '0559876543', email: 'contact@alamal.com', balance: 0, city: 'جدة' },
+   192→  { id: '3', code: 'SUP-001', nameAr: 'مصنع الخليج', type: 'supplier', phone: '0501112233', email: 'sales@gulf-factory.com', balance: -32000, city: 'الدمام', rating: 4 },
+   193→  { id: '4', code: 'CUS-003', nameAr: 'شركة الرائد', type: 'customer', phone: '0544445555', email: 'info@raed.com', balance: 22800, city: 'الرياض', rating: 4 },
+   194→  { id: '5', code: 'SUP-002', nameAr: 'شركة الشرق للأدوات', type: 'supplier', phone: '0506667788', email: 'order@sharq-tools.com', balance: -15000, city: 'جدة', rating: 5 },
+   195→  { id: '6', code: 'CUS-004', nameAr: 'المخازن الذكية', type: 'customer', phone: '0577788899', email: 'sales@smart-stores.com', balance: 8500, city: 'الدمام', rating: 3 },
+   196→  { id: '7', code: 'BOTH-001', nameAr: 'شركة الابتكار', type: 'both', phone: '0509990000', email: 'info@innovation.com', balance: -5000, city: 'الرياض', rating: 5 },
+   197→]
+   198→
+   199→const mockTransactions = [
+   200→  { id: '1', type: 'income', amount: 15500, category: 'مبيعات', description: 'فاتورة مبيعات INV-2024-001', date: '2024-01-15', reference: 'INV-2024-001' },
+   201→  { id: '2', type: 'expense', amount: 32000, category: 'مشتريات', description: 'فاتورة مشتريات INV-2024-003', date: '2024-01-17', reference: 'INV-2024-003' },
+   202→  { id: '3', type: 'payment_received', amount: 10000, category: 'تحصيل', description: 'سداد من شركة النور', date: '2024-01-16', reference: 'PAY-001' },
+   203→  { id: '4', type: 'expense', amount: 3500, category: 'إيجار', description: 'إيجار شهر يناير', date: '2024-01-01' },
+   204→  { id: '5', type: 'income', amount: 8750, category: 'مبيعات', description: 'فاتورة مبيعات INV-2024-002', date: '2024-01-16', reference: 'INV-2024-002' },
+   205→  { id: '6', type: 'expense', amount: 2800, category: 'رواتب', description: 'رواتب الموظفين', date: '2024-01-30' },
+   206→  { id: '7', type: 'payment_sent', amount: 5000, category: 'دفوعات', description: 'دفع لمورد مصنع الخليج', date: '2024-01-18', reference: 'PAY-002' },
+   207→  { id: '8', type: 'income', amount: 2200, category: 'مرتجع مبيعات', description: 'مرتجع مبيعات INV-2024-005', date: '2024-01-19' },
+   208→]
+   209→
+   210→const mockEmployees = [
+   211→  { id: '1', employeeCode: 'EMP-001', fullNameAr: 'أحمد محمد العلي', department: 'المحاسبة', position: 'محاسب أول', phone: '0501112233', baseSalary: 8500, status: 'active', hireDate: '2022-03-15' },
+   212→  { id: '2', employeeCode: 'EMP-002', fullNameAr: 'سارة أحمد حسن', department: 'المبيعات', position: 'مندوبة مبيعات', phone: '0554445566', baseSalary: 6000, status: 'active', hireDate: '2023-01-10' },
+   213→  { id: '3', employeeCode: 'EMP-003', fullNameAr: 'خالد عبدالله السعيد', department: 'المخزون', position: 'مشرف مخزون', phone: '0547778899', baseSalary: 7000, status: 'active', hireDate: '2022-08-20' },
+   214→  { id: '4', employeeCode: 'EMP-004', fullNameAr: 'فاطمة محمود علي', department: 'خدمة العملاء', position: 'موظفة خدمة عملاء', phone: '0563334455', baseSalary: 5500, status: 'on_leave', hireDate: '2023-06-01' },
+   215→  { id: '5', employeeCode: 'EMP-005', fullNameAr: 'محمد سعد الدين', department: 'تقنية المعلومات', position: 'فني دعم فني', phone: '0572223344', baseSalary: 7500, status: 'active', hireDate: '2023-03-15' },
+   216→  { id: '6', employeeCode: 'EMP-006', fullNameAr: 'نورة خالد الأحمد', department: 'الإدارة', position: 'مديرة موارد بشرية', phone: '0581112233', baseSalary: 9000, status: 'active', hireDate: '2021-11-01' },
+   217→]
+   218→
+   219→const mockJournalEntries = [
+   220→  { id: '1', entryNumber: 'JE-2024-001', date: '2024-01-15', description: 'تسجيل فاتورة مبيعات INV-2024-001', totalDebit: 15500, totalCredit: 15500, status: 'posted' },
+   221→  { id: '2', entryNumber: 'JE-2024-002', date: '2024-01-16', description: 'تسجيل فاتورة مبيعات INV-2024-002', totalDebit: 8750, totalCredit: 8750, status: 'posted' },
+   222→  { id: '3', entryNumber: 'JE-2024-003', date: '2024-01-17', description: 'تسجيل فاتورة مشتريات INV-2024-003', totalDebit: 32000, totalCredit: 32000, status: 'posted' },
+   223→  { id: '4', entryNumber: 'JE-2024-004', date: '2024-01-18', description: 'قيود تصحيحية - توزيع مصروفات', totalDebit: 5000, totalCredit: 5000, status: 'draft' },
+   224→]
+   225→
+   226→const mockBankAccounts = [
+   227→  { id: '1', bankName: 'البنك الأهلي', accountNumber: 'SA1234567890123456', accountName: 'الحساب الجاري الرئيسي', type: 'current', balance: 125000, currency: 'SAR' },
+   228→  { id: '2', bankName: 'بنك الراجحي', accountNumber: 'SA9876543210987654', accountName: 'حساب الادخار', type: 'savings', balance: 75000, currency: 'SAR' },
+   229→  { id: '3', bankName: 'بنك الإنماء', accountNumber: 'SA1122334455667788', accountName: 'حساب الاستثمار', type: 'investment', balance: 50000, currency: 'SAR' },
+   230→]
+   231→
+   232→const mockChecks = [
+   233→  { id: '1', checkNumber: 'CHK-001', type: 'issued', amount: 15000, dueDate: '2024-02-15', payeeName: 'مصنع الخليج', status: 'pending' },
+   234→  { id: '2', checkNumber: 'CHK-002', type: 'received', amount: 8000, dueDate: '2024-02-01', payeeName: 'شركة النور للتجارة', status: 'pending' },
+   235→  { id: '3', checkNumber: 'CHK-003', type: 'issued', amount: 5500, dueDate: '2024-01-25', payeeName: 'شركة الشرق للأدوات', status: 'cleared' },
+   236→  { id: '4', checkNumber: 'CHK-004', type: 'received', amount: 12000, dueDate: '2024-01-20', status: 'bounced' },
+   237→]
+   238→
+   239→const mockSalaries = [
+   240→  { id: '1', employeeName: 'أحمد محمد العلي', month: 1, year: 2024, baseSalary: 8500, allowances: 2000, deductions: 1450, netSalary: 9050, status: 'approved' },
+   241→  { id: '2', employeeName: 'سارة أحمد حسن', month: 1, year: 2024, baseSalary: 6000, allowances: 1500, deductions: 980, netSalary: 6520, status: 'approved' },
+   242→  { id: '3', employeeName: 'خالد عبدالله السعيد', month: 1, year: 2024, baseSalary: 7000, allowances: 1800, deductions: 1100, netSalary: 7700, status: 'draft' },
+   243→  { id: '4', employeeName: 'محمد سعد الدين', month: 1, year: 2024, baseSalary: 7500, allowances: 1700, deductions: 1200, netSalary: 8000, status: 'paid' },
+   244→]
+   245→
+   246→const mockAttendance = [
+   247→  { id: '1', employeeName: 'أحمد محمد العلي', date: '2024-01-20', clockIn: '07:55', clockOut: '17:05', workingHours: 9.1, status: 'present' },
+   248→  { id: '2', employeeName: 'سارة أحمد حسن', date: '2024-01-20', clockIn: '08:15', clockOut: '17:00', workingHours: 8.7, status: 'late' },
+   249→  { id: '3', employeeName: 'خالد عبدالله السعيد', date: '2024-01-20', clockIn: '07:50', clockOut: '17:10', workingHours: 9.3, status: 'present' },
+   250→  { id: '4', employeeName: 'فاطمة محمود علي', date: '2024-01-20', clockIn: '-', clockOut: '-', workingHours: 0, status: 'leave' },
+   251→  { id: '5', employeeName: 'محمد سعد الدين', date: '2024-01-20', clockIn: '08:30', clockOut: '17:30', workingHours: 9, status: 'late' },
+   252→]
+   253→
+   254→const mockExpenses = [
+   255→  { id: '1', category: 'مصروفات إدارية', subcategory: 'إيجار', amount: 5000, date: '2024-01-01', description: 'إيجار المكتب - يناير 2024', isRecurring: true },
+   256→  { id: '2', category: 'مصروفات تشغيلية', subcategory: 'كهرباء', amount: 1800, date: '2024-01-05', description: 'فاتورة كهرباء', isRecurring: false },
+   257→  { id: '3', category: 'مصروفات تشغيلية', subcategory: 'مياه', amount: 350, date: '2024-01-05', description: 'فاتورة مياه', isRecurring: false },
+   258→  { id: '4', category: 'مصروفات تسويقية', subcategory: 'إعلانات', amount: 3000, date: '2024-01-10', description: 'حملة إعلانية يناير', isRecurring: false },
+   259→  { id: '5', category: 'مصروفات إدارية', subcategory: 'إنترنت', amount: 600, date: '2024-01-01', description: 'اشتراك إنترنت', isRecurring: true },
+   260→  { id: '6', category: 'مصروفات سفر', subcategory: 'تذاكر طيران', amount: 2500, date: '2024-01-15', description: 'سفر - معرض الرياض', isRecurring: false },
+   261→  { id: '7', category: 'مصروفات صيانة', subcategory: 'صيانة أجهزة', amount: 1200, date: '2024-01-18', description: 'صيانة طابعات', isRecurring: false },
+   262→]
+   263→
+   264→// Main Component
+   265→export default function AccountingApp() {
+   266→  const [isLoggedIn, setIsLoggedIn] = useState(false)
+   267→  const [currentUser, setCurrentUser] = useState(null)
+   268→  const [loginEmail, setLoginEmail] = useState('')
+   269→  const [loginPassword, setLoginPassword] = useState('')
+   270→  const [loginError, setLoginError] = useState('')
+   271→  const [activeModule, setActiveModule] = useState('dashboard')
+   272→  const [sidebarOpen, setSidebarOpen] = useState(true)
+   273→
+   274→  const [invoices] = useState(mockInvoices)
+   275→  const [items] = useState(mockItems)
+   276→  const [parties] = useState(mockParties)
+   277→  const [transactions] = useState(mockTransactions)
+   278→  const [employees] = useState(mockEmployees)
+   279→  const [quotations] = useState(mockQuotations)
+   280→  const [purchaseOrders] = useState(mockPurchaseOrders)
+   281→  const [journalEntries] = useState(mockJournalEntries)
+   282→  const [bankAccounts] = useState(mockBankAccounts)
+   283→  const [checks] = useState(mockChecks)
+   284→  const [salaries] = useState(mockSalaries)
+   285→  const [attendance] = useState(mockAttendance)
+   286→  const [expenses] = useState(mockExpenses)
+   287→
+   288→  const handleLogin = useCallback(() => {
+   289→    const user = mockUsers.find(u => u.email === loginEmail && u.password === loginPassword)
+   290→    if (user) {
+   291→      if (!user.isActive) { setLoginError('الحساب معطل'); return }
+   292→      setCurrentUser(user); setIsLoggedIn(true); setLoginError('')
+   293→      localStorage.setItem('injaz_user', JSON.stringify(user))
+   294→    } else {
+   295→      setLoginError('البريد الإلكتروني أو كلمة المرور غير صحيحة')
+   296→    }
+   297→  }, [loginEmail, loginPassword])
+   298→
+   299→  const handleLogout = useCallback(() => {
+   300→    setIsLoggedIn(false); setCurrentUser(null); localStorage.removeItem('injaz_user')
+   301→  }, [])
+   302→
+   303→  useEffect(() => {
+   304→    const savedUser = localStorage.getItem('injaz_user')
+   305→    if (savedUser) { try { const user = JSON.parse(savedUser); setCurrentUser(user); setIsLoggedIn(true) } catch { localStorage.removeItem('injaz_user') } }
+   306→  }, [])
+   307→
+   308→  // Stats
+   309→  const totalSales = invoices.filter(i => i.type === 'sale').reduce((sum, i) => sum + i.total, 0)
+   310→  const totalPurchases = invoices.filter(i => i.type === 'purchase').reduce((sum, i) => sum + i.total, 0)
+   311→  const totalInventoryValue = items.reduce((sum, item) => sum + (item.costPrice * item.stock), 0)
+   312→  const dueInvoices = invoices.filter(i => i.paymentStatus !== 'paid').reduce((sum, i) => sum + i.remaining, 0)
+   313→  const treasuryBalance = transactions.filter(t => t.type === 'income' || t.type === 'payment_received').reduce((sum, t) => sum + t.amount, 0)
+   314→    - transactions.filter(t => t.type === 'expense' || t.type === 'payment_sent').reduce((sum, t) => sum + t.amount, 0)
+   315→  const customerCount = parties.filter(p => p.type === 'customer' || p.type === 'both').length
+   316→  const employeeCount = employees.filter(e => e.status === 'active').length
+   317→  const lowStockItems = items.filter(item => item.stock <= item.minStock)
+   318→
+   319→  // LOGIN SCREEN
+   320→  if (!isLoggedIn) {
+   321→    return (
+   322→      <div className="min-h-screen bg-gradient-to-br from-[#005f73] via-[#0a9396] to-[#94d2bd] flex items-center justify-center p-4" dir="rtl">
+   323→        <div className="bg-white rounded-2xl shadow-2xl w-full max-w-md p-8 animate-scaleIn">
+   324→          <div className="text-center mb-8">
+   325→            <div className="w-20 h-20 bg-gradient-to-br from-[#005f73] to-[#0a9396] rounded-2xl mx-auto mb-4 flex items-center justify-center">
+   326→              <Calculator className="w-10 h-10 text-white" />
+   327→            </div>
+   328→            <h1 className="text-2xl font-bold text-[#005f73]">نظام إنجاز المحاسبي</h1>
+   329→            <p className="text-gray-500 mt-2">نظام محاسبي متكامل لإدارة أعمالك</p>
+   330→          </div>
+   331→          <div className="space-y-4">
+   332→            <div>
+   333→              <Label className="text-right block mb-2">البريد الإلكتروني</Label>
+   334→              <div className="relative"><Mail className="absolute right-3 top-3 h-5 w-5 text-gray-400" /><Input type="email" placeholder="admin@injaz.com" value={loginEmail} onChange={(e) => setLoginEmail(e.target.value)} className="pr-10 text-right" onKeyDown={(e) => e.key === 'Enter' && handleLogin()} /></div>
+   335→            </div>
+   336→            <div>
+   337→              <Label className="text-right block mb-2">كلمة المرور</Label>
+   338→              <div className="relative"><Lock className="absolute right-3 top-3 h-5 w-5 text-gray-400" /><Input type="password" placeholder="••••••••" value={loginPassword} onChange={(e) => setLoginPassword(e.target.value)} className="pr-10 text-right" onKeyDown={(e) => e.key === 'Enter' && handleLogin()} /></div>
+   339→            </div>
+   340→            {loginError && <div className="bg-red-50 border border-red-200 text-red-600 px-4 py-3 rounded-lg flex items-center gap-2"><AlertCircle className="w-5 h-5" /><span>{loginError}</span></div>}
+   341→            <Button onClick={handleLogin} className="w-full bg-gradient-to-r from-[#005f73] to-[#0a9396] hover:from-[#004d5c] hover:to-[#087778] h-12 text-lg"><LogOut className="ml-2 h-5 w-5 rotate-180" />تسجيل الدخول</Button>
+   342→          </div>
+   343→          <div className="mt-6 pt-6 border-t border-gray-200">
+   344→            <p className="text-sm text-gray-500 text-center mb-3">بيانات تجريبية:</p>
+   345→            <div className="grid grid-cols-2 gap-2 text-xs">
+   346→              {[{r:'مدير',e:'admin@injaz.com',p:'admin123'},{r:'محاسب',e:'accountant@injaz.com',p:'acc123'},{r:'أمين صندوق',e:'cashier@injaz.com',p:'cash123'},{r:'مشاهد',e:'viewer@injaz.com',p:'view123'}].map(u=><button key={u.e} onClick={() => {setLoginEmail(u.e);setLoginPassword(u.p)}} className="p-2 bg-gray-50 rounded hover:bg-gray-100 text-right"><Badge variant="outline" className="mb-1">{u.r}</Badge><p>{u.e}</p></button>)}
+   347→            </div>
+   348→          </div>
+   349→        </div>
+   350→      </div>
+   351→    )
+   352→  }
+   353→
+   354→  const menuItems = [
+   355→    { id: 'dashboard', icon: LayoutDashboard, label: 'لوحة التحكم' },
+   356→    { id: 'sales', icon: ShoppingCart, label: 'المبيعات' },
+   357→    { id: 'purchases', icon: ShoppingCart, label: 'المشتريات' },
+   358→    { id: 'inventory', icon: Package, label: 'المخزون' },
+   359→    { id: 'accounts', icon: GitBranch, label: 'الحسابات' },
+   360→    { id: 'banks', icon: Landmark, label: 'البنوك والخزينة' },
+   361→    { id: 'parties', icon: Users, label: 'العملاء والموردين' },
+   362→    { id: 'treasury', icon: Wallet, label: 'الحركات المالية' },
+   363→    { id: 'hr', icon: UserCheck, label: 'الموارد البشرية' },
+   364→    { id: 'expenses', icon: Receipt, label: 'المصروفات' },
+   365→    { id: 'reports', icon: FileText, label: 'التقارير' },
+   366→    { id: 'settings', icon: Settings, label: 'الإعدادات' },
+   367→  ]
+   368→
+   369→  return (
+   370→    <div className="min-h-screen bg-[#f8f9fa]" dir="rtl">
+   371→      {/* Sidebar */}
+   372→      <aside className={`fixed top-0 right-0 h-full bg-gradient-to-b from-[#005f73] to-[#0a9396] text-white transition-all duration-300 z-50 ${sidebarOpen ? 'w-64' : 'w-20'}`}>
+   373→        <div className="p-4 flex items-center justify-between border-b border-white/20">
+   374→          {sidebarOpen && <h1 className="text-xl font-bold">إنجاز</h1>}
+   375→          <button onClick={() => setSidebarOpen(!sidebarOpen)} className="p-2 hover:bg-white/10 rounded-lg">{sidebarOpen ? <X /> : <Menu />}</button>
+   376→        </div>
+   377→        <nav className="mt-4 px-2 space-y-1">
+   378→          {menuItems.map(item => (
+   379→            <button key={item.id} onClick={() => setActiveModule(item.id)} className={`w-full flex items-center gap-3 px-4 py-3 rounded-lg transition-colors ${activeModule === item.id ? 'bg-white/20 text-white' : 'hover:bg-white/10 text-white/80'}`}>
+   380→              <item.icon className="w-5 h-5 flex-shrink-0" />
+   381→              {sidebarOpen && <span>{item.label}</span>}
+   382→            </button>
+   383→          ))}
+   384→        </nav>
+   385→        <div className="absolute bottom-0 left-0 right-0 p-4 border-t border-white/20">
+   386→          <button onClick={handleLogout} className="w-full flex items-center gap-3 px-4 py-3 rounded-lg hover:bg-red-500/20 text-red-200 transition-colors">
+   387→            <LogOut className="w-5 h-5" />
+   388→            {sidebarOpen && <span>تسجيل الخروج</span>}
+   389→          </button>
+   390→        </div>
+   391→      </aside>
+   392→
+   393→      {/* Main Content */}
+   394→      <main className={`transition-all duration-300 ${sidebarOpen ? 'mr-64' : 'mr-20'} p-6`}>
+   395→        {/* Header */}
+   396→        <header className="flex justify-between items-center mb-6 bg-white p-4 rounded-xl shadow-sm">
+   397→          <div className="flex items-center gap-4">
+   398→            <button onClick={() => setSidebarOpen(!sidebarOpen)} className="lg:hidden p-2 hover:bg-gray-100 rounded-lg"><Menu /></button>
+   399→            <div><h2 className="text-xl font-bold text-gray-800">{menuItems.find(m=>m.id===activeModule)?.label}</h2><p className="text-sm text-gray-500">مرحباً {currentUser?.name || 'مستخدم'}</p></div>
+   400→          </div>
+   401→          <div className="flex items-center gap-4">
+   402→            <button className="relative p-2 hover:bg-gray-100 rounded-full"><Bell className="w-5 h-5" /><span className="absolute -top-1 -right-1 w-4 h-4 bg-red-500 text-white text-xs rounded-full flex items-center justify-center">{lowStockItems.length}</span></button>
+   403→            <div className="flex items-center gap-2"><div className="w-8 h-8 bg-[#0a9396] rounded-full flex items-center justify-center text-white font-bold">{currentUser?.name?.[0]||'U'}</div></div>
+   404→          </div>
+   405→        </header>
+   406→
+   407→        {/* Module Content */}
+   408→        {activeModule === 'dashboard' && <DashboardModule invoices={invoices} items={items} transactions={transactions} parties={parties} employees={employees} checks={checks} totalSales={totalSales} totalPurchases={totalPurchases} totalInventoryValue={totalInventoryValue} dueInvoices={dueInvoices} treasuryBalance={treasuryBalance} customerCount={customerCount} employeeCount={employeeCount} lowStockItems={lowStockItems} />}
+   409→        {activeModule === 'sales' && <SalesModule invoices={invoices} quotations={quotations} parties={parties} />}
+   410→        {activeModule === 'purchases' && <PurchasesModule invoices={invoices} purchaseOrders={purchaseOrders} parties={parties} totalPurchases={totalPurchases} />}
+   411→        {activeModule === 'inventory' && <InventoryModule items={items} lowStockItems={lowStockItems} />}
+   412→        {activeModule === 'accounts' && <AccountsModule accounts={mockAccounts} journalEntries={journalEntries} />}
+   413→        {activeModule === 'banks' && <BanksModule bankAccounts={bankAccounts} checks={checks} transactions={transactions} treasuryBalance={treasuryBalance} />}
+   414→        {activeModule === 'parties' && <PartiesModule parties={parties} />}
+   415→        {activeModule === 'treasury' && <TreasuryModule transactions={transactions} treasuryBalance={treasuryBalance} />}
+   416→        {activeModule === 'hr' && <HRModule employees={employees} salaries={salaries} attendance={attendance} />}
+   417→        {activeModule === 'expenses' && <ExpensesModule expenses={expenses} />}
+   418→        {activeModule === 'reports' && <ReportsModule />}
+   419→        {activeModule === 'settings' && <SettingsModule users={mockUsers} />}
+   420→      </main>
+   421→    </div>
+   422→  )
+   423→}
+   424→
+   425→// ==================== DASHBOARD MODULE ====================
+   426→function DashboardModule({ invoices, items, transactions, parties, employees, checks, totalSales, totalPurchases, totalInventoryValue, dueInvoices, treasuryBalance, customerCount, employeeCount, lowStockItems }: any) {
+   427→  return (
+   428→    <div className="space-y-6 animate-fadeIn">
+   429→      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+   430→        {[
+   431→          { title: 'إجمالي المبيعات', value: `${totalSales.toLocaleString()} ر.س`, change: '+12%', icon: TrendingUp, color: 'green' },
+   432→          { title: 'إجمالي المشتريات', value: `${totalPurchases.toLocaleString()} ر.س`, change: '+5%', icon: TrendingDown, color: 'red' },
+   433→          { title: 'صافي الربح التقديري', value: `${(totalSales - totalPurchases * 0.7).toLocaleString()} ر.س`, change: '~30%', icon: DollarSign, color: 'blue' },
+   434→          { title: 'قيمة المخزون', value: `${totalInventoryValue.toLocaleString()} ر.س`, change: `${items.length} صنف`, icon: Package, color: 'purple' },
+   435→          { title: 'الفواتير المستحقة', value: `${dueInvoices.toLocaleString()} ر.س`, change: `${invoices.filter(i=>i.paymentStatus!=='paid').length} فاتورة`, icon: Clock, color: 'orange' },
+   436→          { title: 'رصيد الخزينة', value: `${treasuryBalance.toLocaleString()} ر.س`, change: 'صافي الحركات', icon: Wallet, color: 'cyan' },
+   437→          { title: 'عدد العملاء', value: customerCount.toString(), change: 'عميل نشط', icon: Users, color: 'indigo' },
+   438→          { title: 'الموظفون النشطون', value: employeeCount.toString(), change: `من أصل ${employees.length}`, icon: UserCheck, color: 'teal' },
+   439→        ].map((kpi, idx) => (
+   440→          <Card key={idx} className={`hover:shadow-lg transition-shadow`}>
+   441→            <CardContent className="p-6">
+   442→              <div className="flex items-center justify-between">
+   443→                <div><p className="text-sm text-gray-500">{kpi.title}</p><p className="text-2xl font-bold">{kpi.value}</p><p className="text-xs text-gray-500 mt-1 flex items-center"><kpi.icon className="h-3 w-3 ml-1" />{kpi.change}</p></div>
+   444→                <div className="w-14 h-14 bg-gray-100 rounded-full flex items-center justify-center"><kpi.icon className="w-7 h-7 text-gray-600" /></div>
+   445→              </div>
+   446→            </CardContent>
+   447→          </Card>
+   448→        ))}
+   449→      </div>
+   450→
+   451→      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+   452→        <Card className="lg:col-span-2">
+   453→          <CardHeader><CardTitle>المبيعات والمشتريات (آخر 6 أشهر)</CardTitle></CardHeader>
+   454→          <CardContent>
+   455→            <div className="h-64 flex items-end justify-around gap-4 px-4">
+   456→              {['أغسطس','سبتمبر','أكتوبر','نوفمبر','ديسمبر','يناير'].map((month, idx) => {
+   457→                const sh = [65,72,68,85,90,100][idx], ph = [45,55,50,60,70,75][idx]
+   458→                return (<div key={month} className="flex-1 flex flex-col items-center gap-2"><div className="w-full flex gap-1 items-end justify-center h-48"><div className="w-5 bg-gradient-to-t from-[#005f73] to-[#0a9396] rounded-t" style={{height:`${sh}%`}}/><div className="w-5 bg-gradient-to-t from-red-400 to-red-500 rounded-t" style={{height:`${ph}%`}}/></div><span className="text-xs text-gray-500">{month}</span></div>)
+   459→              })}
+   460→            </div>
+   461→          </CardContent>
+   462→        </Card>
+   463→
+   464→        <Card>
+   465→          <CardHeader><CardTitle>إجراءات سريعة</CardTitle></CardHeader>
+   466→          <CardContent className="space-y-3">
+   467→            <Button className="w-full justify-start bg-green-50 text-green-700" variant="outline"><Plus className="ml-2 h-4 w-4" />فاتورة جديدة</Button>
+   468→            <Button className="w-full justify-start bg-blue-50 text-blue-700" variant="outline"><Plus className="ml-2 h-4 w-4" />طلب شراء</Button>
+   469→            <Button className="w-full justify-start bg-purple-50 text-purple-700" variant="outline"><Wallet className="ml-2 h-4 w-4" />تحصيل</Button>
+   470→            <Button className="w-full justify-start bg-orange-50 text-orange-700" variant="outline"><Receipt className="ml-2 h-4 w-4" />مصروف</Button>
+   471→          </CardContent>
+   472→        </Card>
+   473→      </div>
+   474→
+   475→      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+   476→        <Card>
+   477→          <CardHeader><CardTitle>آخر المعاملات</CardTitle></CardHeader>
+   478→          <CardContent>
+   479→            <Table><TableHeader><TableRow><TableHead>المرجع</TableHead><TableHead>الوصف</TableHead><TableHead>المبلغ</TableHead><TableHead>التاريخ</TableHead></TableRow></TableHeader><TableBody>{transactions.slice(0,5).map(t => (<TableRow key={t.id}><TableCell><Badge variant="outline">{t.reference||'-'}</Badge></TableCell><TableCell>{t.description}</TableCell><TableCell className={t.type.startsWith('income')?'text-green-600':'text-red-600'}>{t.amount.toLocaleString()}</TableCell><TableCell>{t.date}</TableCell></TableRow>))}</TableBody></Table>
+   480→          </CardContent>
+   481→        </Card>
+   482→
+   483→        <Card>
+   484→          <CardHeader><CardTitle>تنبيهات هامة</CardTitle></CardHeader>
+   485→          <CardContent className="space-y-3">
+   486→            {lowStockItems.length > 0 && (<div className="bg-orange-50 border border-orange-200 rounded-lg p-3"><p className="font-medium text-orange-800">أصناف نفدت ({lowStockItems.length})</p><div className="mt-2 space-y-1">{lowStockItems.map(item => (<div key={item.id} className="text-sm text-orange-700 flex justify-between"><span>{item.nameAr}</span><span>متبقي: {item.stock}</span></div>))}</div></div>)}
+   487→            {checks.filter(c => c.status === 'pending').length > 0 && (<div className="bg-blue-50 border border-blue-200 rounded-lg p-3"><p className="font-medium text-blue-800">شيكات مستحقة ({checks.filter(c=>c.status==='pending').length})</p></div>)}
+   488→            {invoices.filter(i => i.paymentStatus !== 'paid').length > 0 && (<div className="bg-red-50 border border-red-200 rounded-lg p-3"><p className="font-medium text-red-800">فواتير غير مسددة ({invoices.filter(i=>i.paymentStatus!=='paid').length}) - {dueInvoices.toLocaleString()} ر.س</p></div>)}
+   489→          </CardContent>
+   490→        </Card>
+   491→      </div>
+   492→    </div>
+   493→  )
+   494→}
+   495→
+   496→// ==================== SALES MODULE ====================
+   497→function SalesModule({ invoices, quotations, parties }: any) {
+   498→  return (
+   499→    <div className="space-y-6 animate-fadeIn">
+   500→      <div className="flex justify-between items-center">
+
+[showing lines 1-500 of 840; use offset=501 with limit to continue reading]

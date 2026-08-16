@@ -1,0 +1,391 @@
+   450→
+   451→      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+   452→        <Card className="lg:col-span-2">
+   453→          <CardHeader><CardTitle>المبيعات والمشتريات (آخر 6 أشهر)</CardTitle></CardHeader>
+   454→          <CardContent>
+   455→            <div className="h-64 flex items-end justify-around gap-4 px-4">
+   456→              {['أغسطس','سبتمبر','أكتوبر','نوفمبر','ديسمبر','يناير'].map((month, idx) => {
+   457→                const sh = [65,72,68,85,90,100][idx], ph = [45,55,50,60,70,75][idx]
+   458→                return (<div key={month} className="flex-1 flex flex-col items-center gap-2"><div className="w-full flex gap-1 items-end justify-center h-48"><div className="w-5 bg-gradient-to-t from-[#005f73] to-[#0a9396] rounded-t" style={{height:`${sh}%`}}/><div className="w-5 bg-gradient-to-t from-red-400 to-red-500 rounded-t" style={{height:`${ph}%`}}/></div><span className="text-xs text-gray-500">{month}</span></div>)
+   459→              })}
+   460→            </div>
+   461→          </CardContent>
+   462→        </Card>
+   463→
+   464→        <Card>
+   465→          <CardHeader><CardTitle>إجراءات سريعة</CardTitle></CardHeader>
+   466→          <CardContent className="space-y-3">
+   467→            <Button className="w-full justify-start bg-green-50 text-green-700" variant="outline"><Plus className="ml-2 h-4 w-4" />فاتورة جديدة</Button>
+   468→            <Button className="w-full justify-start bg-blue-50 text-blue-700" variant="outline"><Plus className="ml-2 h-4 w-4" />طلب شراء</Button>
+   469→            <Button className="w-full justify-start bg-purple-50 text-purple-700" variant="outline"><Wallet className="ml-2 h-4 w-4" />تحصيل</Button>
+   470→            <Button className="w-full justify-start bg-orange-50 text-orange-700" variant="outline"><Receipt className="ml-2 h-4 w-4" />مصروف</Button>
+   471→          </CardContent>
+   472→        </Card>
+   473→      </div>
+   474→
+   475→      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+   476→        <Card>
+   477→          <CardHeader><CardTitle>آخر المعاملات</CardTitle></CardHeader>
+   478→          <CardContent>
+   479→            <Table><TableHeader><TableRow><TableHead>المرجع</TableHead><TableHead>الوصف</TableHead><TableHead>المبلغ</TableHead><TableHead>التاريخ</TableHead></TableRow></TableHeader><TableBody>{transactions.slice(0,5).map(t => (<TableRow key={t.id}><TableCell><Badge variant="outline">{t.reference||'-'}</Badge></TableCell><TableCell>{t.description}</TableCell><TableCell className={t.type.startsWith('income')?'text-green-600':'text-red-600'}>{t.amount.toLocaleString()}</TableCell><TableCell>{t.date}</TableCell></TableRow>))}</TableBody></Table>
+   480→          </CardContent>
+   481→        </Card>
+   482→
+   483→        <Card>
+   484→          <CardHeader><CardTitle>تنبيهات هامة</CardTitle></CardHeader>
+   485→          <CardContent className="space-y-3">
+   486→            {lowStockItems.length > 0 && (<div className="bg-orange-50 border border-orange-200 rounded-lg p-3"><p className="font-medium text-orange-800">أصناف نفدت ({lowStockItems.length})</p><div className="mt-2 space-y-1">{lowStockItems.map(item => (<div key={item.id} className="text-sm text-orange-700 flex justify-between"><span>{item.nameAr}</span><span>متبقي: {item.stock}</span></div>))}</div></div>)}
+   487→            {checks.filter(c => c.status === 'pending').length > 0 && (<div className="bg-blue-50 border border-blue-200 rounded-lg p-3"><p className="font-medium text-blue-800">شيكات مستحقة ({checks.filter(c=>c.status==='pending').length})</p></div>)}
+   488→            {invoices.filter(i => i.paymentStatus !== 'paid').length > 0 && (<div className="bg-red-50 border border-red-200 rounded-lg p-3"><p className="font-medium text-red-800">فواتير غير مسددة ({invoices.filter(i=>i.paymentStatus!=='paid').length}) - {dueInvoices.toLocaleString()} ر.س</p></div>)}
+   489→          </CardContent>
+   490→        </Card>
+   491→      </div>
+   492→    </div>
+   493→  )
+   494→}
+   495→
+   496→// ==================== SALES MODULE ====================
+   497→function SalesModule({ invoices, quotations, parties }: any) {
+   498→  return (
+   499→    <div className="space-y-6 animate-fadeIn">
+   500→      <div className="flex justify-between items-center">
+   501→        <h1 className="text-2xl font-bold text-[#005f73]">المبيعات</h1>
+   502→        <Dialog><DialogTrigger asChild><Button className="bg-gradient-to-r from-[#005f73] to-[#0a9396]"><Plus className="ml-2 h-4 w-4" />فاتورة جديدة</Button></DialogTrigger><DialogContent className="max-w-2xl"><DialogHeader><DialogTitle>فاتورة مبيعات جديدة</DialogTitle></DialogHeader><div className="space-y-4"><div className="grid grid-cols-2 gap-4"><div><Label>العميل</Label><Select><SelectTrigger><SelectValue placeholder="اختر العميل" /></SelectTrigger><SelectContent>{parties.filter(p=>p.type==='customer'||p.type==='both').map(p=><SelectItem key={p.id} value={p.id}>{p.nameAr}</SelectItem>)}</SelectContent></Select></div><div><Label>التاريخ</Label><Input type="date" defaultValue={new Date().toISOString().split('T')[0]} /></div></div><Button className="w-full bg-[#005f73]">حفظ الفاتورة</Button></div></DialogContent></Dialog>
+   503→      </div>
+   504→      <Tabs defaultValue="invoices">
+   505→        <TabsList className="grid w-full grid-cols-3"><TabsTrigger value="invoices">الفواتير</TabsTrigger><TabsTrigger value="quotations">عروض الأسعار</TabsTrigger><TabsTrigger value="returns">المرتجعات</TabsTrigger></TabsList>
+   506→        <TabsContent value="invoices"><Card><CardContent className="pt-6"><Table><TableHeader><TableRow><TableHead>رقم الفاتورة</TableHead><TableHead>العميل</TableHead><TableHead>التاريخ</TableHead><TableHead>الإجمالي</TableHead><TableHead>الحالة</TableHead><TableHead>إجراءات</TableHead></TableRow></TableHeader><TableBody>{invoices.filter(i=>i.type==='sale'||i.type==='sale_return').map(inv => (<TableRow key={inv.id}><TableCell className="font-medium">{inv.invoiceNumber}</TableCell><TableCell>{inv.partyName}</TableCell><TableCell>{inv.date}</TableCell><TableCell>{inv.total.toLocaleString()} ر.س</TableCell><TableCell><Badge>{inv.status==='posted'?'مرحلة':'مسودة'}</Badge></TableCell><TableCell><div className="flex gap-1"><Button size="sm" variant="ghost"><Eye /></Button><Button size="sm" variant="ghost"><Printer /></Button></div></TableCell></TableRow>))}</TableBody></Table></CardContent></Card></TabsContent>
+   507→        <TabsContent value="quotations"><Card><CardContent className="pt-6"><Table><TableHeader><TableRow><TableHead>رقم العرض</TableHead><TableHead>العميل</TableHead><TableHead>التاريخ</TableHead><TableHead>الإجمالي</TableHead><TableHead>الحالة</TableHead></TableRow></TableHeader><TableBody>{quotations.map(q => (<TableRow key={q.id}><TableCell>{q.quotationNumber}</TableCell><TableCell>{q.partyName}</TableCell><TableCell>{q.date}</TableCell><TableCell>{q.total.toLocaleString()} ر.س</TableCell><TableCell><Badge variant={q.status==='accepted'?'default':q.status==='expired'?'destructive':'outline'}>{q.status==='sent'?'مرسل':q.status==='accepted'?'مقبول':q.status==='expired'?'منتهي':'مسودة'}</Badge></TableCell></TableRow>))}</TableBody></Table></CardContent></Card></TabsContent>
+   508→        <TabsContent value="returns"><Card><CardContent className="pt-6"><p className="text-gray-500 text-center py-8">لا توجد مرتجعات حالياً</p></CardContent></Card></TabsContent>
+   509→      </Tabs>
+   510→    </div>
+   511→  )
+   512→}
+   513→
+   514→// ==================== PURCHASES MODULE ====================
+   515→function PurchasesModule({ invoices, purchaseOrders, parties, totalPurchases }: any) {
+   516→  return (
+   517→    <div className="space-y-6 animate-fadeIn">
+   518→      <div className="flex justify-between items-center">
+   519→        <h1 className="text-2xl font-bold text-[#005f73]">المشتريات</h1>
+   520→        <Dialog><DialogTrigger asChild><Button className="bg-gradient-to-r from-blue-600 to-blue-700"><Plus className="ml-2 h-4 w-4" />فاتورة مشتريات</Button></DialogTrigger><DialogContent><DialogHeader><DialogTitle>فاتورة مشتريات جديدة</DialogTitle></DialogHeader><div className="space-y-4"><div><Label>المورد</Label><Select><SelectTrigger><SelectValue placeholder="اختر المورد" /></SelectTrigger><SelectContent>{parties.filter(p=>p.type==='supplier'||p.type==='both').map(p=><SelectItem key={p.id} value={p.id}>{p.nameAr}</SelectItem>)}</SelectContent></Select></div><Button className="w-full bg-blue-600">حفظ الفاتورة</Button></div></DialogContent></Dialog>
+   521→      </div>
+   522→      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+   523→        <Card><CardContent className="pt-6 pb-6 text-center"><p className="text-sm text-gray-500">إجمالي المشتريات</p><p className="text-2xl font-bold text-red-600">{totalPurchases.toLocaleString()} ر.س</p></CardContent></Card>
+   524→        <Card><CardContent className="pt-6 pb-6 text-center"><p className="text-sm text-gray-500">طلبات معلقة</p><p className="text-2xl font-bold text-orange-600">{purchaseOrders.filter(o=>o.status==='sent'||o.status==='approved').length}</p></CardContent></Card>
+   525→        <Card><CardContent className="pt-6 pb-6 text-center"><p className="text-sm text-gray-500">الموردون</p><p className="text-2xl font-bold text-blue-600">{parties.filter(p=>p.type==='supplier'||p.type==='both').length}</p></CardContent></Card>
+   526→      </div>
+   527→      <Tabs defaultValue="invoices">
+   528→        <TabsList className="grid w-full grid-cols-3"><TabsTrigger value="invoices">الفواتير</TabsTrigger><TabsTrigger value="orders">أوامر الشراء</TabsTrigger><TabsTrigger value="returns">المرتجعات</TabsTrigger></TabsList>
+   529→        <TabsContent value="invoices"><Card><CardContent className="pt-6"><Table><TableHeader><TableRow><TableHead>رقم الفاتورة</TableHead><TableHead>المورد</TableHead><TableHead>التاريخ</TableHead><TableHead>الإجمالي</TableHead><TableHead>الحالة</TableHead></TableRow></TableHeader><TableBody>{invoices.filter(i=>i.type==='purchase').map(inv => (<TableRow key={inv.id}><TableCell>{inv.invoiceNumber}</TableCell><TableCell>{inv.partyName}</TableCell><TableCell>{inv.date}</TableCell><TableCell>{inv.total.toLocaleString()} ر.س</TableCell><TableCell><Badge variant="outline">{inv.status}</Badge></TableCell></TableRow>))}</TableBody></Table></CardContent></Card></TabsContent>
+   530→        <TabsContent value="orders"><Card><CardContent className="pt-6"><Table><TableHeader><TableRow><TableHead>رقم الأمر</TableHead><TableHead>المورد</TableHead><TableHead>التاريخ</TableHead><TableHead>الإجمالي</TableHead><TableHead>الحالة</TableHead></TableRow></TableHeader><TableBody>{purchaseOrders.map(po => (<TableRow key={po.id}><TableCell>{po.orderNumber}</TableCell><TableCell>{po.supplierName}</TableCell><TableCell>{po.date}</TableCell><TableCell>{po.total.toLocaleString()} ر.س</TableCell><TableCell><Badge variant={po.status==='approved'?'default':po.status==='sent'?'secondary':'outline'}>{po.status==='sent'?'مرسل':po.status==='approved'?'موافق عليه':po.status==='received'?'تم الاستلام':'مسودة'}</Badge></TableCell></TableRow>))}</TableBody></Table></CardContent></Card></TabsContent>
+   531→        <TabsContent value="returns"><Card><CardContent className="pt-6"><p className="text-gray-500 text-center py-8">لا توجد مرتجعات مشتريات</p></CardContent></Card></TabsContent>
+   532→      </Tabs>
+   533→    </div>
+   534→  )
+   535→}
+   536→
+   537→// ==================== INVENTORY MODULE ====================
+   538→function InventoryModule({ items, lowStockItems }: any) {
+   539→  return (
+   540→    <div className="space-y-6 animate-fadeIn">
+   541→      <div className="flex justify-between items-center">
+   542→        <h1 className="text-2xl font-bold text-[#005f73]">المخزون</h1>
+   543→        <Dialog><DialogTrigger asChild><Button className="bg-gradient-to-r from-purple-600 to-purple-700"><Plus className="ml-2 h-4 w-4" />صنف جديد</Button></DialogTrigger><DialogContent><DialogHeader><DialogTitle>إضافة صنف جديد</DialogTitle></DialogHeader><div className="space-y-4"><div className="grid grid-cols-2 gap-4"><div><Label>اسم الصنف (عربي)</Label><Input placeholder="اسم الصنف بالعربية" /></div><div><Label>الكود</Label><Input placeholder="ITM-XXX" /></div></div><div className="grid grid-cols-3 gap-4"><div><Label>سعر التكلفة</Label><Input type="number" placeholder="0" /></div><div><Label>سعر البيع</Label><Input type="number" placeholder="0" /></div><div><Label>الحد الأدنى</Label><Input type="number" placeholder="0" /></div></div><Button className="w-full bg-purple-600">حفظ الصنف</Button></div></DialogContent></Dialog>
+   544→      </div>
+   545→      <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+   546→        <Card><CardContent className="pt-6 pb-6 text-center"><Package className="w-8 h-8 mx-auto mb-2 text-purple-500" /><p className="text-sm text-gray-500">إجمالي الأصناف</p><p className="text-2xl font-bold">{items.length}</p></CardContent></Card>
+   547→        <Card><CardContent className="pt-6 pb-6 text-center"><CheckCircle className="w-8 h-8 mx-auto mb-2 text-green-500" /><p className="text-sm text-gray-500">متوفر</p><p className="text-2xl font-bold text-green-600">{items.filter(i=>i.stock>i.minStock).length}</p></CardContent></Card>
+   548→        <Card><CardContent className="pt-6 pb-6 text-center"><AlertCircle className="w-8 h-8 mx-auto mb-2 text-red-500" /><p className="text-sm text-gray-500">نفد المخزون</p><p className="text-2xl font-bold text-red-600">{lowStockItems.length}</p></CardContent></Card>
+   549→        <Card><CardContent className="pt-6 pb-6 text-center"><Building2 className="w-8 h-8 mx-auto mb-2 text-blue-500" /><p className="text-sm text-gray-500">المخازن</p><p className="text-2xl font-bold">2</p></CardContent></Card>
+   550→      </div>
+   551→      {lowStockItems.length > 0 && (<Card className="border-r-4 border-r-red-500"><CardContent className="pt-6"><h3 className="font-bold text-red-600 mb-3 flex items-center gap-2"><AlertTriangle />تنبيه نفاد المخزون</h3><div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">{lowStockItems.map(item => (<div key={item.id} className="bg-red-50 p-3 rounded-lg"><p className="font-medium">{item.nameAr}</p><p className="text-sm text-red-600">متبقي: {item.stock} | الحد الأدنى: {item.minStock}</p></div>))}</div></CardContent></Card>)}
+   552→      <Card><CardContent className="pt-6"><Table><TableHeader><TableRow><TableHead>الكود</TableHead><TableHead>الصنف</TableHead><TableHead>التصنيف</TableHead><TableHead>المخزن</TableHead><TableHead>الكمية</TableHead><TableHead>سعر البيع</TableHead></TableRow></TableHeader><TableBody>{items.map(item => (<TableRow key={item.id}><TableCell className="font-medium">{item.code}</TableCell><TableCell>{item.nameAr}</TableCell><TableCell>{item.category}</TableCell><TableCell>{item.warehouse}</TableCell><TableCell><Badge variant={item.stock<=item.minStock?'destructive':'secondary'}>{item.stock}</Badge></TableCell><TableCell>{item.salePrice.toLocaleString()} ر.س</TableCell></TableRow>))}</TableBody></Table></CardContent></Card>
+   553→    </div>
+   554→  )
+   555→}
+   556→
+   557→// ==================== ACCOUNTS MODULE ====================
+   558→function AccountsModule({ accounts, journalEntries }: any) {
+   559→  return (
+   560→    <div className="space-y-6 animate-fadeIn">
+   561→      <div className="flex justify-between items-center">
+   562→        <h1 className="text-2xl font-bold text-[#005f73]">شجرة الحسابات</h1>
+   563→        <Dialog><DialogTrigger asChild><Button className="bg-gradient-to-r from-indigo-600 to-indigo-700"><Plus className="ml-2 h-4 w-4" />حساب جديد</Button></DialogTrigger><DialogContent><DialogHeader><DialogTitle>إضافة حساب جديد</DialogTitle></DialogHeader><div className="space-y-4"><div><Label>نوع الحساب</Label><Select><SelectTrigger><SelectValue /></SelectTrigger><SelectContent><SelectItem value="asset">أصل</SelectItem><SelectItem value="liability">خصم</SelectItem><SelectItem value="equity">حقوق ملكية</SelectItem><SelectItem value="revenue">إيراد</SelectItem><SelectItem value="expense">مصروف</SelectItem></SelectContent></Select></div><Button className="w-full bg-indigo-600">إضافة الحساب</Button></div></DialogContent></Dialog>
+   564→      </div>
+   565→      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+   566→        <Card>
+   567→          <CardHeader><CardTitle>هيكل الحسابات</CardTitle></CardHeader>
+   568→          <CardContent>
+   569→            <div className="space-y-2">
+   570→              {accounts.map(acc => (
+   571→                <div key={acc.id} className="border rounded-lg overflow-hidden">
+   572→                  <div className="bg-gray-50 p-3 flex items-center justify-between cursor-pointer hover:bg-gray-100">
+   573→                    <div className="flex items-center gap-2"><ChevronRight className="w-4 h-4" /><Badge variant="outline">{acc.code}</Badge><span className="font-medium">{acc.nameAr}</span></div>
+   574→                    <span className="text-sm text-gray-500">{acc.balance.toLocaleString()} ر.س</span>
+   575→                  </div>
+   576→                  {acc.children && (
+   577→                    <div className="border-t">
+   578→                      {acc.children.map(child => (
+   579→                        <div key={child.id} className="p-3 pr-8 hover:bg-gray-50 flex items-center justify-between border-b last:border-b-0">
+   580→                          <div className="flex items-center gap-2"><ChevronRight className="w-4 h-4 text-gray-400" /><Badge variant="outline" className="text-xs">{child.code}</Badge><span>{child.nameAr}</span></div>
+   581→                          <span className="text-sm font-medium">{child.balance.toLocaleString()} ر.س</span>
+   582→                        </div>
+   583→                      ))}
+   584→                    </div>
+   585→                  )}
+   586→                </div>
+   587→              ))}
+   588→            </div>
+   589→          </CardContent>
+   590→        </Card>
+   591→
+   592→        <Card>
+   593→          <CardHeader><CardTitle>القيود المحاسبية</CardTitle></CardHeader>
+   594→          <CardContent>
+   595→            <Table><TableHeader><TableRow><TableHead>رقم القيد</TableHead><TableHead>التاريخ</TableHead><TableHead>الوصف</TableHead><TableHead>مدين</TableHead><TableHead>دائن</TableHead><TableHead>الحالة</TableHead></TableRow></TableHeader><TableBody>{journalEntries.map(je => (<TableRow key={je.id}><TableCell className="font-medium">{je.entryNumber}</TableCell><TableCell>{je.date}</TableCell><TableCell>{je.description}</TableCell><TableCell className="text-red-600">{je.totalDebit.toLocaleString()}</TableCell><TableCell className="text-green-600">{je.totalCredit.toLocaleString()}</TableCell><TableCell><Badge variant={je.status==='posted'?'default':'outline'}>{je.status==='posted'?'مرحلة':'مسودة'}</Badge></TableCell></TableRow>))}</TableBody></Table>
+   596→            <Dialog><DialogTrigger asChild><Button className="w-full mt-4" variant="outline"><Plus className="ml-2 h-4 w-4" />قييد جديد</Button></DialogTrigger><DialogContent><DialogHeader><DialogTitle>إنشاء قيد محاسبي</DialogTitle></DialogHeader><div className="space-y-4"><div><Label>وصف القيد</Label><Textarea placeholder="وصف القيد..." /></div><Button className="w-full bg-indigo-600">حفظ القيد</Button></div></DialogContent></Dialog>
+   597→          </CardContent>
+   598→        </Card>
+   599→      </div>
+   600→    </div>
+   601→  )
+   602→}
+   603→
+   604→// ==================== BANKS MODULE ====================
+   605→function BanksModule({ bankAccounts, checks, transactions, treasuryBalance }: any) {
+   606→  return (
+   607→    <div className="space-y-6 animate-fadeIn">
+   608→      <h1 className="text-2xl font-bold text-[#005f73]">البنوك والخزينة</h1>
+   609→      <Tabs defaultValue="banks">
+   610→        <TabsList className="grid w-full grid-cols-3"><TabsTrigger value="banks">الحسابات البنكية</TabsTrigger><TabsTrigger value="checks">الشيكات</TabsTrigger><TabsTrigger value="treasury">الخزينة</TabsTrigger></TabsList>
+   611→        <TabsContent value="banks">
+   612→          <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+   613→            {bankAccounts.map(bank => (
+   614→              <Card key={bank.id}>
+   615→                <CardContent className="pt-6">
+   616→                  <div className="flex items-center justify-between mb-4"><Landmark className="w-8 h-8 text-[#0a9396]" /><Badge variant="outline">{bank.type === 'current' ? 'جاري' : bank.type === 'savings' ? 'ادخار' : 'استثمار'}</Badge></div>
+   617→                  <h3 className="font-bold text-lg">{bank.bankName}</h3>
+   618→                  <p className="text-sm text-gray-500 mt-1">{bank.accountName}</p>
+   619→                  <Separator className="my-3" />
+   620→                  <p className="text-2xl font-bold text-[#005f73]">{bank.balance.toLocaleString()} {bank.currency}</p>
+   621→                </CardContent>
+   622→              </Card>
+   623→            ))}
+   624→          </div>
+   625→        </TabsContent>
+   626→        <TabsContent value="checks">
+   627→          <Card><CardContent className="pt-6"><Table><TableHeader><TableRow><TableHead>رقم الشيك</TableHead><TableHead>النوع</TableHead><TableHead>المبلغ</TableHead><TableHead>المستفيد</TableHead><TableHead>استحقاق</TableHead><TableHead>الحالة</TableHead></TableRow></TableHeader><TableBody>{checks.map(check => (<TableRow key={check.id}><TableCell className="font-medium">{check.checkNumber}</TableCell><TableCell><Badge variant={check.type==='issued'?'destructive':'default'}>{check.type==='issued'?'صادر':'وارد'}</Badge></TableCell><TableCell>{check.amount.toLocaleString()} ر.س</TableCell><TableCell>{check.payeeName||'-'}</TableCell><TableCell>{check.dueDate}</TableCell><TableCell><Badge variant={check.status==='cleared'?'default':check.status==='bounced'?'destructive':'outline'}>{check.status==='cleared'?'محقق':check.status==='bounced'?'مرتجع':'معلق'}</Badge></TableCell></TableRow>))}</TableBody></Table></CardContent></Card>
+   628→        </TabsContent>
+   629→        <TabsContent value="treasury">
+   630→          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+   631→            <Card><CardContent className="pt-6 pb-6 text-center"><Wallet className="w-8 h-8 mx-auto mb-2 text-green-500" /><p className="text-sm text-gray-500">الإيرادات</p><p className="text-2xl font-bold text-green-600">{transactions.filter(t=>t.type==='income'||t.type==='payment_received').reduce((s,t)=>s+t.amount,0).toLocaleString()}</p></CardContent></Card>
+   632→            <Card><CardContent className="pt-6 pb-6 text-center"><Wallet className="w-8 h-8 mx-auto mb-2 text-red-500" /><p className="text-sm text-gray-500">المصروفات</p><p className="text-2xl font-bold text-red-600">{transactions.filter(t=>t.type==='expense'||t.type==='payment_sent').reduce((s,t)=>s+t.amount,0).toLocaleString()}</p></CardContent></Card>
+   633→            <Card><CardContent className="pt-6 pb-6 text-center"><DollarSign className="w-8 h-8 mx-auto mb-2 text-blue-500" /><p className="text-sm text-gray-500">الرصيد</p><p className="text-2xl font-bold text-blue-600">{treasuryBalance.toLocaleString()}</p></CardContent></Card>
+   634→          </div>
+   635→        </TabsContent>
+   636→      </Tabs>
+   637→    </div>
+   638→  )
+   639→}
+   640→
+   641→// ==================== PARTIES MODULE ====================
+   642→function PartiesModule({ parties }: any) {
+   643→  return (
+   644→    <div className="space-y-6 animate-fadeIn">
+   645→      <div className="flex justify-between items-center">
+   646→        <h1 className="text-2xl font-bold text-[#005f73]">العملاء والموردين</h1>
+   647→        <Dialog><DialogTrigger asChild><Button className="bg-gradient-to-r from-[#005f73] to-[#0a9396]"><Plus className="ml-2 h-4 w-4" />إضافة طرف جديد</Button></DialogTrigger><DialogContent className="max-w-2xl"><DialogHeader><DialogTitle>إضافة عميل/مورد جديد</DialogTitle></DialogHeader><div className="space-y-4"><div className="grid grid-cols-2 gap-4"><div><Label>النوع</Label><Select><SelectTrigger><SelectValue /></SelectTrigger><SelectContent><SelectItem value="customer">عميل</SelectItem><SelectItem value="supplier">مورد</SelectItem><SelectItem value="both">كلاهما</SelectItem></SelectContent></Select></div><div><Label>الكود</Label><Input placeholder="CUS/SUP-XXX" /></div></div><div className="grid grid-cols-2 gap-4"><div><Label>الاسم (عربي)</Label><Input placeholder="الاسم بالعربية" /></div><div><Label>الهاتف</Label><Input placeholder="05XXXXXXXX" /></div></div><Button className="w-full bg-[#005f73]">حفظ</Button></div></DialogContent></Dialog>
+   648→      </div>
+   649→      <Tabs defaultValue="all">
+   650→        <TabsList><TabsTrigger value="all">الكل</TabsTrigger><TabsTrigger value="customer">العملاء</TabsTrigger><TabsTrigger value="supplier">الموردون</TabsTrigger></TabsList>
+   651→        <TabsContent value="all">
+   652→          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+   653→            {parties.map(party => (
+   654→              <Card key={party.id}>
+   655→                <CardContent className="pt-6">
+   656→                  <div className="flex items-start justify-between mb-3">
+   657→                    <div><h3 className="font-bold">{party.nameAr}</h3><p className="text-sm text-gray-500">{party.code}</p></div>
+   658→                    <Badge variant={party.type==='customer'?'default':party.type==='supplier'?'secondary':'outline'}>{party.type==='customer'?'عميل':party.type==='supplier'?'مورد':'كلاهما'}</Badge>
+   659→                  </div>
+   660→                  <div className="space-y-1 text-sm text-gray-600"><div className="flex items-center gap-2"><Phone className="w-4 h-4" />{party.phone||'-'}</div><div className="flex items-center gap-2"><MapPin className="w-4 h-4" />{party.city||'-'}</div></div>
+   661→                  <Separator className="my-3" />
+   662→                  <div className="flex justify-between items-center"><span className="text-sm text-gray-500">الرصيد</span><span className={`font-bold ${party.balance > 0 ? 'text-green-600' : party.balance < 0 ? 'text-red-600' : ''}`}>{Math.abs(party.balance).toLocaleString()} ر.س {party.balance > 0 ? '(له)' : party.balance < 0 ? '(عليه)' : ''}</span></div>
+   663→                  {party.rating && (<div className="mt-2 flex items-center gap-1">{Array(5).fill(0).map((_,i) => (<Star key={i} className={`w-4 h-4 ${i < party.rating! ? 'text-yellow-400 fill-yellow-400' : 'text-gray-300'}`} />))}</div>)}
+   664→                </CardContent>
+   665→              </Card>
+   666→            ))}
+   667→          </div>
+   668→        </TabsContent>
+   669→      </Tabs>
+   670→    </div>
+   671→  )
+   672→}
+   673→
+   674→// ==================== TREASURY MODULE ====================
+   675→function TreasuryModule({ transactions, treasuryBalance }: any) {
+   676→  return (
+   677→    <div className="space-y-6 animate-fadeIn">
+   678→      <div className="flex justify-between items-center">
+   679→        <h1 className="text-2xl font-bold text-[#005f73]">الحركات المالية</h1>
+   680→        <Dialog><DialogTrigger asChild><Button className="bg-gradient-to-r from-[#005f73] to-[#0a9396]"><Plus className="ml-2 h-4 w-4" />حركة جديدة</Button></DialogTrigger><DialogContent><DialogHeader><DialogTitle>إضافة حركة مالية</DialogTitle></DialogHeader><div className="space-y-4"><div className="grid grid-cols-2 gap-4"><div><Label>نوع الحركة</Label><Select><SelectTrigger><SelectValue /></SelectTrigger><SelectContent><SelectItem value="income">إيراد</SelectItem><SelectItem value="expense">مصروف</SelectItem><SelectItem value="payment_received">تحصيل</SelectItem><SelectItem value="payment_sent">دفع</SelectItem></SelectContent></Select></div><div><Label>المبلغ</Label><Input type="number" placeholder="0.00" /></div></div><Button className="w-full bg-[#005f73]">حفظ الحركة</Button></div></DialogContent></Dialog>
+   681→      </div>
+   682→      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+   683→        <Card className="bg-green-50 border-green-200"><CardContent className="pt-6 pb-6 text-center"><TrendingUp className="w-8 h-8 mx-auto mb-2 text-green-600" /><p className="text-sm text-green-700">إجمالي الإيرادات</p><p className="text-2xl font-bold text-green-600">{transactions.filter(t=>t.type==='income'||t.type==='payment_received').reduce((s,t)=>s+t.amount,0).toLocaleString()} ر.س</p></CardContent></Card>
+   684→        <Card className="bg-red-50 border-red-200"><CardContent className="pt-6 pb-6 text-center"><TrendingDown className="w-8 h-8 mx-auto mb-2 text-red-600" /><p className="text-sm text-red-700">إجمالي المصروفات</p><p className="text-2xl font-bold text-red-600">{transactions.filter(t=>t.type==='expense'||t.type==='payment_sent').reduce((s,t)=>s+t.amount,0).toLocaleString()} ر.س</p></CardContent></Card>
+   685→        <Card className="bg-blue-50 border-blue-200"><CardContent className="pt-6 pb-6 text-center"><DollarSign className="w-8 h-8 mx-auto mb-2 text-blue-600" /><p className="text-sm text-blue-700">صافي الرصيد</p><p className="text-2xl font-bold text-blue-600">{treasuryBalance.toLocaleString()} ر.س</p></CardContent></Card>
+   686→      </div>
+   687→      <Card><CardContent className="pt-6"><Table><TableHeader><TableRow><TableHead>المرجع</TableHead><TableHead>النوع</TableHead><TableHead>التصنيف</TableHead><TableHead>الوصف</TableHead><TableHead>المبلغ</TableHead><TableHead>التاريخ</TableHead></TableRow></TableHeader><TableBody>{transactions.map(t => (<TableRow key={t.id}><TableCell><Badge variant="outline">{t.reference||'-'}</Badge></TableCell><TableCell><Badge variant={t.type.startsWith('income')||t.type==='payment_received'?'default':'destructive'}>{t.type==='income'?'إيراد':t.type==='expense'?'مصروف':t.type==='payment_received'?'تحصيل':'دفع'}</Badge></TableCell><TableCell>{t.category}</TableCell><TableCell>{t.description}</TableCell><TableCell className={t.type.startsWith('income')||t.type==='payment_received'?'text-green-600':'text-red-600'}>{t.type.startsWith('income')||t.type==='payment_received'?'+':'-'}{t.amount.toLocaleString()}</TableCell><TableCell>{t.date}</TableCell></TableRow>))}</TableBody></Table></CardContent></Card>
+   688→    </div>
+   689→  )
+   690→}
+   691→
+   692→// ==================== HR MODULE ====================
+   693→function HRModule({ employees, salaries, attendance }: any) {
+   694→  return (
+   695→    <div className="space-y-6 animate-fadeIn">
+   696→      <div className="flex justify-between items-center">
+   697→        <h1 className="text-2xl font-bold text-[#005f73]">الموارد البشرية والرواتب</h1>
+   698→        <Dialog><DialogTrigger asChild><Button className="bg-gradient-to-r from-teal-600 to-teal-700"><Plus className="ml-2 h-4 w-4" />موظف جديد</Button></DialogTrigger><DialogContent className="max-w-2xl"><DialogHeader><DialogTitle>إضافة موظف جديد</DialogTitle></DialogHeader><div className="space-y-4"><div className="grid grid-cols-2 gap-4"><div><Label>الاسم الكامل (عربي)</Label><Input placeholder="الاسم بالعربية" /></div><div><Label>الرقم الوظيفي</Label><Input placeholder="EMP-XXX" /></div></div><div className="grid grid-cols-2 gap-4"><div><Label>القسم</Label><Select><SelectTrigger><SelectValue /></SelectTrigger><SelectContent><SelectItem value="accounts">المحاسبة</SelectItem><SelectItem value="sales">المبيعات</SelectItem><SelectItem value="inventory">المخزون</SelectItem><SelectItem value="it">تقنية المعلومات</SelectItem><SelectItem value="hr">الموارد البشرية</SelectItem></SelectContent></Select></div><div><Label>الراتب الأساسي</Label><Input type="number" placeholder="0" /></div></div><Button className="w-full bg-teal-600">إضافة الموظف</Button></div></DialogContent></Dialog>
+   699→      </div>
+   700→      <Tabs defaultValue="employees">
+   701→        <TabsList className="grid w-full grid-cols-4"><TabsTrigger value="employees">الموظفون</TabsTrigger><TabsTrigger value="salaries">الرواتب</TabsTrigger><TabsTrigger value="attendance">الحضور</TabsTrigger><TabsTrigger value="loans">السلف</TabsTrigger></TabsList>
+   702→        <TabsContent value="employees">
+   703→          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+   704→            {employees.map(emp => (
+   705→              <Card key={emp.id}>
+   706→                <CardContent className="pt-6">
+   707→                  <div className="flex items-center gap-4 mb-4">
+   708→                    <div className="w-12 h-12 bg-gradient-to-br from-teal-400 to-teal-600 rounded-full flex items-center justify-center text-white font-bold text-lg">{emp.fullNameAr[0]}</div>
+   709→                    <div><h3 className="font-bold">{emp.fullNameAr}</h3><p className="text-sm text-gray-500">{emp.employeeCode}</p></div>
+   710→                  </div>
+   711→                  <div className="space-y-2 text-sm"><div className="flex justify-between"><span className="text-gray-500">القسم</span><span>{emp.department}</span></div><div className="flex justify-between"><span className="text-gray-500">المنصب</span><span>{emp.position}</span></div><div className="flex justify-between"><span className="text-gray-500">الراتب الأساسي</span><span className="font-medium">{emp.baseSalary.toLocaleString()} ر.س</span></div></div>
+   712→                  <Separator className="my-3" />
+   713→                  <div className="flex justify-between items-center"><Badge variant={emp.status==='active'?'default':emp.status==='on_leave'?'secondary':'outline'}>{emp.status==='active'?'نشط':emp.status==='on_leave'?'في إجازة':'معطل'}</Badge><Phone className="w-4 h-4 text-gray-400" /></div>
+   714→                </CardContent>
+   715→              </Card>
+   716→            ))}
+   717→          </div>
+   718→        </TabsContent>
+   719→        <TabsContent value="salaries">
+   720→          <Card><CardContent className="pt-6"><Table><TableHeader><TableRow><TableHead>الموظف</TableHead><TableHead>الشهر</TableHead><TableHead>الأساسي</TableHead><TableHead>البدلات</TableHead><TableHead>الخصومات</TableHead><TableHead>الصافي</TableHead><TableHead>الحالة</TableHead></TableRow></TableHeader><TableBody>{salaries.map(sal => (<TableRow key={sal.id}><TableCell>{sal.employeeName}</TableCell><TableCell>{sal.month}/{sal.year}</TableCell><TableCell>{sal.baseSalary.toLocaleString()}</TableCell><TableCell className="text-green-600">+{sal.allowances.toLocaleString()}</TableCell><TableCell className="text-red-600">-{sal.deductions.toLocaleString()}</TableCell><TableCell className="font-bold">{sal.netSalary.toLocaleString()} ر.س</TableCell><TableCell><Badge variant={sal.status==='paid'?'default':sal.status==='approved'?'secondary':'outline'}>{sal.status==='paid'?'مدفوع':sal.status==='approved'?'موافق عليه':'مسودة'}</Badge></TableCell></TableRow>))}</TableBody></Table></CardContent></Card>
+   721→        </TabsContent>
+   722→        <TabsContent value="attendance">
+   723→          <Card><CardContent className="pt-6"><Table><TableHeader><TableRow><TableHead>الموظف</TableHead><TableHead>التاريخ</TableHead><TableHead>حضور</TableHead><TableHead>انصراف</TableHead><TableHead>ساعات العمل</TableHead><TableHead>الحالة</TableHead></TableRow></TableHeader><TableBody>{attendance.map(att => (<TableRow key={att.id}><TableCell>{att.employeeName}</TableCell><TableCell>{att.date}</TableCell><TableCell>{att.clockIn}</TableCell><TableCell>{att.clockOut}</TableCell><TableCell>{att.workingHours}</TableCell><TableCell><Badge variant={att.status==='present'?'default':att.status==='late'?'destructive':'outline'}>{att.status==='present'?'حاضر':att.status==='late'?'متأخر':att.status==='leave'?'إجازة':'غائب'}</Badge></TableCell></TableRow>))}</TableBody></Table></CardContent></Card>
+   724→        </TabsContent>
+   725→        <TabsContent value="loans">
+   726→          <Card><CardContent className="pt-6"><p className="text-gray-500 text-center py-8">لا توجد سلف حالياً</p></CardContent></Card>
+   727→        </TabsContent>
+   728→      </Tabs>
+   729→    </div>
+   730→  )
+   731→}
+   732→
+   733→// ==================== EXPENSES MODULE ====================
+   734→function ExpensesModule({ expenses }: any) {
+   735→  return (
+   736→    <div className="space-y-6 animate-fadeIn">
+   737→      <div className="flex justify-between items-center">
+   738→        <h1 className="text-2xl font-bold text-[#005f73]">المصروفات والإيرادات</h1>
+   739→        <Dialog><DialogTrigger asChild><Button className="bg-gradient-to-r from-orange-600 to-orange-700"><Plus className="ml-2 h-4 w-4" />مصروف جديد</Button></DialogTrigger><DialogContent><DialogHeader><DialogTitle>إضافة مصروف جديد</DialogTitle></DialogHeader><div className="space-y-4"><div className="grid grid-cols-2 gap-4"><div><Label>التصنيف</Label><Select><SelectTrigger><SelectValue /></SelectTrigger><SelectContent><SelectItem value="admin">مصروفات إدارية</SelectItem><SelectItem value="operating">مصروفات تشغيلية</SelectItem><SelectItem value="marketing">مصروفات تسويقية</SelectItem><SelectItem value="travel">مصروفات سفر</SelectItem><SelectItem value="maintenance">مصروفات صيانة</SelectItem></SelectContent></Select></div><div><Label>المبلغ</Label><Input type="number" placeholder="0.00" /></div></div><Button className="w-full bg-orange-600">حفظ المصروف</Button></div></DialogContent></Dialog>
+   740→      </div>
+   741→      <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
+   742→        <Card><CardContent className="pt-6 pb-6 text-center"><Receipt className="w-8 h-8 mx-auto mb-2 text-orange-500" /><p className="text-sm text-gray-500">إجمالي المصروفات</p><p className="text-2xl font-bold text-orange-600">{expenses.reduce((s,e)=>s+e.amount,0).toLocaleString()} ر.س</p></CardContent></Card>
+   743→        <Card><CardContent className="pt-6 pb-6 text-center"><RefreshCw className="w-8 h-8 mx-auto mb-2 text-blue-500" /><p className="text-sm text-gray-500">مصروفات دورية</p><p className="text-2xl font-bold text-blue-600">{expenses.filter(e=>e.isRecurring).length}</p></CardContent></Card>
+   744→        <Card><CardContent className="pt-6 pb-6 text-center"><Calendar className="w-8 h-8 mx-auto mb-2 text-green-500" /><p className="text-sm text-gray-500">هذا الشهر</p><p className="text-2xl font-bold text-green-600">{expenses.filter(e=>e.date.startsWith('2024-01')).reduce((s,e)=>s+e.amount,0).toLocaleString()} ر.س</p></CardContent></Card>
+   745→        <Card><CardContent className="pt-6 pb-6 text-center"><PieChart className="w-8 h-8 mx-auto mb-2 text-purple-500" /><p className="text-sm text-gray-500">تصنيفات</p><p className="text-2xl font-bold text-purple-600">{new Set(expenses.map(e=>e.category)).size}</p></CardContent></Card>
+   746→      </div>
+   747→      <Card><CardContent className="pt-6"><Table><TableHeader><TableRow><TableHead>التصنيف</TableHead><TableHead>الفرعي</TableHead><TableHead>الوصف</TableHead><TableHead>المبلغ</TableHead><TableHead>التاريخ</TableHead><TableHead>دوري</TableHead></TableRow></TableHeader><TableBody>{expenses.map(exp => (<TableRow key={exp.id}><TableCell><Badge variant="outline">{exp.category}</Badge></TableCell><TableCell>{exp.subcategory}</TableCell><TableCell>{exp.description}</TableCell><TableCell className="text-red-600 font-medium">{exp.amount.toLocaleString()} ر.س</TableCell><TableCell>{exp.date}</TableCell><TableCell>{exp.isRecurring ? <CheckCircle className="w-5 h-5 text-green-500" /> : <XCircle className="w-5 h-5 text-gray-300" />}</TableCell></TableRow>))}</TableBody></Table></CardContent></Card>
+   748→    </div>
+   749→  )
+   750→}
+   751→
+   752→// ==================== REPORTS MODULE ====================
+   753→function ReportsModule() {
+   754→  return (
+   755→    <div className="space-y-6 animate-fadeIn">
+   756→      <div className="flex justify-between items-center">
+   757→        <h1 className="text-2xl font-bold text-[#005f73]">التقارير المالية</h1>
+   758→        <div className="flex gap-2"><Input type="date" className="w-40" defaultValue="2024-01-01" /><Input type="date" className="w-40" defaultValue="2024-01-31" /><Button variant="outline"><Filter className="ml-2 h-4 w-4" />تطبيق</Button></div>
+   759→      </div>
+   760→      
+   761→      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+   762→        {[
+   763→          { title: 'قائمة الدخل', desc: 'الإيرادات والمصروفات وصافي الربح', icon: BarChart3 },
+   764→          { title: 'قائمة الميزانية', desc: 'الأصول والخصوم وحقوق الملكية', icon: PieChart },
+   765→          { title: 'التدفقات النقدية', desc: 'التدفقات من الأنشطة المختلفة', icon: Activity },
+   766→          { title: 'ميزان المراجعة', desc: 'أرصدة جميع الحسابات', icon: BookOpen },
+   767→          { title: 'الأستاذ العام', desc: 'تفاصيل حركات كل حساب', icon: FileBarChart },
+   768→          { title: 'تقرير المبيعات', desc: 'تحليل المبيعات حسب الفترة', icon: TrendingUp },
+   769→          { title: 'تقرير المشتريات', desc: 'تحليل المشتريات حسب المورد', icon: TrendingDown },
+   770→          { title: 'تقرير المخزون', desc: 'حركة وقيمة المخزون', icon: Package },
+   771→          { title: 'أعمار العملاء', desc: 'مستحقات العملاء حسب العمر', icon: Users },
+   772→        ].map((report, idx) => (
+   773→          <Card key={idx} className="hover:shadow-lg transition-all cursor-pointer group">
+   774→            <CardContent className="pt-6">
+   775→              <div className="flex items-start justify-between mb-3">
+   776→                <div className="w-12 h-12 bg-gray-100 rounded-xl flex items-center justify-center group-hover:scale-110 transition-transform"><report.icon className="w-6 h-6 text-gray-600" /></div>
+   777→                <div className="flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity"><Button size="sm" variant="ghost"><Eye className="h-4 w-4" /></Button><Button size="sm" variant="ghost"><Printer className="h-4 w-4" /></Button><Button size="sm" variant="ghost"><Download className="h-4 w-4" /></Button></div>
+   778→              </div>
+   779→              <h3 className="font-bold text-lg">{report.title}</h3>
+   780→              <p className="text-sm text-gray-500 mt-1">{report.desc}</p>
+   781→            </CardContent>
+   782→          </Card>
+   783→        ))}
+   784→      </div>
+   785→
+   786→      {/* Sample Income Statement Preview */}
+   787→      <Card>
+   788→        <CardHeader><CardTitle className="flex items-center gap-2"><BarChart3 className="w-5 h-5 text-green-600" />قائمة الدخل - يناير 2024</CardTitle></CardHeader>
+   789→        <CardContent>
+   790→          <div className="max-w-2xl mx-auto">
+   791→            <Table><TableHeader><TableRow><TableHead colSpan={2} className="text-center">الإيرادات</TableHead></TableRow></TableHeader><TableBody>
+   792→              <TableRow><TableCell>إيرادات المبيعات</TableCell><TableCell className="text-left font-medium">450,000 ر.س</TableCell></TableRow>
+   793→              <TableRow><TableCell>إيرادات أخرى</TableCell><TableCell className="text-left">15,000 ر.س</TableCell></TableRow>
+   794→              <TableRow className="bg-green-50 font-bold"><TableCell>إجمالي الإيرادات</TableCell><TableCell className="text-left text-green-600">465,000 ر.س</TableCell></TableRow>
+   795→              <TableRow><TableHead colSpan={2} className="text-center pt-4">المصروفات</TableHead></TableRow>
+   796→              <TableRow><TableCell>تكلفة المبيعات</TableCell><TableCell className="text-left">(280,000) ر.س</TableCell></TableRow>
+   797→              <TableRow><TableCell>مصروفات الرواتب</TableCell><TableCell className="text-left">(95,000) ر.س</TableCell></TableRow>
+   798→              <TableRow><TableCell>مصروفات إدارية</TableCell><TableCell className="text-left">(35,000) ر.س</TableCell></TableRow>
+   799→              <TableRow><TableCell>مصروفات تشغيلية</TableCell><TableCell className="text-left">(28,000) ر.س</TableCell></TableRow>
+   800→              <TableRow><TableCell>مصروفات تسويقية</TableCell><TableCell className="text-left">(18,000) ر.س</TableCell></TableRow>
+   801→              <TableRow className="bg-red-50 font-bold"><TableCell>إجمالي المصروفات</TableCell><TableCell className="text-left text-red-600">(456,000) ر.س</TableCell></TableRow>
+   802→              <TableRow className="bg-blue-50 text-lg"><TableCell className="font-bold">صافي الربح</TableCell><TableCell className="text-left font-bold text-blue-600">9,000 ر.س</TableCell></TableRow>
+   803→            </TableBody></Table>
+   804→          </div>
+   805→        </CardContent>
+   806→      </Card>
+   807→    </div>
+   808→  )
+   809→}
+   810→
+   811→// ==================== SETTINGS MODULE ====================
+   812→function SettingsModule({ users }: any) {
+   813→  return (
+   814→    <div className="space-y-6 animate-fadeIn">
+   815→      <h1 className="text-2xl font-bold text-[#005f73]">الإعدادات</h1>
+   816→      <Tabs defaultValue="general">
+   817→        <TabsList className="grid w-full grid-cols-5"><TabsTrigger value="general">عام</TabsTrigger><TabsTrigger value="company">الشركة</TabsTrigger><TabsTrigger value="invoice">الفواتير</TabsTrigger><TabsTrigger value="users">المستخدمين</TabsTrigger><TabsTrigger value="backup">النسخ الاحتياطي</TabsTrigger></TabsList>
+   818→        <TabsContent value="general">
+   819→          <Card><CardContent className="pt-6 space-y-4"><div className="grid grid-cols-2 gap-4"><div><Label>لغة النظام</Label><Select defaultValue="ar"><SelectTrigger><SelectValue /></SelectTrigger><SelectContent><SelectItem value="ar">العربية</SelectItem><SelectItem value="en">English</SelectItem></SelectContent></Select></div><div><Label>العملة</Label><Select defaultValue="sar"><SelectTrigger><SelectValue /></SelectTrigger><SelectContent><SelectItem value="sar">ريال سعودي (SAR)</SelectItem><SelectItem value="aed">درهم إماراتي (AED)</SelectItem><SelectItem value="egp">جنيه مصري (EGP)</SelectItem></SelectContent></Select></div></div><Button className="bg-[#005f73]">حفظ الإعدادات</Button></CardContent></Card>
+   820→        </TabsContent>
+   821→        <TabsContent value="company">
+   822→          <Card><CardContent className="pt-6 space-y-4"><div className="grid grid-cols-2 gap-4"><div><Label>اسم الشركة</Label><Input defaultValue="شركة إنجاز للمحاسبة" /></div><div><Label>الاسم بالإنجليزية</Label><Input defaultValue="Injaz Accounting Co." /></div></div><div className="grid grid-cols-2 gap-4"><div><Label>الرقم الضريبي</Label><Input placeholder="الرقم الضريبي" /></div><div><Label>السجل التجاري</Label><Input placeholder="السجل التجاري" /></div></div><Button className="bg-[#005f73]">حفظ بيانات الشركة</Button></CardContent></Card>
+   823→        </TabsContent>
+   824→        <TabsContent value="invoice">
+   825→          <Card><CardContent className="pt-6 space-y-4"><div className="grid grid-cols-2 gap-4"><div><Label>بادئة رقم فاتورة المبيعات</Label><Input defaultValue="INV-" /></div><div><Label>بادئة رقم فاتورة المشتريات</Label><Input defaultValue="PUR-" /></div></div><div className="grid grid-cols-2 gap-4"><div><Label>شروط الدفع (يوم)</Label><Input type="number" defaultValue="30" /></div><div><Label>ضريبة القيمة المضافة %</Label><Input type="number" defaultValue="15" /></div></div><Button className="bg-[#005f73]">حفظ إعدادات الفواتير</Button></CardContent></Card>
+   826→        </TabsContent>
+   827→        <TabsContent value="users">
+   828→          <Card><CardContent className="pt-6"><div className="flex justify-between items-center mb-4"><h3 className="font-semibold">إدارة المستخدمين</h3><Dialog><DialogTrigger asChild><Button variant="outline" size="sm"><Plus className="ml-2 h-4 w-4" />مستخدم جديد</Button></DialogTrigger><DialogContent><DialogHeader><DialogTitle>إضافة مستخدم جديد</DialogTitle></DialogHeader><div className="space-y-4"><div className="grid grid-cols-2 gap-4"><div><Label>الاسم</Label><Input placeholder="اسم المستخدم" /></div><div><Label>البريد الإلكتروني</Label><Input type="email" placeholder="email@example.com" /></div></div><div className="grid grid-cols-2 gap-4"><div><Label>كلمة المرور</Label><Input type="password" /></div><div><Label>الدور</Label><Select><SelectTrigger><SelectValue /></SelectTrigger><SelectContent><SelectItem value="admin">مدير</SelectItem><SelectItem value="accountant">محاسب</SelectItem><SelectItem value="cashier">أمين صندوق</SelectItem><SelectItem value="viewer">مشاهد</SelectItem></SelectContent></Select></div></div><Button className="w-full bg-[#005f73]">إضافة المستخدم</Button></div></DialogContent></Dialog></div><Table><TableHeader><TableRow><TableHead>الاسم</TableHead><TableHead>البريد</TableHead><TableHead>الدور</TableHead><TableHead>الحالة</TableHead><TableHead>إجراءات</TableHead></TableRow></TableHeader><TableBody>{users.map(user => (<TableRow key={user.id}><TableCell className="font-medium">{user.name}</TableCell><TableCell>{user.email}</TableCell><TableCell><Badge variant={user.role==='admin'?'default':user.role==='accountant'?'secondary':'outline'}>{user.role==='admin'?'مدير':user.role==='accountant'?'محاسب':user.role==='cashier'?'أمين صندوق':'مشاهد'}</Badge></TableCell><TableCell><Badge variant={user.isActive?'default':'destructive'}>{user.isActive?'نشط':'معطل'}</Badge></TableCell><TableCell><div className="flex gap-1"><Button size="sm" variant="ghost"><Edit2 className="h-4 w-4" /></Button><Button size="sm" variant="ghost" className="text-red-500"><Trash2 className="h-4 w-4" /></Button></div></TableCell></TableRow>))}</TableBody></Table></CardContent></Card>
+   829→        </TabsContent>
+   830→        <TabsContent value="backup">
+   831→          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+   832→            <Card><CardHeader><CardTitle className="flex items-center gap-2"><Database className="w-5 h-5" />نسخ احتياطي</CardTitle><CardDescription>قم بإنشاء نسخة احتياطية من جميع بيانات النظام</CardDescription></CardHeader><CardContent className="space-y-4"><Button className="w-full bg-green-600"><Download className="ml-2 h-4 w-4" />إنشاء نسخة احتياطية الآن</Button><p className="text-sm text-gray-500">آخر نسخة: 2024-01-20 14:30</p></CardContent></Card>
+   833→            <Card><CardHeader><CardTitle className="flex items-center gap-2"><Upload className="w-5 h-5" />استعادة</CardTitle><CardDescription>استعادة بيانات من نسخة احتياطية سابقة</CardDescription></CardHeader><CardContent className="space-y-4"><Button className="w-full bg-blue-600" variant="outline"><Upload className="ml-2 h-4 w-4" />اختيار ملف النسخة الاحتياطية</Button><p className="text-sm text-red-500">تحذير: سيتم استبدال جميع البيانات الحالية</p></CardContent></Card>
+   834→          </div>
+   835→        </TabsContent>
+   836→      </Tabs>
+   837→    </div>
+   838→  )
+   839→}
+   840→
