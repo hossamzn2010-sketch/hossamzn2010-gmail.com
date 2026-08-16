@@ -1,0 +1,203 @@
+// Accounting Pro - Arabic Accounting Application Schema
+// نظام المحاسبة الاحترافي
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+// ==================== Settings & Users ====================
+model Setting {
+  id        String   @id @default(cuid())
+  key       String   @unique
+  value     String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model User {
+  id            String   @id @default(cuid())
+  name          String
+  email         String   @unique
+  password      String
+  role          String   @default("user") // admin, user, viewer
+  isActive      Boolean  @default(true)
+  lastLoginAt   DateTime?
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+  
+  invoices      Invoice[]
+  transactions  TreasuryTransaction[]
+}
+
+// ==================== Inventory Management ====================
+model Warehouse {
+  id        String   @id @default(cuid())
+  name      String
+  nameAr    String   // Arabic name
+  address   String?
+  phone     String?
+  isActive  Boolean  @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  
+  items     Item[]
+}
+
+model Category {
+  id        String   @id @default(cuid())
+  name      String
+  nameAr    String   // Arabic name
+  parentId  String?
+  isActive  Boolean  @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  
+  parent    Category? @relation("CategoryHierarchy", fields: [parentId], references: [id])
+  children  Category[] @relation("CategoryHierarchy")
+  items     Item[]
+}
+
+model Unit {
+  id          String   @id @default(cuid())
+  name        String
+  nameAr      String   // Arabic name
+  abbreviation String  // e.g., kg, pc, box
+  isActive    Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  
+  items       Item[]
+}
+
+model Item {
+  id              String   @id @default(cuid())
+  code            String   @unique
+  name            String
+  nameAr          String   // Arabic name
+  description     String?
+  barcode         String?
+  categoryId      String
+  unitId          String
+  warehouseId     String
+  costPrice       Float    @default(0)
+  salePrice       Float    @default(0)
+  minStock        Int      @default(0)
+  maxStock        Int      @default(0)
+  currentQuantity Float    @default(0)
+  hasExpiry       Boolean  @default(false)
+  expiryDate      DateTime?
+  image           String?
+  isActive        Boolean  @default(true)
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+  
+  category        Category  @relation(fields: [categoryId], references: [id])
+  unit            Unit      @relation(fields: [unitId], references: [id])
+  warehouse       Warehouse @relation(fields: [warehouseId], references: [id])
+  
+  invoiceItems    InvoiceItem[]
+}
+
+// ==================== Parties (Customers/Suppliers) ====================
+model Party {
+  id            String   @id @default(cuid())
+  type          String   // customer, supplier, both
+  name          String
+  nameAr        String   // Arabic name
+  phone         String?
+  email         String?
+  address       String?
+  taxNumber     String?
+  creditLimit   Float    @default(0)
+  currentBalance Float   @default(0) // Positive = owes us, Negative = we owe them
+  isActive      Boolean  @default(true)
+  notes         String?
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+  
+  invoices      Invoice[]
+  transactions  TreasuryTransaction[]
+}
+
+// ==================== Invoices (Sales/Purchases) ====================
+model Invoice {
+  id                String   @id @default(cuid())
+  invoiceNumber     String   @unique
+  type              String   // sale, purchase, sale_return, purchase_return
+  partyId           String
+  userId            String
+  date              DateTime
+  dueDate           DateTime?
+  subtotal          Float    @default(0)
+  discountValue     Float    @default(0)
+  discountPercent   Float    @default(0)
+  taxValue          Float    @default(0)
+  taxPercent        Float    @default(0)
+  total             Float    @default(0)
+  paidAmount        Float    @default(0)
+  remainingAmount   Float    @default(0)
+  paymentStatus     String   @default("unpaid") // unpaid, partial, paid
+  paymentMethod     String   @default("cash") // cash, credit, bank_transfer
+  status            String   @default("draft") // draft, confirmed, cancelled
+  notes             String?
+  referenceNumber   String?
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+  
+  party             Party              @relation(fields: [partyId], references: [id])
+  user              User               @relation(fields: [userId], references: [id])
+  items             InvoiceItem[]
+  transactions      TreasuryTransaction[]
+  
+  @@index([partyId])
+  @@index([date])
+  @@index([type])
+  @@index([status])
+}
+
+model InvoiceItem {
+  id          String   @id @default(cuid())
+  invoiceId   String
+  itemId      String
+  quantity    Float
+  unitPrice   Float
+  total       Float
+  discount    Float    @default(0)
+  createdAt   DateTime @default(now())
+  
+  invoice     Invoice @relation(fields: [invoiceId], references: [id], onDelete: Cascade)
+  item        Item    @relation(fields: [itemId], references: [id])
+  
+  @@index([invoiceId])
+  @@index([itemId])
+}
+
+// ==================== Treasury / Financial Transactions ====================
+model TreasuryTransaction {
+  id              String   @id @default(cuid())
+  type            String   // income, expense, payment_received, payment_sent
+  category        String   // e.g., sales, purchases, salary, rent, utilities
+  amount          Float
+  paymentMethod   String   // cash, bank_transfer, check
+  referenceType   String?  // invoice, manual
+  referenceId     String?
+  description     String?
+  date            DateTime
+  userId          String
+  partyId         String?
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+  
+  user            User   @relation(fields: [userId], references: [id])
+  party           Party? @relation(fields: [partyId], references: [id])
+  invoice         Invoice? @relation(fields: [referenceId], references: [id])
+  
+  @@index([date])
+  @@index([type])
+  @@index([userId])
+}
