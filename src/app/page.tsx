@@ -173,10 +173,80 @@ export default function AccountingApp() {
     setShowAddCustomerDialog(false)
   }
 
-  // Add new item on the fly
+  // Add new item on the fly (from invoice form)
   const [showAddItemDialog, setShowAddItemDialog] = useState(false)
   const [newItem, setNewItem] = useState({ nameAr: '', code: '', category: '', stock: 0, price: 0 })
   const [itemEditIndex, setItemEditIndex] = useState<number | null>(null)
+
+  // Inventory Item Dialog State (for inventory tab)
+  const [showInventoryItemDialog, setShowInventoryItemDialog] = useState(false)
+  const [editingInventoryItem, setEditingInventoryItem] = useState<Item | null>(null)
+  const [inventoryItemForm, setInventoryItemForm] = useState({ nameAr: '', code: '', category: '', stock: 0, price: 0 })
+
+  const openNewInventoryItem = () => {
+    setEditingInventoryItem(null)
+    setInventoryItemForm({ nameAr: '', code: '', category: '', stock: 0, price: 0 })
+    setShowInventoryItemDialog(true)
+  }
+
+  const openEditInventoryItem = (item: Item) => {
+    setEditingInventoryItem(item)
+    setInventoryItemForm({
+      nameAr: item.nameAr,
+      code: item.code,
+      category: item.category,
+      stock: item.stock,
+      price: item.price
+    })
+    setShowInventoryItemDialog(true)
+  }
+
+  const saveInventoryItem = () => {
+    if (!inventoryItemForm.nameAr) {
+      alert('يرجى إدخال اسم الصنف')
+      return
+    }
+
+    if (editingInventoryItem) {
+      // Edit existing item
+      setItems(prev => prev.map(item => 
+        item.id === editingInventoryItem.id 
+          ? { ...item, ...inventoryItemForm }
+          : item
+      ))
+    } else {
+      // Add new item
+      const item: Item = {
+        id: Date.now().toString(),
+        nameAr: inventoryItemForm.nameAr,
+        code: inventoryItemForm.code || `P${items.length + 1}`,
+        category: inventoryItemForm.category || 'عام',
+        stock: inventoryItemForm.stock,
+        price: inventoryItemForm.price
+      }
+      setItems(prev => [...prev, item])
+    }
+    
+    setShowInventoryItemDialog(false)
+    setEditingInventoryItem(null)
+    setInventoryItemForm({ nameAr: '', code: '', category: '', stock: 0, price: 0 })
+  }
+
+  const deleteInventoryItem = (itemId: string, itemName: string) => {
+    setDeleteConfirm({
+      show: true,
+      type: 'item',
+      id: itemId,
+      name: itemName
+    })
+  }
+
+  const confirmDeleteItem = () => {
+    if (deleteConfirm.type === 'item') {
+      setItems(prev => prev.filter(item => item.id !== deleteConfirm.id))
+    }
+    setDeleteConfirm({ show: false, type: '', id: '', name: '' })
+  }
 
   const addNewItem = () => {
     if (!newItem.nameAr) {
@@ -295,6 +365,15 @@ export default function AccountingApp() {
     if (deleteConfirm.type === 'invoice') {
       setInvoices(prev => prev.filter(inv => inv.id !== deleteConfirm.id))
       alert('تم حذف الفاتورة بنجاح')
+    } else if (deleteConfirm.type === 'item') {
+      setItems(prev => prev.filter(item => item.id !== deleteConfirm.id))
+      alert('تم حذف الصنف بنجاح')
+    } else if (deleteConfirm.type === 'party') {
+      setParties(prev => prev.filter(party => party.id !== deleteConfirm.id))
+      alert('تم حذف الطرف بنجاح')
+    } else if (deleteConfirm.type === 'transaction') {
+      setTransactions(prev => prev.filter(t => t.id !== deleteConfirm.id))
+      alert('تم حذف العملية بنجاح')
     }
     setDeleteConfirm({ show: false, type: '', id: '', name: '' })
   }
@@ -1106,7 +1185,7 @@ export default function AccountingApp() {
                 <CardContent className="pt-6">
                   <div className="flex flex-wrap items-center justify-between gap-4 mb-4">
                     <div className="flex items-center gap-2">
-                      <Button className="bg-gradient-to-r from-[#005f73] to-[#0a9396]"><Plus className="ml-2 h-4 w-4" />صنف جديد</Button>
+                      <Button onClick={openNewInventoryItem} className="bg-gradient-to-r from-[#005f73] to-[#0a9396]"><Plus className="ml-2 h-4 w-4" />صنف جديد</Button>
                       <Button variant="outline"><Truck className="ml-2 h-4 w-4" />نقل مخزني</Button>
                       <Button variant="outline"><QrCode className="ml-2 h-4 w-4" />طباعة باركود</Button>
                       <Button variant="outline"><Upload className="ml-2 h-4 w-4" />استيراد</Button>
@@ -1154,10 +1233,10 @@ export default function AccountingApp() {
                             <td className="p-3">
                               <div className="flex items-center gap-1">
                                 <Button variant="ghost" size="icon" title="عرض"><Eye className="w-4 h-4 text-blue-600" /></Button>
-                                <Button variant="ghost" size="icon" title="تعديل"><Edit2 className="w-4 h-4 text-purple-600" /></Button>
+                                <Button variant="ghost" size="icon" onClick={() => openEditInventoryItem(item)} title="تعديل"><Edit2 className="w-4 h-4 text-purple-600" /></Button>
                                 <Button variant="ghost" size="icon" title="طباعة باركود"><QrCode className="w-4 h-4 text-gray-600" /></Button>
                                 <Button variant="ghost" size="icon" title="حركة مخزون"><Activity className="w-4 h-4 text-green-600" /></Button>
-                                <Button variant="ghost" size="icon" title="حذف"><Trash2 className="w-4 h-4 text-red-600" /></Button>
+                                <Button variant="ghost" size="icon" onClick={() => deleteInventoryItem(item.id, item.nameAr)} title="حذف"><Trash2 className="w-4 h-4 text-red-600" /></Button>
                               </div>
                             </td>
                           </tr>
@@ -2352,6 +2431,103 @@ export default function AccountingApp() {
               >
                 <Plus className="ml-2 h-4 w-4" />
                 إضافة الصنف
+              </Button>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* ============ INVENTORY ITEM DIALOG (Add/Edit) ============ */}
+      <Dialog open={showInventoryItemDialog} onOpenChange={setShowInventoryItemDialog}>
+        <DialogContent className="max-w-md" dir="rtl">
+          <DialogHeader>
+            <DialogTitle className="text-[#005f73]">
+              {editingInventoryItem ? 'تعديل الصنف' : 'إضافة صنف جديد'}
+            </DialogTitle>
+            <DialogDescription>
+              {editingInventoryItem ? 'قم بتعديل بيانات الصنف' : 'أدخل بيانات الصنف الجديد'}
+            </DialogDescription>
+          </DialogHeader>
+          
+          <div className="space-y-4 mt-4">
+            <div>
+              <Label>اسم الصنف <span className="text-red-500">*</span></Label>
+              <Input 
+                className="mt-1"
+                placeholder="مثال: مطبخ مودرن"
+                value={inventoryItemForm.nameAr}
+                onChange={(e) => setInventoryItemForm(prev => ({ ...prev, nameAr: e.target.value }))}
+              />
+            </div>
+            
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <Label>الكود</Label>
+                <Input 
+                  className="mt-1"
+                  placeholder="MK-001"
+                  value={inventoryItemForm.code}
+                  onChange={(e) => setInventoryItemForm(prev => ({ ...prev, code: e.target.value }))}
+                />
+              </div>
+              
+              <div>
+                <Label>الفئة</Label>
+                <Input 
+                  className="mt-1"
+                  placeholder="أثاث مطابخ"
+                  value={inventoryItemForm.category}
+                  onChange={(e) => setInventoryItemForm(prev => ({ ...prev, category: e.target.value }))}
+                />
+              </div>
+            </div>
+            
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <Label>السعر (ر.س)</Label>
+                <Input 
+                  type="number"
+                  min="0"
+                  step="0.01"
+                  className="mt-1"
+                  placeholder="0.00"
+                  value={inventoryItemForm.price || ''}
+                  onChange={(e) => setInventoryItemForm(prev => ({ ...prev, price: parseFloat(e.target.value) || 0 }))}
+                />
+              </div>
+              
+              <div>
+                <Label>الكمية في المخزون</Label>
+                <Input 
+                  type="number"
+                  min="0"
+                  className="mt-1"
+                  placeholder="0"
+                  value={inventoryItemForm.stock || ''}
+                  onChange={(e) => setInventoryItemForm(prev => ({ ...prev, stock: parseInt(e.target.value) || 0 }))}
+                />
+              </div>
+            </div>
+
+            <div className="flex items-center justify-end gap-2 pt-4">
+              <Button variant="outline" onClick={() => setShowInventoryItemDialog(false)}>
+                إلغاء
+              </Button>
+              <Button 
+                className="bg-gradient-to-r from-[#005f73] to-[#0a9396] text-white"
+                onClick={saveInventoryItem}
+              >
+                {editingInventoryItem ? (
+                  <>
+                    <Save className="ml-2 h-4 w-4" />
+                    حفظ التعديلات
+                  </>
+                ) : (
+                  <>
+                    <Plus className="ml-2 h-4 w-4" />
+                    إضافة الصنف
+                  </>
+                )}
               </Button>
             </div>
           </div>
