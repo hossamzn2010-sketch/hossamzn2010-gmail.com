@@ -173,6 +173,226 @@ export default function AccountingApp() {
     setShowAddCustomerDialog(false)
   }
 
+  // ============ PARTIES CRUD ============
+  const [showPartyDialog, setShowPartyDialog] = useState(false)
+  const [editingParty, setEditingParty] = useState<Party | null>(null)
+  const [partyForm, setPartyForm] = useState({ nameAr: '', type: 'customer' as 'customer' | 'supplier' | 'both', phone: '', balance: 0 })
+
+  const openNewParty = () => {
+    setEditingParty(null)
+    setPartyForm({ nameAr: '', type: 'customer', phone: '', balance: 0 })
+    setShowPartyDialog(true)
+  }
+
+  const openEditParty = (party: Party) => {
+    setEditingParty(party)
+    setPartyForm({
+      nameAr: party.nameAr,
+      type: party.type,
+      phone: party.phone,
+      balance: party.balance
+    })
+    setShowPartyDialog(true)
+  }
+
+  const saveParty = () => {
+    if (!partyForm.nameAr) {
+      alert('يرجى إدخال اسم الطرف')
+      return
+    }
+
+    if (editingParty) {
+      setParties(prev => prev.map(p => 
+        p.id === editingParty.id 
+          ? { ...p, ...partyForm }
+          : p
+      ))
+      alert('تم تحديث بيانات الطرف بنجاح')
+    } else {
+      const party: Party = {
+        id: Date.now().toString(),
+        nameAr: partyForm.nameAr,
+        type: partyForm.type,
+        phone: partyForm.phone,
+        balance: partyForm.balance
+      }
+      setParties(prev => [...prev, party])
+      alert('تم إضافة الطرف بنجاح')
+    }
+    
+    setShowPartyDialog(false)
+    setEditingParty(null)
+    setPartyForm({ nameAr: '', type: 'customer', phone: '', balance: 0 })
+  }
+
+  const deleteParty = (partyId: string, partyName: string) => {
+    setDeleteConfirm({
+      show: true,
+      type: 'party',
+      id: partyId,
+      name: partyName
+    })
+  }
+
+  const viewPartyDetails = (party: Party) => {
+    alert(`تفاصيل الطرف:\n\nالاسم: ${party.nameAr}\nالنوع: ${party.type === 'customer' ? 'عميل' : party.type === 'supplier' ? 'مورد' : 'كلاهما'}\nالهاتف: ${party.phone || 'غير محدد'}\nالرصيد: ${party.balance >= 0 ? '' : '-'}${Math.abs(party.balance).toLocaleString()} ر.س`)
+  }
+
+  const printPartyStatement = (party: Party) => {
+    const printWindow = window.open('', '_blank')
+    if (printWindow) {
+      printWindow.document.write(`
+        <html dir="rtl">
+        <head><title>كشف حساب - ${party.nameAr}</title>
+        <style>
+          body { font-family: Arial; padding: 20px; direction: rtl; }
+          h1 { color: #005f73; text-align: center; }
+          .info { margin: 10px 0; padding: 10px; background: #f5f5f5; border-radius: 8px; }
+          table { width: 100%; border-collapse: collapse; margin-top: 20px; }
+          th, td { border: 1px solid #ddd; padding: 8px; text-align: right; }
+          th { background: #005f73; color: white; }
+        </style>
+        </head>
+        <body>
+          <h1>📋 كشف حساب</h1>
+          <div class="info">
+            <p><strong>الاسم:</strong> ${party.nameAr}</p>
+            <p><strong>الهاتف:</strong> ${party.phone || '-'}</p>
+            <p><strong>الرصيد الحالي:</strong> ${party.balance >= 0 ? '' : '-'}${Math.abs(party.balance).toLocaleString()} ر.س</p>
+          </div>
+          <table>
+            <thead>
+              <tr><th>التاريخ</th><th>البيان</th><th>مدين</th><th>دائن</th><th>الرصيد</th></tr>
+            </thead>
+            <tbody>
+              <tr><td colspan="5" style="text-align:center;">لا توجد حركات</td></tr>
+            </tbody>
+          </table>
+        </body>
+        </html>
+      `)
+      printWindow.document.close()
+      printWindow.print()
+    }
+  }
+
+  // ============ TRANSACTIONS CRUD ============
+  const [showTransactionDialog, setShowTransactionDialog] = useState(false)
+  const [editingTransaction, setEditingTransaction] = useState<Transaction | null>(null)
+  const [transactionForm, setTransactionForm] = useState({ 
+    date: new Date().toISOString().split('T')[0], 
+    description: '', 
+    amount: 0, 
+    type: 'income' as 'income' | 'expense',
+    category: ''
+  })
+  const [viewingTransaction, setViewingTransaction] = useState<Transaction | null>(null)
+
+  const openNewTransaction = (type: 'income' | 'expense') => {
+    setEditingTransaction(null)
+    setTransactionForm({ 
+      date: new Date().toISOString().split('T')[0], 
+      description: '', 
+      amount: 0, 
+      type,
+      category: type === 'income' ? 'إيرادات أخرى' : 'مصروفات أخرى'
+    })
+    setShowTransactionDialog(true)
+  }
+
+  const openEditTransaction = (transaction: Transaction) => {
+    setEditingTransaction(transaction)
+    setTransactionForm({
+      date: transaction.date,
+      description: transaction.description,
+      amount: transaction.amount,
+      type: transaction.type,
+      category: transaction.category
+    })
+    setShowTransactionDialog(true)
+  }
+
+  const saveTransaction = () => {
+    if (!transactionForm.description) {
+      alert('يرجى إدخال الوصف')
+      return
+    }
+    if (!transactionForm.amount || transactionForm.amount <= 0) {
+      alert('يرجى إدخال مبلغ صحيح')
+      return
+    }
+
+    if (editingTransaction) {
+      setTransactions(prev => prev.map(t => 
+        t.id === editingTransaction.id 
+          ? { ...t, ...transactionForm }
+          : t
+      ))
+      alert('تم تحديث العملية بنجاح')
+    } else {
+      const transaction: Transaction = {
+        id: Date.now().toString(),
+        date: transactionForm.date,
+        description: transactionForm.description,
+        amount: transactionForm.amount,
+        type: transactionForm.type,
+        category: transactionForm.category
+      }
+      setTransactions(prev => [...prev, transaction])
+      alert('تمت إضافة العملية بنجاح')
+    }
+    
+    setShowTransactionDialog(false)
+    setEditingTransaction(null)
+    setTransactionForm({ date: new Date().toISOString().split('T')[0], description: '', amount: 0, type: 'income', category: '' })
+  }
+
+  const deleteTransaction = (transactionId: string, description: string) => {
+    setDeleteConfirm({
+      show: true,
+      type: 'transaction',
+      id: transactionId,
+      name: description
+    })
+  }
+
+  const viewTransactionDetails = (transaction: Transaction) => {
+    setViewingTransaction(transaction)
+  }
+
+  const printTransaction = (transaction: Transaction) => {
+    const printWindow = window.open('', '_blank')
+    if (printWindow) {
+      printWindow.document.write(`
+        <html dir="rtl">
+        <head><title>${transaction.type === 'income' ? 'إيصال إيراد' : 'إيصال مصروف'}</title>
+        <style>
+          body { font-family: Arial; padding: 40px; direction: rtl; max-width: 400px; margin: 0 auto; }
+          h1 { color: #005f73; text-align: center; border-bottom: 2px solid #005f73; padding-bottom: 10px; }
+          .details { margin: 20px 0; }
+          .row { display: flex; justify-content: space-between; padding: 8px 0; border-bottom: 1px dashed #ddd; }
+          .total { font-size: 24px; font-weight: bold; color: ${transaction.type === 'income' ? 'green' : 'red'}; text-align: center; margin-top: 20px; }
+          .date { text-align: center; color: #666; font-size: 12px; margin-top: 30px; }
+        </style>
+        </head>
+        <body>
+          <h1>${transaction.type === 'income' ? '💰 إيصال إيراد' : '💸 إيصال مصروف'}</h1>
+          <div class="details">
+            <div class="row"><span>رقم العملية:</span><span>#${transaction.id.slice(-6)}</span></div>
+            <div class="row"><span>التاريخ:</span><span>${transaction.date}</span></div>
+            <div class="row"><span>الوصف:</span><span>${transaction.description}</span></div>
+            <div class="row"><span>الفئة:</span><span>${transaction.category}</span></div>
+          </div>
+          <div class="total">${transaction.type === 'income' ? '+' : '-'}${transaction.amount.toLocaleString()} ر.س</div>
+          <div class="date">تاريخ الطباعة: ${new Date().toLocaleDateString('ar-SA')}</div>
+        </body>
+        </html>
+      `)
+      printWindow.document.close()
+      printWindow.print()
+    }
+  }
+
   // Add new item on the fly (from invoice form)
   const [showAddItemDialog, setShowAddItemDialog] = useState(false)
   const [newItem, setNewItem] = useState({ nameAr: '', code: '', category: '', stock: 0, price: 0 })
@@ -1232,10 +1452,34 @@ export default function AccountingApp() {
                             </td>
                             <td className="p-3">
                               <div className="flex items-center gap-1">
-                                <Button variant="ghost" size="icon" title="عرض"><Eye className="w-4 h-4 text-blue-600" /></Button>
+                                <Button variant="ghost" size="icon" onClick={() => alert(`تفاصيل الصنف:\n\nالاسم: ${item.nameAr}\nالكود: ${item.code}\nالفئة: ${item.category}\nالسعر: ${item.price.toLocaleString()} ر.س\nالكمية: ${item.stock}`)} title="عرض"><Eye className="w-4 h-4 text-blue-600" /></Button>
                                 <Button variant="ghost" size="icon" onClick={() => openEditInventoryItem(item)} title="تعديل"><Edit2 className="w-4 h-4 text-purple-600" /></Button>
-                                <Button variant="ghost" size="icon" title="طباعة باركود"><QrCode className="w-4 h-4 text-gray-600" /></Button>
-                                <Button variant="ghost" size="icon" title="حركة مخزون"><Activity className="w-4 h-4 text-green-600" /></Button>
+                                <Button variant="ghost" size="icon" onClick={() => {
+                                  const printWindow = window.open('', '_blank')
+                                  if (printWindow) {
+                                    printWindow.document.write(`
+                                      <html dir="rtl">
+                                      <head><title>باركود - ${item.nameAr}</title>
+                                      <style>
+                                        body { font-family: Arial; padding: 40px; direction: rtl; text-align: center; }
+                                        .barcode { font-size: 48px; font-family: monospace; margin: 20px 0; }
+                                        .name { font-size: 24px; font-weight: bold; }
+                                        .price { font-size: 32px; color: #005f73; margin-top: 10px; }
+                                      </style>
+                                      </head>
+                                      <body>
+                                        <div class="name">${item.nameAr}</div>
+                                        <div class="barcode">|||${item.code}|||</div>
+                                        <div class="code">${item.code}</div>
+                                        <div class="price">${item.price.toLocaleString()} ر.س</div>
+                                      </body>
+                                      </html>
+                                    `)
+                                    printWindow.document.close()
+                                    printWindow.print()
+                                  }
+                                }} title="طباعة باركود"><QrCode className="w-4 h-4 text-gray-600" /></Button>
+                                <Button variant="ghost" size="icon" onClick={() => alert(`حركة مخزون - ${item.nameAr}:\n\nالكمية الحالية: ${item.stock}\n\n(سيتم تطوير هذه الميزة لاحقاً)`)} title="حركة مخزون"><Activity className="w-4 h-4 text-green-600" /></Button>
                                 <Button variant="ghost" size="icon" onClick={() => deleteInventoryItem(item.id, item.nameAr)} title="حذف"><Trash2 className="w-4 h-4 text-red-600" /></Button>
                               </div>
                             </td>
@@ -1259,7 +1503,7 @@ export default function AccountingApp() {
                   <Card>
                     <CardContent className="pt-6">
                       <div className="flex items-center justify-between mb-4">
-                        <Button className="bg-gradient-to-r from-[#005f73] to-[#0a9396]"><Plus className="ml-2 h-4 w-4" />طرف جديد</Button>
+                        <Button onClick={openNewParty} className="bg-gradient-to-r from-[#005f73] to-[#0a9396]"><Plus className="ml-2 h-4 w-4" />طرف جديد</Button>
                         <div className="flex items-center gap-2">
                           <div className="flex items-center bg-gray-100 rounded-lg px-3 py-2">
                             <Search className="w-4 h-4 text-gray-400 ml-2" />
@@ -1293,10 +1537,10 @@ export default function AccountingApp() {
                                 </span>
                               </div>
                               <div className="flex items-center gap-1 mt-3">
-                                <Button variant="ghost" size="sm" title="عرض"><Eye className="w-4 h-4" /></Button>
-                                <Button variant="ghost" size="sm" title="تعديل"><Edit2 className="w-4 h-4" /></Button>
-                                <Button variant="ghost" size="sm" title="كشف حساب"><Receipt className="w-4 h-4" /></Button>
-                                <Button variant="ghost" size="sm" title="حذف"><Trash2 className="w-4 h-4 text-red-600" /></Button>
+                                <Button variant="ghost" size="sm" onClick={() => viewPartyDetails(party)} title="عرض"><Eye className="w-4 h-4" /></Button>
+                                <Button variant="ghost" size="sm" onClick={() => openEditParty(party)} title="تعديل"><Edit2 className="w-4 h-4" /></Button>
+                                <Button variant="ghost" size="sm" onClick={() => printPartyStatement(party)} title="كشف حساب"><Receipt className="w-4 h-4" /></Button>
+                                <Button variant="ghost" size="sm" onClick={() => deleteParty(party.id, party.nameAr)} title="حذف"><Trash2 className="w-4 h-4 text-red-600" /></Button>
                               </div>
                             </CardContent>
                           </Card>
@@ -1313,17 +1557,17 @@ export default function AccountingApp() {
           {activeModule === 'treasury' && (
             <div className="space-y-6">
               <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                <Card className="border-r-4 border-r-green-500"><CardContent className="pt-6"><div className="flex items-center gap-3"><div className="w-12 h-12 bg-green-100 rounded-full flex items-center justify-center"><TrendingUp className="w-6 h-6 text-green-600" /></div><div><p className="text-sm text-gray-500">الإيرادات</p><p className="text-xl font-bold text-green-600">21,500 ر.س</p></div></div></CardContent></Card>
-                <Card className="border-r-4 border-r-red-500"><CardContent className="pt-6"><div className="flex items-center gap-3"><div className="w-12 h-12 bg-red-100 rounded-full flex items-center justify-center"><TrendingDown className="w-6 h-6 text-red-600" /></div><div><p className="text-sm text-gray-500">المصروفات</p><p className="text-xl font-bold text-red-600">7,000 ر.س</p></div></div></CardContent></Card>
-                <Card className="border-r-4 border-r-blue-500"><CardContent className="pt-6"><div className="flex items-center gap-3"><div className="w-12 h-12 bg-blue-100 rounded-full flex items-center justify-center"><Wallet className="w-6 h-6 text-blue-600" /></div><div><p className="text-sm text-gray-500">الرصيد</p><p className="text-xl font-bold text-blue-600">14,500 ر.س</p></div></div></CardContent></Card>
+                <Card className="border-r-4 border-r-green-500"><CardContent className="pt-6"><div className="flex items-center gap-3"><div className="w-12 h-12 bg-green-100 rounded-full flex items-center justify-center"><TrendingUp className="w-6 h-6 text-green-600" /></div><div><p className="text-sm text-gray-500">الإيرادات</p><p className="text-xl font-bold text-green-600">{transactions.filter(t => t.type === 'income').reduce((sum, t) => sum + t.amount, 0).toLocaleString()} ر.س</p></div></div></CardContent></Card>
+                <Card className="border-r-4 border-r-red-500"><CardContent className="pt-6"><div className="flex items-center gap-3"><div className="w-12 h-12 bg-red-100 rounded-full flex items-center justify-center"><TrendingDown className="w-6 h-6 text-red-600" /></div><div><p className="text-sm text-gray-500">المصروفات</p><p className="text-xl font-bold text-red-600">{transactions.filter(t => t.type === 'expense').reduce((sum, t) => sum + t.amount, 0).toLocaleString()} ر.س</p></div></div></CardContent></Card>
+                <Card className="border-r-4 border-r-blue-500"><CardContent className="pt-6"><div className="flex items-center gap-3"><div className="w-12 h-12 bg-blue-100 rounded-full flex items-center justify-center"><Wallet className="w-6 h-6 text-blue-600" /></div><div><p className="text-sm text-gray-500">الرصيد</p><p className="text-xl font-bold text-blue-600">{(transactions.filter(t => t.type === 'income').reduce((sum, t) => sum + t.amount, 0) - transactions.filter(t => t.type === 'expense').reduce((sum, t) => sum + t.amount, 0)).toLocaleString()} ر.س</p></div></div></CardContent></Card>
               </div>
 
               <Card>
                 <CardContent className="pt-6">
                   <div className="flex items-center justify-between mb-4">
                     <div className="flex items-center gap-2">
-                      <Button className="bg-green-500 hover:bg-green-600"><Plus className="ml-2 h-4 w-4" />إيراد جديد</Button>
-                      <Button className="bg-red-500 hover:bg-red-600"><Plus className="ml-2 h-4 w-4" />مصروف جديد</Button>
+                      <Button onClick={() => openNewTransaction('income')} className="bg-green-500 hover:bg-green-600"><Plus className="ml-2 h-4 w-4" />إيراد جديد</Button>
+                      <Button onClick={() => openNewTransaction('expense')} className="bg-red-500 hover:bg-red-600"><Plus className="ml-2 h-4 w-4" />مصروف جديد</Button>
                       <Button variant="outline"><Send className="ml-2 h-4 w-4" />تحويل</Button>
                     </div>
                     <div className="flex items-center gap-2">
@@ -1362,10 +1606,10 @@ export default function AccountingApp() {
                             </td>
                             <td className="p-3">
                               <div className="flex items-center gap-1">
-                                <Button variant="ghost" size="icon" title="عرض"><Eye className="w-4 h-4 text-blue-600" /></Button>
-                                <Button variant="ghost" size="icon" title="تعديل"><Edit2 className="w-4 h-4 text-purple-600" /></Button>
-                                <Button variant="ghost" size="icon" title="طباعة"><Printer className="w-4 h-4 text-gray-600" /></Button>
-                                <Button variant="ghost" size="icon" title="حذف"><Trash2 className="w-4 h-4 text-red-600" /></Button>
+                                <Button variant="ghost" size="icon" onClick={() => viewTransactionDetails(trans)} title="عرض"><Eye className="w-4 h-4 text-blue-600" /></Button>
+                                <Button variant="ghost" size="icon" onClick={() => openEditTransaction(trans)} title="تعديل"><Edit2 className="w-4 h-4 text-purple-600" /></Button>
+                                <Button variant="ghost" size="icon" onClick={() => printTransaction(trans)} title="طباعة"><Printer className="w-4 h-4 text-gray-600" /></Button>
+                                <Button variant="ghost" size="icon" onClick={() => deleteTransaction(trans.id, trans.description)} title="حذف"><Trash2 className="w-4 h-4 text-red-600" /></Button>
                               </div>
                             </td>
                           </tr>
@@ -2434,6 +2678,248 @@ export default function AccountingApp() {
               </Button>
             </div>
           </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* ============ PARTY DIALOG (Add/Edit) ============ */}
+      <Dialog open={showPartyDialog} onOpenChange={setShowPartyDialog}>
+        <DialogContent className="max-w-md" dir="rtl">
+          <DialogHeader>
+            <DialogTitle className="text-[#005f73]">
+              {editingParty ? 'تعديل بيانات الطرف' : 'إضافة طرف جديد'}
+            </DialogTitle>
+            <DialogDescription>
+              {editingParty ? 'قم بتعديل بيانات الطرف' : 'أدخل بيانات الطرف الجديد'}
+            </DialogDescription>
+          </DialogHeader>
+          
+          <div className="space-y-4 mt-4">
+            <div>
+              <Label>الاسم <span className="text-red-500">*</span></Label>
+              <Input 
+                className="mt-1"
+                placeholder="مثال: شركة الأمل للتجارة"
+                value={partyForm.nameAr}
+                onChange={(e) => setPartyForm(prev => ({ ...prev, nameAr: e.target.value }))}
+              />
+            </div>
+
+            <div>
+              <Label>نوع الطرف</Label>
+              <Select value={partyForm.type} onValueChange={(value: any) => setPartyForm(prev => ({ ...prev, type: value }))}>
+                <SelectTrigger className="mt-1"><SelectValue /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="customer">عميل</SelectItem>
+                  <SelectItem value="supplier">مورد</SelectItem>
+                  <SelectItem value="both">عميل ومورد</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            
+            <div>
+              <Label>رقم الهاتف</Label>
+              <Input 
+                className="mt-1"
+                placeholder="05xxxxxxxx"
+                value={partyForm.phone}
+                onChange={(e) => setPartyForm(prev => ({ ...prev, phone: e.target.value }))}
+              />
+            </div>
+
+            <div>
+              <Label>الرصيد الافتتاحي (ر.س)</Label>
+              <Input 
+                type="number"
+                min="0"
+                step="0.01"
+                className="mt-1"
+                placeholder="0.00"
+                value={partyForm.balance || ''}
+                onChange={(e) => setPartyForm(prev => ({ ...prev, balance: parseFloat(e.target.value) || 0 }))}
+              />
+            </div>
+
+            <div className="flex items-center justify-end gap-2 pt-4">
+              <Button variant="outline" onClick={() => setShowPartyDialog(false)}>
+                إلغاء
+              </Button>
+              <Button 
+                className="bg-gradient-to-r from-[#005f73] to-[#0a9396] text-white"
+                onClick={saveParty}
+              >
+                {editingParty ? (
+                  <>
+                    <Save className="ml-2 h-4 w-4" />
+                    حفظ التعديلات
+                  </>
+                ) : (
+                  <>
+                    <Plus className="ml-2 h-4 w-4" />
+                    إضافة الطرف
+                  </>
+                )}
+              </Button>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* ============ TRANSACTION DIALOG (Add/Edit) ============ */}
+      <Dialog open={showTransactionDialog} onOpenChange={setShowTransactionDialog}>
+        <DialogContent className="max-w-md" dir="rtl">
+          <DialogHeader>
+            <DialogTitle className={transactionForm.type === 'income' ? 'text-green-600' : 'text-red-600'}>
+              {editingTransaction 
+                ? (transactionForm.type === 'income' ? 'تعديل الإيراد' : 'تعديل المصروف')
+                : (transactionForm.type === 'income' ? 'إيراد جديد' : 'مصروف جديد')
+              }
+            </DialogTitle>
+            <DialogDescription>
+              {editingTransaction ? 'قم بتعديل بيانات العملية' : 'أدخل بيانات العملية الجديدة'}
+            </DialogDescription>
+          </DialogHeader>
+          
+          <div className="space-y-4 mt-4">
+            <div>
+              <Label>التاريخ</Label>
+              <Input 
+                type="date"
+                className="mt-1"
+                value={transactionForm.date}
+                onChange={(e) => setTransactionForm(prev => ({ ...prev, date: e.target.value }))}
+              />
+            </div>
+
+            <div>
+              <Label>الوصف <span className="text-red-500">*</span></Label>
+              <Input 
+                className="mt-1"
+                placeholder={transactionForm.type === 'income' ? 'مثال: مبيعات نقدية' : 'مثال: إيجار المحل'}
+                value={transactionForm.description}
+                onChange={(e) => setTransactionForm(prev => ({ ...prev, description: e.target.value }))}
+              />
+            </div>
+            
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <Label>المبلغ (ر.س)</Label>
+                <Input 
+                  type="number"
+                  min="0"
+                  step="0.01"
+                  className="mt-1"
+                  placeholder="0.00"
+                  value={transactionForm.amount || ''}
+                  onChange={(e) => setTransactionForm(prev => ({ ...prev, amount: parseFloat(e.target.value) || 0 }))}
+                />
+              </div>
+              
+              <div>
+                <Label>الفئة</Label>
+                <Select value={transactionForm.category} onValueChange={(value) => setTransactionForm(prev => ({ ...prev, category: value }))}>
+                  <SelectTrigger className="mt-1"><SelectValue /></SelectTrigger>
+                  <SelectContent>
+                    {transactionForm.type === 'income' ? (
+                      <>
+                        <SelectItem value="مبيعات نقدية">مبيعات نقدية</SelectItem>
+                        <SelectItem value="مبيعات آجلة">مبيعات آجلة</SelectItem>
+                        <SelectItem value="إيرادات أخرى">إيرادات أخرى</SelectItem>
+                      </>
+                    ) : (
+                      <>
+                        <SelectItem value="رواتب">رواتب</SelectItem>
+                        <SelectItem value="إيجار">إيجار</SelectItem>
+                        <SelectItem value="فواتير">فواتير</SelectItem>
+                        <SelectItem value="مصروفات أخرى">مصروفات أخرى</SelectItem>
+                      </>
+                    )}
+                  </SelectContent>
+                </Select>
+              </div>
+            </div>
+
+            <div className="flex items-center justify-end gap-2 pt-4">
+              <Button variant="outline" onClick={() => setShowTransactionDialog(false)}>
+                إلغاء
+              </Button>
+              <Button 
+                className={transactionForm.type === 'income' ? 'bg-green-500 hover:bg-green-600 text-white' : 'bg-red-500 hover:bg-red-600 text-white'}
+                onClick={saveTransaction}
+              >
+                {editingTransaction ? (
+                  <>
+                    <Save className="ml-2 h-4 w-4" />
+                    حفظ التعديلات
+                  </>
+                ) : (
+                  <>
+                    <Plus className="ml-2 h-4 w-4" />
+                    {transactionForm.type === 'income' ? 'إضافة الإيراد' : 'إضافة المصروف'}
+                  </>
+                )}
+              </Button>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* = TRANSACTION VIEW DIALOG ============ */}
+      <Dialog open={!!viewingTransaction} onOpenChange={() => setViewingTransaction(null)}>
+        <DialogContent dir="rtl">
+          <DialogHeader>
+            <DialogTitle className={viewingTransaction?.type === 'income' ? 'text-green-600' : 'text-red-600'}>
+              {viewingTransaction?.type === 'income' ? '💰 تفاصيل الإيراد' : '💸 تفاصيل المصروف'}
+            </DialogTitle>
+          </DialogHeader>
+          
+          {viewingTransaction && (
+            <div className="space-y-4 mt-4">
+              <div className="grid grid-cols-2 gap-4">
+                <div className="p-3 bg-gray-50 rounded-lg">
+                  <p className="text-sm text-gray-500">رقم العملية</p>
+                  <p className="font-bold font-mono">#{viewingTransaction.id.slice(-6)}</p>
+                </div>
+                <div className="p-3 bg-gray-50 rounded-lg">
+                  <p className="text-sm text-gray-500">التاريخ</p>
+                  <p className="font-bold">{viewingTransaction.date}</p>
+                </div>
+              </div>
+              
+              <div className="p-3 bg-gray-50 rounded-lg">
+                <p className="text-sm text-gray-500">الوصف</p>
+                <p className="font-medium">{viewingTransaction.description}</p>
+              </div>
+              
+              <div className="grid grid-cols-2 gap-4">
+                <div className="p-3 bg-gray-50 rounded-lg">
+                  <p className="text-sm text-gray-500">الفئة</p>
+                  <p className="font-medium">{viewingTransaction.category}</p>
+                </div>
+                <div className={`p-3 rounded-lg ${viewingTransaction.type === 'income' ? 'bg-green-50' : 'bg-red-50'}`}>
+                  <p className="text-sm text-gray-500">المبلغ</p>
+                  <p className={`font-bold text-xl ${viewingTransaction.type === 'income' ? 'text-green-600' : 'text-red-600'}`}>
+                    {viewingTransaction.type === 'income' ? '+' : '-'}{viewingTransaction.amount.toLocaleString()} ر.س
+                  </p>
+                </div>
+              </div>
+
+              <div className="flex items-center justify-end gap-2 pt-4">
+                <Button variant="outline" onClick={() => setViewingTransaction(null)}>
+                  إغلاق
+                </Button>
+                <Button 
+                  variant="outline"
+                  onClick={() => {
+                    printTransaction(viewingTransaction)
+                    setViewingTransaction(null)
+                  }}
+                >
+                  <Printer className="ml-2 h-4 w-4" />
+                  طباعة
+                </Button>
+              </div>
+            </div>
+          )}
         </DialogContent>
       </Dialog>
 
