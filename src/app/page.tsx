@@ -75,99 +75,29 @@ interface Transaction {
   category: string
 }
 
-// ============ MOCK DATA ============
-const mockInvoices: Invoice[] = [
-  { id: '1', number: 'INV-001', date: '2024-01-15', customerName: 'شركة النور', total: 15000, status: 'posted', items: [{ id: '1', name: 'منتج أ', quantity: 10, price: 1000, total: 10000 }, { id: '2', name: 'منتج ب', quantity: 5, price: 1000, total: 5000 }] },
-  { id: '2', number: 'INV-002', date: '2024-01-16', customerName: 'مؤسسة الأمل', total: 8500, status: 'paid', items: [{ id: '3', name: 'منتج ج', quantity: 5, price: 1700, total: 8500 }] },
-  { id: '3', number: 'INV-003', date: '2024-01-17', customerName: 'شركة الرائد', total: 22000, status: 'draft', items: [{ id: '4', name: 'منتج د', quantity: 20, price: 1100, total: 22000 }] },
-  { id: '4', number: 'INV-004', date: '2024-01-18', customerName: 'مؤسسة البناء', total: 12300, status: 'posted', items: [{ id: '5', name: 'منتج هـ', quantity: 3, price: 4100, total: 12300 }] },
-  { id: '5', number: 'INV-005', date: '2024-01-19', customerName: 'شركة المستقبل', total: 18500, status: 'cancelled', items: [] }
-]
-
-const mockQuotations = [
-  { id: 'Q1', number: 'QUO-001', date: '2024-01-15', customerName: 'شركة التقنية', total: 25000, status: 'pending', validUntil: '2024-02-15' },
-  { id: 'Q2', number: 'QUO-002', date: '2024-01-16', customerName: 'مؤسسة التقدم', total: 18000, status: 'accepted', validUntil: '2024-02-16' },
-  { id: 'Q3', number: 'QUO-003', date: '2024-01-17', customerName: 'شركة النجاح', total: 32000, status: 'expired', validUntil: '2024-01-17' }
-]
-
-const mockSalesReturns = [
-  { id: 'SR1', number: 'SR-001', date: '2024-01-18', customerName: 'شركة النور', invoiceNumber: 'INV-001', total: 5000, reason: 'عيب في المنتج', status: 'approved' },
-  { id: 'SR2', number: 'SR-002', date: '2024-01-19', customerName: 'مؤسسة الأمل', invoiceNumber: 'INV-002', total: 2000, reason: 'إرجاع جزئي', status: 'pending' }
-]
-
-const mockItems: Item[] = [
-  { id: '1', nameAr: 'منتج أ', code: 'P001', category: 'إلكترونيات', stock: 150, price: 1000 },
-  { id: '2', nameAr: 'منتج ب', code: 'P002', category: 'إلكترونيات', stock: 80, price: 1000 },
-  { id: '3', nameAr: 'منتج ج', code: 'P003', category: 'أثاث', stock: 25, price: 1700 },
-  { id: '4', nameAr: 'منتج د', code: 'P004', category: 'أثاث', stock: 45, price: 1100 },
-  { id: '5', nameAr: 'منتج هـ', code: 'P005', category: 'ملابس', stock: 200, price: 4100 }
-]
-
-const mockParties: Party[] = [
-  { id: '1', nameAr: 'شركة النور', type: 'customer', phone: '0501234567', balance: 15000 },
-  { id: '2', nameAr: 'مؤسسة الأمل', type: 'customer', phone: '0559876543', balance: -5000 },
-  { id: '3', nameAr: 'شركة الرائد', type: 'supplier', phone: '0541112233', balance: -25000 },
-  { id: '4', nameAr: 'مؤسسة البناء', type: 'both', phone: '0507778899', balance: 8000 },
-  { id: '5', nameAr: 'شركة المستقبل', type: 'customer', phone: '0563334455', balance: 0 }
-]
-
-const mockTransactions: Transaction[] = [
-  { id: '1', date: '2024-01-15', description: 'تحصيل من شركة النور', amount: 10000, type: 'income', category: 'تحصيل' },
-  { id: '2', date: '2024-01-16', description: 'إيجار المكتب', amount: 5000, type: 'expense', category: 'إيجار' },
-  { id: '3', date: '2024-01-17', description: 'مبيعات نقدية', amount: 3500, type: 'income', category: 'مبيعات' },
-  { id: '4', date: '2024-01-18', description: 'مشتريات مستلزمات', amount: 1200, type: 'expense', category: 'مشتريات' },
-  { id: '5', date: '2024-01-19', description: 'تحصيل من مؤسسة البناء', amount: 8000, type: 'income', category: 'تحصيل' }
-]
-
-const mockPurchaseOrders = [
-  { id: 'PO1', number: 'PO-001', date: '2024-01-15', supplierName: 'شركة الرائد', total: 35000, status: 'pending', expectedDate: '2024-01-25' },
-  { id: 'PO2', number: 'PO-002', date: '2024-01-16', supplierName: 'المورد العالمي', total: 18000, status: 'received', expectedDate: '2024-01-20' },
-  { id: 'PO3', number: 'PO-003', date: '2024-01-17', supplierName: 'شركة الرائد', total: 42000, status: 'ordered', expectedDate: '2024-02-01' }
-]
-
-const mockAccounts = [
-  { id: '1', code: '1000', name: 'الأصول', type: 'asset', parentId: null, balance: 150000 },
-  { id: '2', code: '1001', name: 'الصندوق', type: 'asset', parentId: '1', balance: 25000 },
-  { id: '3', code: '1002', name: 'البنوك', type: 'asset', parentId: '1', balance: 125000 },
-  { id: '4', code: '2000', name: 'الخصوم', type: 'liability', parentId: null, balance: 75000 },
-  { id: '5', code: '2001', name: 'الموردون', type: 'liability', parentId: '4', balance: 75000 },
-  { id: '6', code: '3000', name: 'حقوق الملكية', type: 'equity', parentId: null, balance: 100000 },
-  { id: '7', code: '4000', name: 'الإيرادات', type: 'revenue', parentId: null, balance: 200000 },
-  { id: '8', code: '5000', name: 'المصروفات', type: 'expense', parentId: null, balance: 120000 }
-]
-
-const mockBankAccounts = [
-  { id: '1', bankName: 'البنك الأهلي', accountNumber: '1234567890', accountType: 'جاري', balance: 85000, currency: 'ريال' },
-  { id: '2', bankName: 'بنك الراجحي', accountNumber: '0987654321', accountType: 'جاري', balance: 40000, currency: 'ريال' }
-]
-
-const mockChecks = [
-  { id: '1', checkNumber: 'CHQ-001', bankName: 'البنك الأهلي', amount: 15000, dueDate: '2024-02-01', status: 'pending', beneficiary: 'شركة النور' },
-  { id: '2', checkNumber: 'CHQ-002', bankName: 'بنك الراجحي', amount: 8000, dueDate: '2024-01-25', status: 'deposited', beneficiary: 'مؤسسة البناء' }
-]
-
-const mockEmployees = [
-  { id: '1', name: 'أحمد محمد', position: 'محاسب', department: 'المالية', salary: 8000, status: 'active', joinDate: '2023-01-15' },
-  { id: '2', name: 'سارة علي', position: 'مندوب مبيعات', department: 'المبيعات', salary: 6000, status: 'active', joinDate: '2023-03-01' },
-  { id: '3', name: 'خالد عبدالله', position: 'مخزني', department: 'المخزون', salary: 5000, status: 'active', joinDate: '2023-06-15' }
-]
-
-const mockExpenses = [
-  { id: '1', date: '2024-01-15', category: 'إيجار', description: 'إيجار شهر يناير', amount: 5000, type: 'fixed', status: 'paid' },
-  { id: '2', date: '2024-01-16', category: 'مرتبات', description: 'رواتب الموظفين', amount: 19000, type: 'fixed', status: 'paid' },
-  { id: '3', date: '2024-01-17', category: 'مواد', description: 'مشتريات مستلزمات مكتبية', amount: 1200, type: 'variable', status: 'paid' },
-  { id: '4', date: '2024-01-18', category: 'صيانة', description: 'صيانة أجهزة', amount: 800, type: 'variable', status: 'pending' }
-]
+// ============ EMPTY DATA ARRAYS FOR MANUAL ENTRY ============
+const mockInvoices: Invoice[] = []
+const mockQuotations: any[] = []
+const mockSalesReturns: any[] = []
+const mockItems: Item[] = []
+const mockParties: Party[] = []
+const mockTransactions: Transaction[] = []
+const mockPurchaseOrders: any[] = []
+const mockAccounts: any[] = []
+const mockBankAccounts: any[] = []
+const mockChecks: any[] = []
+const mockEmployees: any[] = []
+const mockExpenses: any[] = []
 
 // ============ MAIN COMPONENT ============
 export default function AccountingApp() {
   const [activeModule, setActiveModule] = useState<ModuleType>('dashboard')
   const [sidebarOpen, setSidebarOpen] = useState(true)
   const [isLoggedIn, setIsLoggedIn] = useState(false)
-  const [invoices, setInvoices] = useState<Invoice[]>(mockInvoices)
-  const [items] = useState<Item[]>(mockItems)
-  const [parties] = useState<Party[]>(mockParties)
-  const [transactions, setTransactions] = useState<Transaction[]>(mockTransactions)
+  const [invoices, setInvoices] = useState<Invoice[]>([])
+  const [items, setItems] = useState<Item[]>([])
+  const [parties, setParties] = useState<Party[]>([])
+  const [transactions, setTransactions] = useState<Transaction[]>([])
   const [searchTerm, setSearchTerm] = useState('')
   
   // Invoice Form States
@@ -183,12 +113,8 @@ export default function AccountingApp() {
   // Delete Confirmation State
   const [deleteConfirm, setDeleteConfirm] = useState<{ show: boolean; type: string; id: string; name: string }>({ show: false, type: '', id: '', name: '' })
 
-  // Notification State
-  const [notifications] = useState([
-    { id: 1, message: 'فاتورة INV-001 تم ترحيلها بنجاح', time: 'منذ 5 دقائق', type: 'success' as const },
-    { id: 2, message: 'تنبيه: مخزون منتج ج منخفض', time: 'منذ ساعة', type: 'warning' as const },
-    { id: 3, message: 'دفعة مستحقة غداً لمؤسسة البناء', time: 'منذ ساعتين', type: 'info' as const }
-  ])
+  // Notification State - Empty for fresh start
+  const [notifications] = useState<any[]>([])
 
   // Login Handler
   const handleLogin = (e: React.FormEvent) => {
@@ -216,6 +142,59 @@ export default function AccountingApp() {
       items: invoice.items.map(item => ({ itemId: item.id, quantity: item.quantity, price: item.price, discount: 0 }))
     })
     setShowInvoiceDialog(true)
+  }
+
+  // Add new customer/party on the fly
+  const [showAddCustomerDialog, setShowAddCustomerDialog] = useState(false)
+  const [newCustomer, setNewCustomer] = useState({ nameAr: '', type: 'customer' as 'customer' | 'supplier' | 'both', phone: '' })
+
+  const addNewCustomer = () => {
+    if (!newCustomer.nameAr) {
+      alert('يرجى إدخال اسم العميل')
+      return
+    }
+    const party: Party = {
+      id: Date.now().toString(),
+      nameAr: newCustomer.nameAr,
+      type: newCustomer.type,
+      phone: newCustomer.phone,
+      balance: 0
+    }
+    setParties(prev => [...prev, party])
+    setInvoiceForm(prev => ({ ...prev, customerId: party.id }))
+    setNewCustomer({ nameAr: '', type: 'customer', phone: '' })
+    setShowAddCustomerDialog(false)
+  }
+
+  // Add new item on the fly
+  const [showAddItemDialog, setShowAddItemDialog] = useState(false)
+  const [newItem, setNewItem] = useState({ nameAr: '', code: '', category: '', stock: 0, price: 0 })
+  const [itemEditIndex, setItemEditIndex] = useState<number | null>(null)
+
+  const addNewItem = () => {
+    if (!newItem.nameAr) {
+      alert('يرجى إدخال اسم الصنف')
+      return
+    }
+    const item: Item = {
+      id: Date.now().toString(),
+      nameAr: newItem.nameAr,
+      code: newItem.code || `P${items.length + 1}`,
+      category: newItem.category || 'عام',
+      stock: newItem.stock,
+      price: newItem.price
+    }
+    setItems(prev => [...prev, item])
+    
+    // If adding from invoice form, update the specific item row
+    if (itemEditIndex !== null) {
+      updateInvoiceItem(itemEditIndex, 'itemId', item.id)
+      updateInvoiceItem(itemEditIndex, 'price', item.price)
+      setItemEditIndex(null)
+    }
+    
+    setNewItem({ nameAr: '', code: '', category: '', stock: 0, price: 0 })
+    setShowAddItemDialog(false)
   }
 
   const addInvoiceItem = () => {
@@ -1764,16 +1743,28 @@ export default function AccountingApp() {
               </div>
               <div>
                 <Label className="text-sm font-medium text-gray-700">اختر العميل</Label>
-                <Select value={invoiceForm.customerId} onValueChange={(value) => setInvoiceForm(prev => ({ ...prev, customerId: value }))}>
-                  <SelectTrigger className="mt-1 border-gray-300 focus:border-[#0a9396]">
-                    <SelectValue placeholder="اختر العميل" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {parties.filter(p => p.type === 'customer' || p.type === 'both').map(party => (
-                      <SelectItem key={party.id} value={party.id}>{party.nameAr}</SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
+                <div className="flex gap-2 mt-1">
+                  <Select value={invoiceForm.customerId} onValueChange={(value) => setInvoiceForm(prev => ({ ...prev, customerId: value }))}>
+                    <SelectTrigger className="flex-1 border-gray-300 focus:border-[#0a9396]">
+                      <SelectValue placeholder="اختر العميل" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {parties.filter(p => p.type === 'customer' || p.type === 'both').map(party => (
+                        <SelectItem key={party.id} value={party.id}>{party.nameAr}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                  <Button 
+                    type="button"
+                    variant="outline" 
+                    size="icon"
+                    onClick={() => setShowAddCustomerDialog(true)}
+                    title="إضافة عميل جديد"
+                    className="border-dashed border-2 border-emerald-300 text-emerald-600 hover:bg-emerald-50"
+                  >
+                    <Plus className="w-4 h-4" />
+                  </Button>
+                </div>
               </div>
               <div>
                 <Label className="text-sm font-medium text-gray-700">ضم (%)</Label>
@@ -1797,11 +1788,12 @@ export default function AccountingApp() {
               <div className="col-span-2">
                 <div className="border border-gray-200 rounded-lg overflow-hidden">
                   {/* Table Header */}
-                  <div className="grid grid-cols-4 bg-gray-50 p-3 border-b">
+                  <div className="grid grid-cols-5 bg-gray-50 p-3 border-b">
                     <div className="text-sm font-semibold text-gray-700">الصنف</div>
                     <div className="text-sm font-semibold text-gray-700">الكمية</div>
                     <div className="text-sm font-semibold text-gray-700">السعر</div>
                     <div className="text-sm font-semibold text-gray-700">الإجمالي</div>
+                    <div className="w-8"></div>
                   </div>
                   
                   {/* Items List or Empty State */}
@@ -1821,8 +1813,8 @@ export default function AccountingApp() {
                       {invoiceForm.items.map((item, idx) => {
                         const lineTotal = item.quantity * item.price
                         return (
-                          <div key={idx} className="grid grid-cols-4 gap-4 p-3 hover:bg-gray-50 items-center">
-                            <div>
+                          <div key={idx} className="grid grid-cols-5 gap-3 p-3 hover:bg-gray-50 items-center">
+                            <div className="flex gap-1">
                               <Select value={item.itemId} onValueChange={(value) => {
                                 updateInvoiceItem(idx, 'itemId', value)
                                 const selected = items.find(i => i.id === value)
@@ -1841,6 +1833,16 @@ export default function AccountingApp() {
                                   ))}
                                 </SelectContent>
                               </Select>
+                              <Button 
+                                type="button"
+                                variant="outline" 
+                                size="icon"
+                                onClick={() => { setItemEditIndex(idx); setShowAddItemDialog(true); }}
+                                title="إضافة صنف جديد"
+                                className="h-8 w-8 border-dashed border-emerald-300 text-emerald-600 hover:bg-emerald-50 flex-shrink-0"
+                              >
+                                <Plus className="w-3 h-3" />
+                              </Button>
                             </div>
                             <div>
                               <Input 
@@ -1956,6 +1958,149 @@ export default function AccountingApp() {
                 disabled={!invoiceForm.customerId || invoiceForm.items.length === 0}
               >
                 إنشاء الفاتورة
+              </Button>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* ============ ADD CUSTOMER DIALOG ============ */}
+      <Dialog open={showAddCustomerDialog} onOpenChange={setShowAddCustomerDialog}>
+        <DialogContent className="max-w-md" dir="rtl">
+          <DialogHeader>
+            <DialogTitle className="text-emerald-600">إضافة عميل جديد</DialogTitle>
+            <DialogDescription>أدخل بيانات العميل الجديد</DialogDescription>
+          </DialogHeader>
+          
+          <div className="space-y-4 mt-4">
+            <div>
+              <Label>اسم العميل <span className="text-red-500">*</span></Label>
+              <Input 
+                className="mt-1"
+                placeholder="مثال: شركة النور"
+                value={newCustomer.nameAr}
+                onChange={(e) => setNewCustomer(prev => ({ ...prev, nameAr: e.target.value }))}
+              />
+            </div>
+            
+            <div>
+              <Label>نوع الطرف</Label>
+              <Select value={newCustomer.type} onValueChange={(val: any) => setNewCustomer(prev => ({ ...prev, type: val }))}>
+                <SelectTrigger className="mt-1">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="customer">عميل</SelectItem>
+                  <SelectItem value="supplier">مورد</SelectItem>
+                  <SelectItem value="both">عميل ومورد</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            
+            <div>
+              <Label>رقم الهاتف</Label>
+              <Input 
+                className="mt-1"
+                placeholder="05xxxxxxxx"
+                value={newCustomer.phone}
+                onChange={(e) => setNewCustomer(prev => ({ ...prev, phone: e.target.value }))}
+              />
+            </div>
+
+            <div className="flex items-center justify-end gap-2 pt-4">
+              <Button variant="outline" onClick={() => setShowAddCustomerDialog(false)}>
+                إلغاء
+              </Button>
+              <Button 
+                className="bg-emerald-500 hover:bg-emerald-600 text-white"
+                onClick={addNewCustomer}
+              >
+                <Plus className="ml-2 h-4 w-4" />
+                إضافة العميل
+              </Button>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* ============ ADD ITEM DIALOG ============ */}
+      <Dialog open={showAddItemDialog} onOpenChange={setShowAddItemDialog}>
+        <DialogContent className="max-w-md" dir="rtl">
+          <DialogHeader>
+            <DialogTitle className="text-emerald-600">إضافة صنف جديد</DialogTitle>
+            <DialogDescription>أدخل بيانات الصنف الجديد</DialogDescription>
+          </DialogHeader>
+          
+          <div className="space-y-4 mt-4">
+            <div>
+              <Label>اسم الصنف <span className="text-red-500">*</span></Label>
+              <Input 
+                className="mt-1"
+                placeholder="مثال: لابتوب Dell"
+                value={newItem.nameAr}
+                onChange={(e) => setNewItem(prev => ({ ...prev, nameAr: e.target.value }))}
+              />
+            </div>
+            
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <Label>الكود</Label>
+                <Input 
+                  className="mt-1"
+                  placeholder="P001"
+                  value={newItem.code}
+                  onChange={(e) => setNewItem(prev => ({ ...prev, code: e.target.value }))}
+                />
+              </div>
+              
+              <div>
+                <Label>الفئة</Label>
+                <Input 
+                  className="mt-1"
+                  placeholder="إلكترونيات"
+                  value={newItem.category}
+                  onChange={(e) => setNewItem(prev => ({ ...prev, category: e.target.value }))}
+                />
+              </div>
+            </div>
+            
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <Label>السعر</Label>
+                <Input 
+                  type="number"
+                  min="0"
+                  step="0.01"
+                  className="mt-1"
+                  placeholder="0.00"
+                  value={newItem.price || ''}
+                  onChange={(e) => setNewItem(prev => ({ ...prev, price: parseFloat(e.target.value) || 0 }))}
+                />
+              </div>
+              
+              <div>
+                <Label>الكمية في المخزون</Label>
+                <Input 
+                  type="number"
+                  min="0"
+                  className="mt-1"
+                  placeholder="0"
+                  value={newItem.stock || ''}
+                  onChange={(e) => setNewItem(prev => ({ ...prev, stock: parseInt(e.target.value) || 0 }))}
+                />
+              </div>
+            </div>
+
+            <div className="flex items-center justify-end gap-2 pt-4">
+              <Button variant="outline" onClick={() => setShowAddItemDialog(false)}>
+                إلغاء
+              </Button>
+              <Button 
+                className="bg-emerald-500 hover:bg-emerald-600 text-white"
+                onClick={addNewItem}
+              >
+                <Plus className="ml-2 h-4 w-4" />
+                إضافة الصنف
               </Button>
             </div>
           </div>
