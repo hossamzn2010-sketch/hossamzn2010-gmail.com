@@ -1731,21 +1731,41 @@ export default function AccountingApp() {
         </div>
       </main>
 
-      {/* ============ INVOICE DIALOG (COMPLETE FORM) ============ */}
+      {/* ============ INVOICE DIALOG (MATCHING SCREENSHOT DESIGN) ============ */}
       <Dialog open={showInvoiceDialog} onOpenChange={setShowInvoiceDialog}>
-        <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto" dir="rtl">
-          <DialogHeader>
-            <DialogTitle>{editingInvoice ? 'تعديل فاتورة' : 'فاتورة مبيعات جديدة'}</DialogTitle>
-            <DialogDescription>أدخل تفاصيل الفاتورة بشكل كامل</DialogDescription>
+        <DialogContent className="max-w-5xl max-h-[90vh] overflow-y-auto" dir="rtl">
+          <DialogHeader className="flex flex-row items-center justify-between pb-4 border-b">
+            <div>
+              <DialogTitle className="text-xl font-bold text-[#005f73]">
+                {editingInvoice ? 'تعديل فاتورة مبيعات' : 'إشعار فاتورة مبيعات جديد'}
+              </DialogTitle>
+            </div>
+            <Button 
+              type="button"
+              variant="outline" 
+              size="sm"
+              onClick={() => setShowInvoiceDialog(false)}
+            >
+              ✕
+            </Button>
           </DialogHeader>
           
-          <div className="space-y-6">
-            {/* Customer & Date Info */}
-            <div className="grid grid-cols-2 gap-4">
+          <div className="space-y-6 mt-4">
+            {/* Top Row: Date | Customer | Tax */}
+            <div className="grid grid-cols-3 gap-4">
               <div>
-                <Label>العميل <span className="text-red-500">*</span></Label>
+                <Label className="text-sm font-medium text-gray-700">التاريخ</Label>
+                <Input 
+                  type="date" 
+                  className="mt-1 border-gray-300 focus:border-[#0a9396]"
+                  value={invoiceForm.date}
+                  onChange={(e) => setInvoiceForm(prev => ({ ...prev, date: e.target.value }))}
+                />
+              </div>
+              <div>
+                <Label className="text-sm font-medium text-gray-700">اختر العميل</Label>
                 <Select value={invoiceForm.customerId} onValueChange={(value) => setInvoiceForm(prev => ({ ...prev, customerId: value }))}>
-                  <SelectTrigger className="mt-1">
+                  <SelectTrigger className="mt-1 border-gray-300 focus:border-[#0a9396]">
                     <SelectValue placeholder="اختر العميل" />
                   </SelectTrigger>
                   <SelectContent>
@@ -1756,53 +1776,53 @@ export default function AccountingApp() {
                 </Select>
               </div>
               <div>
-                <Label>التاريخ <span className="text-red-500">*</span></Label>
-                <Input 
-                  type="date" 
-                  className="mt-1"
-                  value={invoiceForm.date}
-                  onChange={(e) => setInvoiceForm(prev => ({ ...prev, date: e.target.value }))}
-                />
+                <Label className="text-sm font-medium text-gray-700">ضم (%)</Label>
+                <Select defaultValue="15">
+                  <SelectTrigger className="mt-1 border-gray-300 focus:border-[#0a9396]">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="0">•</SelectItem>
+                    <SelectItem value="5">5%</SelectItem>
+                    <SelectItem value="10">10%</SelectItem>
+                    <SelectItem value="15">15%</SelectItem>
+                  </SelectContent>
+                </Select>
               </div>
             </div>
 
-            {/* Items Table */}
-            <div>
-              <div className="flex items-center justify-between mb-3">
-                <Label className="text-base font-semibold">بنود الفاتورة</Label>
-                <Button type="button" variant="outline" size="sm" onClick={addInvoiceItem}>
-                  <Plus className="ml-2 h-4 w-4" />إضافة بند
-                </Button>
-              </div>
-              
-              {invoiceForm.items.length === 0 ? (
-                <div className="text-center py-8 bg-gray-50 rounded-lg border-2 border-dashed">
-                  <Package className="w-12 h-12 mx-auto text-gray-400 mb-2" />
-                  <p className="text-gray-500">لم يتم إضافة أي بنود بعد</p>
-                  <Button type="button" variant="outline" className="mt-3" onClick={addInvoiceItem}>
-                    <Plus className="ml-2 h-4 w-4" />أضف أول بند
-                  </Button>
-                </div>
-              ) : (
-                <div className="overflow-x-auto">
-                  <table className="w-full text-sm">
-                    <thead>
-                      <tr className="border-b bg-gray-50">
-                        <th className="text-right p-2 font-medium">الصنف</th>
-                        <th className="text-right p-2 font-medium">الكمية</th>
-                        <th className="text-right p-2 font-medium">السعر</th>
-                        <th className="text-right p-2 font-medium">الخصم</th>
-                        <th className="text-right p-2 font-medium">الإجمالي</th>
-                        <th className="text-right p-2 font-medium">حذف</th>
-                      </tr>
-                    </thead>
-                    <tbody>
+            {/* Items Section with Summary Side by Side */}
+            <div className="grid grid-cols-3 gap-6">
+              {/* Items Table - Takes 2/3 width */}
+              <div className="col-span-2">
+                <div className="border border-gray-200 rounded-lg overflow-hidden">
+                  {/* Table Header */}
+                  <div className="grid grid-cols-4 bg-gray-50 p-3 border-b">
+                    <div className="text-sm font-semibold text-gray-700">الصنف</div>
+                    <div className="text-sm font-semibold text-gray-700">الكمية</div>
+                    <div className="text-sm font-semibold text-gray-700">السعر</div>
+                    <div className="text-sm font-semibold text-gray-700">الإجمالي</div>
+                  </div>
+                  
+                  {/* Items List or Empty State */}
+                  {invoiceForm.items.length === 0 ? (
+                    <div className="p-8 text-center">
+                      <div className="space-y-2">
+                        <div className="grid grid-cols-4 gap-4 px-3 py-2">
+                          <Input placeholder="اسم الصنف" className="border-gray-200" disabled />
+                          <Input type="number" placeholder="1" className="border-gray-200" disabled />
+                          <Input type="number" placeholder="0.00" className="border-gray-200" disabled />
+                          <Input type="number" placeholder="0.00" className="border-gray-200" disabled />
+                        </div>
+                      </div>
+                    </div>
+                  ) : (
+                    <div className="divide-y divide-gray-100 max-h-64 overflow-y-auto">
                       {invoiceForm.items.map((item, idx) => {
-                        const selectedItem = items.find(i => i.id === item.itemId)
-                        const lineTotal = item.quantity * item.price - item.discount
+                        const lineTotal = item.quantity * item.price
                         return (
-                          <tr key={idx} className="border-b">
-                            <td className="p-2">
+                          <div key={idx} className="grid grid-cols-4 gap-4 p-3 hover:bg-gray-50 items-center">
+                            <div>
                               <Select value={item.itemId} onValueChange={(value) => {
                                 updateInvoiceItem(idx, 'itemId', value)
                                 const selected = items.find(i => i.id === value)
@@ -1810,8 +1830,8 @@ export default function AccountingApp() {
                                   updateInvoiceItem(idx, 'price', selected.price)
                                 }
                               }}>
-                                <SelectTrigger className="w-40">
-                                  <SelectValue placeholder="اختر الصنف" />
+                                <SelectTrigger className="w-full border-gray-200 text-sm">
+                                  <SelectValue placeholder="اسم الصنف" />
                                 </SelectTrigger>
                                 <SelectContent>
                                   {items.map(itemOption => (
@@ -1821,112 +1841,122 @@ export default function AccountingApp() {
                                   ))}
                                 </SelectContent>
                               </Select>
-                            </td>
-                            <td className="p-2">
+                            </div>
+                            <div>
                               <Input 
                                 type="number" 
                                 min="1"
-                                className="w-20"
-                                value={item.quantity}
+                                className="border-gray-200 text-sm"
+                                value={item.quantity || ''}
                                 onChange={(e) => updateInvoiceItem(idx, 'quantity', parseInt(e.target.value) || 0)}
+                                placeholder="1"
                               />
-                            </td>
-                            <td className="p-2">
+                            </div>
+                            <div>
                               <Input 
                                 type="number"
                                 min="0"
                                 step="0.01"
-                                className="w-28"
-                                value={item.price}
+                                className="border-gray-200 text-sm"
+                                value={item.price || ''}
                                 onChange={(e) => updateInvoiceItem(idx, 'price', parseFloat(e.target.value) || 0)}
+                                placeholder="0.00"
                               />
-                            </td>
-                            <td className="p-2">
-                              <Input 
-                                type="number"
-                                min="0"
-                                step="0.01"
-                                className="w-24"
-                                value={item.discount}
-                                onChange={(e) => updateInvoiceItem(idx, 'discount', parseFloat(e.target.value) || 0)}
-                              />
-                            </td>
-                            <td className="p-2 font-bold">
-                              {lineTotal.toLocaleString()} ر.س
-                            </td>
-                            <td className="p-2">
+                            </div>
+                            <div className="flex items-center justify-between">
+                              <span className="font-medium text-sm">{lineTotal.toFixed(2)}</span>
                               <Button 
                                 type="button"
                                 variant="ghost" 
                                 size="icon"
+                                className="h-7 w-7 text-red-500 hover:text-red-700 hover:bg-red-50"
                                 onClick={() => removeInvoiceItem(idx)}
                               >
-                                <Trash2 className="w-4 h-4 text-red-600" />
+                                <Trash2 className="w-4 h-4" />
                               </Button>
-                            </td>
-                          </tr>
+                            </div>
+                          </div>
                         )
                       })}
-                    </tbody>
-                  </table>
-                </div>
-              )}
-            </div>
-
-            {/* Totals Section */}
-            {invoiceForm.items.length > 0 && (
-              <div className="bg-gray-50 p-4 rounded-lg space-y-2">
-                <div className="flex justify-between text-sm">
-                  <span>المجموع الفرعي:</span>
-                  <span className="font-medium">{getInvoiceSubtotal().toLocaleString()} ر.س</span>
-                </div>
-                <div className="flex justify-between text-sm">
-                  <span>الخصم:</span>
-                  <span className="font-medium text-red-600">-{getInvoiceDiscount().toLocaleString()} ر.س</span>
-                </div>
-                <div className="flex justify-between text-sm">
-                  <span>الضريبة (15%):</span>
-                  <span className="font-medium">{(getInvoiceTotal() * 0.15).toLocaleString()} ر.س</span>
-                </div>
-                <Separator />
-                <div className="flex justify-between text-lg font-bold">
-                  <span>الإجمالي الكلي:</span>
-                  <span className="text-[#005f73]">{(getInvoiceTotal() * 1.15).toLocaleString()} ر.س</span>
+                    </div>
+                  )}
+                  
+                  {/* Add Item Button */}
+                  <div className="p-3 border-t bg-gray-50">
+                    <Button 
+                      type="button" 
+                      variant="ghost" 
+                      className="text-emerald-600 hover:text-emerald-700 hover:bg-emerald-50 w-full justify-start"
+                      onClick={addInvoiceItem}
+                    >
+                      <Plus className="ml-2 h-4 w-4" />
+                      إضافة صنف
+                    </Button>
+                  </div>
                 </div>
               </div>
-            )}
 
-            {/* Notes */}
+              {/* Summary Section - Takes 1/3 width */}
+              <div className="bg-gray-50 rounded-lg p-4 space-y-3 h-fit border border-gray-200">
+                <h3 className="font-semibold text-gray-800 border-b pb-2 mb-3">ملخص الفاتورة</h3>
+                
+                <div className="space-y-2 text-sm">
+                  <div className="flex justify-between items-center">
+                    <span className="text-gray-600">المصروفات:</span>
+                    <span className="font-medium">0.00 ر.س</span>
+                  </div>
+                  
+                  <div className="flex justify-between items-center">
+                    <span className="text-gray-600">الخصم:</span>
+                    <span className="font-medium text-red-500">-{getInvoiceDiscount().toFixed(2)} ر.س</span>
+                  </div>
+                  
+                  <div className="flex justify-between items-center">
+                    <span className="text-gray-600">الضريبة (15%):</span>
+                    <span className="font-medium">{(getInvoiceTotal() * 0.15).toFixed(2)} ر.س</span>
+                  </div>
+                  
+                  <Separator className="my-2" />
+                  
+                  <div className="flex justify-between items-center pt-2">
+                    <span className="font-bold text-lg text-gray-800">الإجمالي:</span>
+                    <span className="font-bold text-xl text-emerald-600">
+                      {(getInvoiceTotal() * 1.15).toFixed(2)} ر.س
+                    </span>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* Notes Section */}
             <div>
-              <Label>ملاحظات</Label>
+              <Label className="text-sm font-medium text-gray-700 block mb-2">ملاحظات</Label>
               <Textarea 
-                className="mt-1"
-                placeholder="أضف ملاحظات على الفاتورة..."
+                className="border-gray-300 focus:border-[#0a9396] min-h-[80px]"
+                placeholder="ملاحظات إضافية..."
                 value={invoiceForm.notes}
                 onChange={(e) => setInvoiceForm(prev => ({ ...prev, notes: e.target.value }))}
               />
             </div>
 
-            {/* Actions */}
-            <div className="flex items-center justify-between pt-4 border-t">
-              <Button variant="outline" onClick={() => setShowInvoiceDialog(false)}>
+            {/* Action Buttons */}
+            <div className="flex items-center justify-start gap-3 pt-4 border-t">
+              <Button 
+                type="button"
+                variant="outline" 
+                className="px-6 border-gray-300 text-gray-700 hover:bg-gray-50"
+                onClick={() => setShowInvoiceDialog(false)}
+              >
                 إلغاء
               </Button>
-              <div className="flex items-center gap-2">
-                {editingInvoice && (
-                  <Button variant="outline" onClick={() => printInvoice(editingInvoice)}>
-                    <Printer className="ml-2 h-4 w-4" />طباعة
-                  </Button>
-                )}
-                <Button 
-                  className="bg-gradient-to-r from-[#005f73] to-[#0a9396]"
-                  onClick={saveInvoice}
-                  disabled={!invoiceForm.customerId || invoiceForm.items.length === 0}
-                >
-                  <Save className="ml-2 h-4 w-4" />
-                  {editingInvoice ? 'تحديث الفاتورة' : 'حفظ الفاتورة'}
-                </Button>
-              </div>
+              <Button 
+                type="button"
+                className="bg-emerald-500 hover:bg-emerald-600 text-white px-8"
+                onClick={saveInvoice}
+                disabled={!invoiceForm.customerId || invoiceForm.items.length === 0}
+              >
+                إنشاء الفاتورة
+              </Button>
             </div>
           </div>
         </DialogContent>
