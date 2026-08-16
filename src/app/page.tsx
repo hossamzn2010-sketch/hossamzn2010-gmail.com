@@ -79,7 +79,14 @@ interface Transaction {
 const mockInvoices: Invoice[] = []
 const mockQuotations: any[] = []
 const mockSalesReturns: any[] = []
-const mockItems: Item[] = []
+const mockItems: Item[] = [
+  { id: 'item-001', nameAr: 'مطبخ مودرن', code: 'MK-001', category: 'أثاث مطابخ', stock: 10, price: 15000 },
+  { id: 'item-002', nameAr: 'دريسينج رووم', code: 'DR-001', category: 'غرف نوم', stock: 15, price: 4500 },
+  { id: 'item-003', nameAr: 'كوفى كورنر', code: 'CC-001', category: 'أثاث صالات', stock: 8, price: 6500 },
+  { id: 'item-004', nameAr: 'تربيزة شاشة', code: 'TV-001', category: 'أثاث صالات', stock: 20, price: 1200 },
+  { id: 'item-005', nameAr: 'مكتب', code: 'DS-001', category: 'مكاتب', stock: 12, price: 2800 },
+  { id: 'item-006', nameAr: 'غرفة نوم', code: 'BR-001', category: 'غرف نوم', stock: 6, price: 12000 }
+]
 const mockParties: Party[] = []
 const mockTransactions: Transaction[] = []
 const mockPurchaseOrders: any[] = []
@@ -95,7 +102,7 @@ export default function AccountingApp() {
   const [sidebarOpen, setSidebarOpen] = useState(true)
   const [isLoggedIn, setIsLoggedIn] = useState(false)
   const [invoices, setInvoices] = useState<Invoice[]>([])
-  const [items, setItems] = useState<Item[]>([])
+  const [items, setItems] = useState<Item[]>(mockItems)
   const [parties, setParties] = useState<Party[]>([])
   const [transactions, setTransactions] = useState<Transaction[]>([])
   const [searchTerm, setSearchTerm] = useState('')
