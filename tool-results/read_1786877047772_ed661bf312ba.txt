@@ -1,0 +1,2002 @@
+     1→'use client'
+     2→
+     3→import React, { useState, useEffect, useCallback } from 'react'
+     4→import { 
+     5→  LayoutDashboard, ShoppingCart, Package, Users, Wallet, FileText, Settings,
+     6→  Menu, X, Plus, Search, Filter, Download, Printer, Eye, Edit2, Trash2,
+     7→  TrendingUp, TrendingDown, DollarSign, AlertCircle, CheckCircle, Clock,
+     8→  ArrowUpRight, ArrowDownLeft, Receipt, Send, BarChart3, PieChart as PieChartIcon,
+     9→  ChevronDown, ChevronLeft, RefreshCw, Save, XCircle, Calendar, Building2,
+    10→  Phone, Mail, MapPin, Hash, Percent, CreditCard, Banknote, Calculator
+    11→} from 'lucide-react'
+    12→import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
+    13→import { Button } from '@/components/ui/button'
+    14→import { Input } from '@/components/ui/input'
+    15→import { Label } from '@/components/ui/label'
+    16→import { Badge } from '@/components/ui/badge'
+    17→import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
+    18→import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog'
+    19→import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
+    20→import { Textarea } from '@/components/ui/textarea'
+    21→import { Separator } from '@/components/ui/separator'
+    22→import { ScrollArea } from '@/components/ui/scroll-area'
+    23→import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table'
+    24→
+    25→// ==================== Types ====================
+    26→type ModuleType = 'dashboard' | 'sales' | 'purchases' | 'inventory' | 'parties' | 'treasury' | 'reports' | 'settings'
+    27→
+    28→interface Invoice {
+    29→  id: string
+    30→  invoiceNumber: string
+    31→  type: 'sale' | 'purchase' | 'sale_return' | 'purchase_return'
+    32→  partyName: string
+    33→  date: string
+    34→  total: number
+    35→  paidAmount: number
+    36→  remainingAmount: number
+    37→  status: 'draft' | 'confirmed' | 'cancelled'
+    38→  paymentStatus: 'unpaid' | 'partial' | 'paid'
+    39→}
+    40→
+    41→interface Item {
+    42→  id: string
+    43→  code: string
+    44→  name: string
+    45→  nameAr: string
+    46→  category: string
+    47→  unit: string
+    48→  costPrice: number
+    49→  salePrice: number
+    50→  quantity: number
+    51→  minStock: number
+    52→}
+    53→
+    54→interface Party {
+    55→  id: string
+    56→  type: 'customer' | 'supplier' | 'both'
+    57→  name: string
+    58→  nameAr: string
+    59→  phone: string
+    60→  email: string
+    61→  balance: number
+    62→}
+    63→
+    64→interface Transaction {
+    65→  id: string
+    66→  type: 'income' | 'expense' | 'payment_received' | 'payment_sent'
+    67→  category: string
+    68→  amount: number
+    69→  date: string
+    70→  description: string
+    71→  partyName?: string
+    72→}
+    73→
+    74→// ==================== Mock Data ====================
+    75→const mockInvoices: Invoice[] = [
+    76→  { id: '1', invoiceNumber: 'INV-2024-001', type: 'sale', partyName: 'شركة النور للتجارة', date: '2024-01-15', total: 15000, paidAmount: 10000, remainingAmount: 5000, status: 'confirmed', paymentStatus: 'partial' },
+    77→  { id: '2', invoiceNumber: 'INV-2024-002', type: 'sale', partyName: 'مؤسسة الأمل', date: '2024-01-14', total: 8500, paidAmount: 8500, remainingAmount: 0, status: 'confirmed', paymentStatus: 'paid' },
+    78→  { id: '3', invoiceNumber: 'PUR-2024-001', type: 'purchase', partyName: 'مورد الخير', date: '2024-01-13', total: 25000, paidAmount: 25000, remainingAmount: 0, status: 'confirmed', paymentStatus: 'paid' },
+    79→  { id: '4', invoiceNumber: 'INV-2024-003', type: 'sale', partyName: 'محلات السعادة', date: '2024-01-12', total: 4200, paidAmount: 0, remainingAmount: 4200, status: 'draft', paymentStatus: 'unpaid' },
+    80→  { id: '5', invoiceNumber: 'INV-2024-004', type: 'sale_return', partyName: 'شركة النور للتجارة', date: '2024-01-11', total: 2000, paidAmount: 2000, remainingAmount: 0, status: 'confirmed', paymentStatus: 'paid' },
+    81→]
+    82→
+    83→const mockItems: Item[] = [
+    84→  { id: '1', code: 'ITM-001', name: 'Laptop Dell', nameAr: 'لابتوب ديل', category: 'إلكترونيات', unit: 'قطعة', costPrice: 12000, salePrice: 14500, quantity: 25, minStock: 5 },
+    85→  { id: '2', code: 'ITM-002', name: 'Mouse Wireless', nameAr: 'ماوس لاسلكي', category: 'إكسسوارات', unit: 'قطعة', costPrice: 80, salePrice: 150, quantity: 150, minStock: 20 },
+    86→  { id: '3', code: 'ITM-003', name: 'Keyboard Mechanical', nameAr: 'كيبورد ميكانيكي', category: 'إكسسوارات', unit: 'قطعة', costPrice: 250, salePrice: 400, quantity: 45, minStock: 10 },
+    87→  { id: '4', code: 'ITM-004', name: 'Monitor 27"', nameAr: 'شاشة 27 بوصة', category: 'إلكترونيات', unit: 'قطعة', costPrice: 3500, salePrice: 4500, quantity: 12, minStock: 3 },
+    88→  { id: '5', code: 'ITM-005', name: 'USB Cable', nameAr: 'كابل USB', category: 'إكسسوارات', unit: 'قطعة', costPrice: 15, salePrice: 35, quantity: 300, minStock: 50 },
+    89→]
+    90→
+    91→const mockParties: Party[] = [
+    92→  { id: '1', type: 'customer', name: 'Al-Nour Trading Co.', nameAr: 'شركة النور للتجارة', phone: '+966501234567', email: 'info@alnour.com', balance: 5000 },
+    93→  { id: '2', type: 'supplier', name: 'Al-Khair Supplier', nameAr: 'مورد الخير', phone: '+966509876543', email: 'supply@alkhair.com', balance: -8000 },
+    94→  { id: '3', type: 'customer', name: 'Al-Amal Establishment', nameAr: 'مؤسسة الأمل', phone: '+966501112233', email: 'amal@est.com', balance: 0 },
+    95→  { id: '4', type: 'both', name: 'Al-Saada Stores', nameAr: 'محلات السعادة', phone: '+966504445566', email: 'saada@store.com', balance: 4200 },
+    96→  { id: '5', type: 'supplier', name: 'Tech Wholesale', nameAr: 'تقنية الجملة', phone: '+966506677889', email: 'sales@techwh.com', balance: -15000 },
+    97→]
+    98→
+    99→const mockTransactions: Transaction[] = [
+   100→  { id: '1', type: 'income', category: 'مبيعات', amount: 15000, date: '2024-01-15', description: 'تحصيل فاتورة مبيعات INV-2024-001', partyName: 'شركة النور للتجارة' },
+   101→  { id: '2', type: 'expense', category: 'مشتريات', amount: 25000, date: '2024-01-13', description: 'دفع فاتورة مشتريات PUR-2024-001', partyName: 'مورد الخير' },
+   102→  { id: '3', type: 'payment_received', category: 'تحصيل', amount: 8500, date: '2024-01-14', description: 'تحصيل كامل الفاتورة', partyName: 'مؤسسة الأمل' },
+   103→  { id: '4', type: 'expense', category: 'رواتب', amount: 18000, date: '2024-01-10', description: 'رواتب شهر يناير' },
+   104→  { id: '5', type: 'income', category: 'أخرى', amount: 2000, date: '2024-01-11', description: 'مرتجع مبيعات - شركة النور' },
+   105→]
+   106→
+   107→// ==================== Sidebar Component ====================
+   108→const Sidebar: React.FC<{
+   109→  activeModule: ModuleType
+   110→  setActiveModule: (module: ModuleType) => void
+   111→  isOpen: boolean
+   112→  setIsOpen: (open: boolean) => void
+   113→}> = ({ activeModule, setActiveModule, isOpen, setIsOpen }) => {
+   114→  
+   115→  const menuItems: { id: ModuleType; icon: React.ReactNode; label: string; labelAr: string }[] = [
+   116→    { id: 'dashboard', icon: <LayoutDashboard size={20} />, label: 'Dashboard', labelAr: 'لوحة التحكم' },
+   117→    { id: 'sales', icon: <ShoppingCart size={20} />, label: 'Sales', labelAr: 'المبيعات' },
+   118→    { id: 'purchases', icon: <Package size={20} />, label: 'Purchases', labelAr: 'المشتريات' },
+   119→    { id: 'inventory', icon: <Package size={20} />, label: 'Inventory', labelAr: 'المخزون' },
+   120→    { id: 'parties', icon: <Users size={20} />, label: 'Parties', labelAr: 'الأطراف' },
+   121→    { id: 'treasury', icon: <Wallet size={20} />, label: 'Treasury', labelAr: 'الخزينة' },
+   122→    { id: 'reports', icon: <BarChart3 size={20} />, label: 'Reports', labelAr: 'التقارير' },
+   123→    { id: 'settings', icon: <Settings size={20} />, label: 'Settings', labelAr: 'الإعدادات' },
+   124→  ]
+   125→
+   126→  return (
+   127→    <>
+   128→      {/* Mobile Overlay */}
+   129→      {isOpen && (
+   130→        <div 
+   131→          className="fixed inset-0 bg-black/50 z-40 lg:hidden"
+   132→          onClick={() => setIsOpen(false)}
+   133→        />
+   134→      )}
+   135→      
+   136→      {/* Sidebar */}
+   137→      <aside className={`fixed top-0 right-0 z-50 h-full w-72 bg-gradient-to-b from-[#005f73] to-[#0a9396] text-white transform transition-transform duration-300 ease-in-out lg:translate-x-0 ${isOpen ? 'translate-x-0' : 'translate-x-full'} lg:translate-x-0`}>
+   138→        {/* Logo Header */}
+   139→        <div className="p-6 border-b border-white/20">
+   140→          <div className="flex items-center justify-between">
+   141→            <div className="flex items-center gap-3">
+   142→              <div className="w-12 h-12 bg-white rounded-xl flex items-center justify-center shadow-lg">
+   143→                <Wallet className="text-[#005f73]" size={28} />
+   144→              </div>
+   145→              <div>
+   146→                <h1 className="text-xl font-bold">Accounting Pro</h1>
+   147→                <p className="text-xs text-white/70">نظام المحاسبة الاحترافي</p>
+   148→              </div>
+   149→            </div>
+   150→            <Button 
+   151→              variant="ghost" 
+   152→              size="icon" 
+   153→              className="lg:hidden text-white hover:bg-white/20"
+   154→              onClick={() => setIsOpen(false)}
+   155→            >
+   156→              <X size={20} />
+   157→            </Button>
+   158→          </div>
+   159→        </div>
+   160→
+   161→        {/* Navigation */}
+   162→        <nav className="p-4 space-y-2">
+   163→          {menuItems.map((item) => (
+   164→            <button
+   165→              key={item.id}
+   166→              onClick={() => {
+   167→                setActiveModule(item.id)
+   168→                setIsOpen(false)
+   169→              }}
+   170→              className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl transition-all duration-200 group ${
+   171→                activeModule === item.id 
+   172→                  ? 'bg-white text-[#005f73] shadow-lg scale-[1.02]' 
+   173→                  : 'text-white hover:bg-white/10 hover:translate-x-1'
+   174→              }`}
+   175→            >
+   176→              <span className={`${activeModule === item.id ? 'text-[#005f73]' : 'text-white/80 group-hover:text-white'}`}>
+   177→                {item.icon}
+   178→              </span>
+   179→              <div className="text-right flex-1">
+   180→                <span className="block font-semibold text-sm">{item.labelAr}</span>
+   181→                <span className={`block text-xs ${activeModule === item.id ? 'text-[#005f73]/70' : 'text-white/60'}`}>{item.label}</span>
+   182→              </div>
+   183→              {activeModule === item.id && (
+   184→                <ChevronDown size={16} className="rotate-[-90deg] text-[#005f73]" />
+   185→              )}
+   186→            </button>
+   187→          ))}
+   188→        </nav>
+   189→
+   190→        {/* Footer Info */}
+   191→        <div className="absolute bottom-0 left-0 right-0 p-4 border-t border-white/20">
+   192→          <div className="bg-white/10 rounded-xl p-4 backdrop-blur-sm">
+   193→            <p className="text-xs text-white/70 mb-1">الإصدار 1.0.0</p>
+   194→            <p className="text-xs text-white/50">© 2024 Accounting Pro</p>
+   195→          </div>
+   196→        </div>
+   197→      </aside>
+   198→    </>
+   199→  )
+   200→}
+   201→
+   202→// ==================== Dashboard Module ====================
+   203→const Dashboard: React.FC = () => {
+   204→  const kpis = [
+   205→    { title: 'إجمالي المبيعات', titleEn: 'Total Sales', value: '127,500 ر.س', change: '+12.5%', trend: 'up', icon: <TrendingUp size={24} />, color: 'from-emerald-500 to-green-600' },
+   206→    { title: 'إجمالي المشتريات', titleEn: 'Total Purchases', value: '85,000 ر.س', change: '-3.2%', trend: 'down', icon: <TrendingDown size={24} />, color: 'from-orange-500 to-red-600' },
+   207→    { title: 'صافي الربح', titleEn: 'Net Profit', value: '42,500 ر.س', change: '+8.7%', trend: 'up', icon: <DollarSign size={24} />, color: 'from-blue-500 to-indigo-600' },
+   208→    { title: 'الفواتير المستحقة', titleEn: 'Pending Invoices', value: '9,200 ر.س', change: '+2', trend: 'up', icon: <Clock size={24} />, color: 'from-amber-500 to-yellow-600' },
+   209→  ]
+   210→
+   211→  const recentInvoices = mockInvoices.slice(0, 5)
+   212→  const recentTransactions = mockTransactions.slice(0, 5)
+   213→
+   214→  return (
+   215→    <div className="space-y-6 animate-fade-in">
+   216→      {/* Page Header */}
+   217→      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+   218→        <div>
+   219→          <h1 className="text-3xl font-bold text-[#005f73]">لوحة التحكم</h1>
+   220→          <p className="text-gray-500 mt-1">نظرة عامة على أداء أعمالك المالية</p>
+   221→        </div>
+   222→        <div className="flex gap-2">
+   223→          <Button className="bg-[#005f73] hover:bg-[#0a9396] text-white gap-2">
+   224→            <RefreshCw size={18} />
+   225→            تحديث
+   226→          </Button>
+   227→          <Button variant="outline" className="gap-2">
+   228→            <Download size={18} />
+   229→            تصدير التقرير
+   230→          </Button>
+   231→        </div>
+   232→      </div>
+   233→
+   234→      {/* KPI Cards */}
+   235→      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+   236→        {kpis.map((kpi, index) => (
+   237→          <Card key={index} className="overflow-hidden border-0 shadow-lg hover:shadow-xl transition-shadow duration-300">
+   238→            <CardContent className="p-0">
+   239→              <div className={`bg-gradient-to-l ${kpi.color} p-6 text-white`}>
+   240→                <div className="flex justify-between items-start">
+   241→                  <div>
+   242→                    <p className="text-sm opacity-90">{kpi.title}</p>
+   243→                    <p className="text-2xl font-bold mt-2">{kpi.value}</p>
+   244→                    <div className={`flex items-center gap-1 mt-2 text-sm ${kpi.trend === 'up' ? 'text-green-100' : 'text-red-100'}`}>
+   245→                      {kpi.trend === 'up' ? <ArrowUpRight size={16} /> : <ArrowDownLeft size={16} />}
+   246→                      <span>{kpi.change}</span>
+   247→                      <span className="opacity-75">من الشهر الماضي</span>
+   248→                    </div>
+   249→                  </div>
+   250→                  <div className="bg-white/20 p-3 rounded-xl backdrop-blur-sm">
+   251→                    {kpi.icon}
+   252→                  </div>
+   253→                </div>
+   254→              </div>
+   255→            </CardContent>
+   256→          </Card>
+   257→        ))}
+   258→      </div>
+   259→
+   260→      {/* Charts & Recent Activity */}
+   261→      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+   262→        {/* Sales Chart Placeholder */}
+   263→        <Card className="shadow-lg">
+   264→          <CardHeader className="border-b border-gray-100">
+   265→            <CardTitle className="flex items-center gap-2 text-[#005f73]">
+   266→              <BarChart3 size={20} />
+   267→              نظرة على المبيعات
+   268→            </CardTitle>
+   269→            <CardDescription>آخر 6 أشهر</CardDescription>
+   270→          </CardHeader>
+   271→          <CardContent className="pt-6">
+   272→            <div className="h-64 flex items-end justify-around gap-2 px-4">
+   273→              {[65, 85, 45, 90, 70, 95].map((height, i) => (
+   274→                <div key={i} className="flex-1 flex flex-col items-center gap-2">
+   275→                  <div 
+   276→                    className="w-full bg-gradient-to-t from-[#005f73] to-[#94d2bd] rounded-t-lg transition-all duration-500 hover:opacity-80 cursor-pointer"
+   277→                    style={{ height: `${height}%` }}
+   278→                  />
+   279→                  <span className="text-xs text-gray-500">
+   280→                    {['يوليو', 'أغسطس', 'سبتمبر', 'أكتوبر', 'نوفمبر', 'ديسمبر'][i]}
+   281→                  </span>
+   282→                </div>
+   283→              ))}
+   284→            </div>
+   285→          </CardContent>
+   286→        </Card>
+   287→
+   288→        {/* Expense Categories */}
+   289→        <Card className="shadow-lg">
+   290→          <CardHeader className="border-b border-gray-100">
+   291→            <CardTitle className="flex items-center gap-2 text-[#005f73]">
+   292→              <PieChartIcon size={20} />
+   293→              توزيع المصروفات
+   294→            </CardTitle>
+   295→            <CardDescription>هذا الشهر</CardDescription>
+   296→          </CardHeader>
+   297→          <CardContent className="pt-6">
+   298→            <div className="space-y-4">
+   299→              {[
+   300→                { label: 'مشتريات', percent: 45, color: '#005f73', amount: '38,250 ر.س' },
+   301→                { label: 'رواتب', percent: 30, color: '#0a9396', amount: '25,500 ر.س' },
+   302→                { label: 'إيجار', percent: 15, color: '#94d2bd', amount: '12,750 ر.س' },
+   303→                { label: 'أخرى', percent: 10, color: '#f8f9fa', amount: '8,500 ر.س' },
+   304→              ].map((item, i) => (
+   305→                <div key={i} className="space-y-2">
+   306→                  <div className="flex justify-between text-sm">
+   307→                    <span className="font-medium">{item.label}</span>
+   308→                    <span className="text-gray-500">{item.amount}</span>
+   309→                  </div>
+   310→                  <div className="h-3 bg-gray-100 rounded-full overflow-hidden">
+   311→                    <div 
+   312→                      className="h-full rounded-full transition-all duration-700"
+   313→                      style={{ width: `${item.percent}%`, backgroundColor: item.color }}
+   314→                    />
+   315→                  </div>
+   316→                </div>
+   317→              ))}
+   318→            </div>
+   319→          </CardContent>
+   320→        </Card>
+   321→      </div>
+   322→
+   323→      {/* Recent Invoices & Transactions */}
+   324→      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+   325→        {/* Recent Invoices */}
+   326→        <Card className="shadow-lg">
+   327→          <CardHeader className="border-b border-gray-100 flex flex-row items-center justify-between">
+   328→            <div>
+   329→              <CardTitle className="flex items-center gap-2 text-[#005f73]">
+   330→                <Receipt size={20} />
+   331→                آخر الفواتير
+   332→              </CardTitle>
+   333→              <CardDescription>أحدث 5 فواتير</CardDescription>
+   334→            </div>
+   335→            <Button variant="ghost" size="sm" className="text-[#0a9396]">
+   336→              عرض الكل
+   337→            </Button>
+   338→          </CardHeader>
+   339→          <CardContent className="pt-4">
+   340→            <Table>
+   341→              <TableHeader>
+   342→                <TableRow>
+   343→                  <TableHead className="text-right">رقم الفاتورة</TableHead>
+   344→                  <TableHead className="text-right">الطرف</TableHead>
+   345→                  <TableHead className="text-right">المبلغ</TableHead>
+   346→                  <TableHead className="text-right">الحالة</TableHead>
+   347→                </TableRow>
+   348→              </TableHeader>
+   349→              <TableBody>
+   350→                {recentInvoices.map((invoice) => (
+   351→                  <TableRow key={invoice.id} className="hover:bg-gray-50">
+   352→                    <TableCell className="font-medium">{invoice.invoiceNumber}</TableCell>
+   353→                    <TableCell>{invoice.partyName}</TableCell>
+   354→                    <TableCell>{invoice.total.toLocaleString()} ر.س</TableCell>
+   355→                    <TableCell>
+   356→                      <Badge variant={
+   357→                        invoice.paymentStatus === 'paid' ? 'default' :
+   358→                        invoice.paymentStatus === 'partial' ? 'secondary' : 'destructive'
+   359→                      }>
+   360→                        {invoice.paymentStatus === 'paid' ? 'مدفوعة' :
+   361→                         invoice.paymentStatus === 'partial' ? 'جزئية' : 'غير مدفوعة'}
+   362→                      </Badge>
+   363→                    </TableCell>
+   364→                  </TableRow>
+   365→                ))}
+   366→              </TableBody>
+   367→            </Table>
+   368→          </CardContent>
+   369→        </Card>
+   370→
+   371→        {/* Recent Transactions */}
+   372→        <Card className="shadow-lg">
+   373→          <CardHeader className="border-b border-gray-100 flex flex-row items-center justify-between">
+   374→            <div>
+   375→              <CardTitle className="flex items-center gap-2 text-[#005f73]">
+   376→                <Wallet size={20} />
+   377→                آخر المعاملات المالية
+   378→              </CardTitle>
+   379→              <CardDescription>أحدث 5 معاملات</CardDescription>
+   380→            </div>
+   381→            <Button variant="ghost" size="sm" className="text-[#0a9396]">
+   382→              عرض الكل
+   383→            </Button>
+   384→          </CardHeader>
+   385→          <CardContent className="pt-4">
+   386→            <div className="space-y-3">
+   387→              {recentTransactions.map((tx) => (
+   388→                <div key={tx.id} className="flex items-center justify-between p-3 rounded-lg hover:bg-gray-50 transition-colors">
+   389→                  <div className="flex items-center gap-3">
+   390→                    <div className={`p-2 rounded-lg ${tx.type.includes('income') || tx.type === 'payment_received' ? 'bg-emerald-100 text-emerald-600' : 'bg-red-100 text-red-600'}`}>
+   391→                      {tx.type.includes('income') || tx.type === 'payment_received' ? <ArrowDownLeft size={18} /> : <ArrowUpRight size={18} />}
+   392→                    </div>
+   393→                    <div>
+   394→                      <p className="font-medium text-sm">{tx.description}</p>
+   395→                      <p className="text-xs text-gray-500">{tx.partyName || tx.category}</p>
+   396→                    </div>
+   397→                  </div>
+   398→                  <div className="text-left">
+   399→                    <p className={`font-bold ${tx.type.includes('income') || tx.type === 'payment_received' ? 'text-emerald-600' : 'text-red-600'}`}>
+   400→                      {tx.type.includes('income') || tx.type === 'payment_received' ? '+' : '-'}{tx.amount.toLocaleString()} ر.س
+   401→                    </p>
+   402→                    <p className="text-xs text-gray-400">{tx.date}</p>
+   403→                  </div>
+   404→                </div>
+   405→              ))}
+   406→            </div>
+   407→          </CardContent>
+   408→        </Card>
+   409→      </div>
+   410→    </div>
+   411→  )
+   412→}
+   413→
+   414→// ==================== Sales Module ====================
+   415→const Sales: React.FC = () => {
+   416→  const [showNewInvoice, setShowNewInvoice] = useState(false)
+   417→  const [searchTerm, setSearchTerm] = useState('')
+   418→  const [filterStatus, setFilterStatus] = useState<string>('all')
+   419→
+   420→  const filteredInvoices = mockInvoices.filter(inv => {
+   421→    const matchesSearch = inv.partyName.includes(searchTerm) || inv.invoiceNumber.toLowerCase().includes(searchTerm.toLowerCase())
+   422→    const matchesFilter = filterStatus === 'all' || inv.status === filterStatus || inv.paymentStatus === filterStatus
+   423→    return matchesSearch && matchesFilter
+   424→  })
+   425→
+   426→  return (
+   427→    <div className="space-y-6 animate-fade-in">
+   428→      {/* Page Header */}
+   429→      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+   430→        <div>
+   431→          <h1 className="text-3xl font-bold text-[#005f73]">المبيعات</h1>
+   432→          <p className="text-gray-500 mt-1">إدارة فواتير المبيعات والمرتجعات</p>
+   433→        </div>
+   434→        <Dialog open={showNewInvoice} onOpenChange={setShowNewInvoice}>
+   435→          <DialogTrigger asChild>
+   436→            <Button className="bg-[#005f73] hover:bg-[#0a9396] text-white gap-2">
+   437→              <Plus size={18} />
+   438→              فاتورة جديدة
+   439→            </Button>
+   440→          </DialogTrigger>
+   441→          <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
+   442→            <DialogHeader>
+   443→              <DialogTitle className="text-xl text-[#005f73]">إنشاء فاتورة مبيعات جديدة</DialogTitle>
+   444→              <DialogDescription>قم بملء بيانات الفاتورة وإضافة المنتجات</DialogDescription>
+   445→            </DialogHeader>
+   446→            <InvoiceForm type="sale" onClose={() => setShowNewInvoice(false)} />
+   447→          </DialogContent>
+   448→        </Dialog>
+   449→      </div>
+   450→
+   451→      {/* Filters */}
+   452→      <Card className="shadow-md">
+   453→        <CardContent className="p-4">
+   454→          <div className="flex flex-col sm:flex-row gap-4">
+   455→            <div className="relative flex-1">
+   456→              <Search className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400" size={18} />
+   457→              <Input
+   458→                placeholder="بحث بالرقم أو اسم العميل..."
+   459→                value={searchTerm}
+   460→                onChange={(e) => setSearchTerm(e.target.value)}
+   461→                className="pr-10"
+   462→              />
+   463→            </div>
+   464→            <Select value={filterStatus} onValueChange={setFilterStatus}>
+   465→              <SelectTrigger className="w-full sm:w-48">
+   466→                <SelectValue placeholder="الحالة" />
+   467→              </SelectTrigger>
+   468→              <SelectContent>
+   469→                <SelectItem value="all">جميع الحالات</SelectItem>
+   470→                <SelectItem value="paid">مدفوعة</SelectItem>
+   471→                <SelectItem value="partial">جزئية</SelectItem>
+   472→                <SelectItem value="unpaid">غير مدفوعة</SelectItem>
+   473→              </SelectContent>
+   474→            </Select>
+   475→            <Button variant="outline" className="gap-2">
+   476→              <Filter size={18} />
+   477→              فلترة متقدمة
+   478→            </Button>
+   479→          </div>
+   480→        </CardContent>
+   481→      </Card>
+   482→
+   483→      {/* Invoices Table */}
+   484→      <Card className="shadow-lg">
+   485→        <CardContent className="p-0">
+   486→          <Table>
+   487→            <TableHeader>
+   488→              <TableRow className="bg-[#005f73] text-white hover:bg-[#005f73]">
+   489→                <TableHead className="text-white">رقم الفاتورة</TableHead>
+   490→                <TableHead className="text-white">التاريخ</TableHead>
+   491→                <TableHead className="text-white">العميل</TableHead>
+   492→                <TableHead className="text-white">الإجمالي</TableHead>
+   493→                <TableHead className="text-white">المدفوع</TableHead>
+   494→                <TableHead className="text-white">المتبقي</TableHead>
+   495→                <TableHead className="text-white">حالة الدفع</TableHead>
+   496→                <TableHead className="text-white">حالة الفاتورة</TableHead>
+   497→                <TableHead className="text-white text-center">إجراءات</TableHead>
+   498→              </TableRow>
+   499→            </TableHeader>
+   500→            <TableBody>
+   501→              {filteredInvoices.filter(inv => inv.type === 'sale' || inv.type === 'sale_return').map((invoice) => (
+   502→                <TableRow key={invoice.id} className="hover:bg-gray-50 transition-colors">
+   503→                  <TableCell className="font-medium font-mono">{invoice.invoiceNumber}</TableCell>
+   504→                  <TableCell>{invoice.date}</TableCell>
+   505→                  <TableCell className="font-medium">{invoice.partyName}</TableCell>
+   506→                  <TableCell className="font-bold">{invoice.total.toLocaleString()} ر.س</TableCell>
+   507→                  <TableCell className="text-emerald-600">{invoice.paidAmount.toLocaleString()} ر.س</TableCell>
+   508→                  <TableCell className={invoice.remainingAmount > 0 ? 'text-amber-600' : ''}>
+   509→                    {invoice.remainingAmount.toLocaleString()} ر.س
+   510→                  </TableCell>
+   511→                  <TableCell>
+   512→                    <Badge variant={
+   513→                      invoice.paymentStatus === 'paid' ? 'default' :
+   514→                      invoice.paymentStatus === 'partial' ? 'secondary' : 'destructive'
+   515→                    } className={
+   516→                      invoice.paymentStatus === 'paid' ? 'bg-emerald-100 text-emerald-700' :
+   517→                      invoice.paymentStatus === 'partial' ? 'bg-amber-100 text-amber-700' : ''
+   518→                    }>
+   519→                      {invoice.paymentStatus === 'paid' ? '✓ مدفوعة' :
+   520→                       invoice.paymentStatus === 'partial' ? '◐ جزئية' : '✗ غير مدفوعة'}
+   521→                    </Badge>
+   522→                  </TableCell>
+   523→                  <TableCell>
+   524→                    <Badge variant="outline" className={
+   525→                      invoice.status === 'confirmed' ? 'border-blue-500 text-blue-700' :
+   526→                      invoice.status === 'cancelled' ? 'border-red-500 text-red-700' : ''
+   527→                    }>
+   528→                      {invoice.status === 'confirmed' ? 'مؤكدة' :
+   529→                       invoice.status === 'cancelled' ? 'ملغاة' : 'مسودة'}
+   530→                    </Badge>
+   531→                  </TableCell>
+   532→                  <TableCell>
+   533→                    <div className="flex items-center justify-center gap-1">
+   534→                      <Button variant="ghost" size="icon" className="h-8 w-8 text-blue-600 hover:bg-blue-50">
+   535→                        <Eye size={16} />
+   536→                      </Button>
+   537→                      <Button variant="ghost" size="icon" className="h-8 w-8 text-amber-600 hover:bg-amber-50">
+   538→                        <Edit2 size={16} />
+   539→                      </Button>
+   540→                      <Button variant="ghost" size="icon" className="h-8 w-8 text-red-600 hover:bg-red-50">
+   541→                        <Printer size={16} />
+   542→                      </Button>
+   543→                    </div>
+   544→                  </TableCell>
+   545→                </TableRow>
+   546→              ))}
+   547→            </TableBody>
+   548→          </Table>
+   549→        </CardContent>
+   550→      </Card>
+   551→    </div>
+   552→  )
+   553→}
+   554→
+   555→// ==================== Purchases Module ====================
+   556→const Purchases: React.FC = () => {
+   557→  const [showNewPurchase, setShowNewPurchase] = useState(false)
+   558→
+   559→  return (
+   560→    <div className="space-y-6 animate-fade-in">
+   561→      {/* Page Header */}
+   562→      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+   563→        <div>
+   564→          <h1 className="text-3xl font-bold text-[#005f73]">المشتريات</h1>
+   565→          <p className="text-gray-500 mt-1">إدارة فواتير المشتريات ومرتجعات المشتريات</p>
+   566→        </div>
+   567→        <Dialog open={showNewPurchase} onOpenChange={setShowNewPurchase}>
+   568→          <DialogTrigger asChild>
+   569→            <Button className="bg-[#005f73] hover:bg-[#0a9396] text-white gap-2">
+   570→              <Plus size={18} />
+   571→              فاتورة مشتريات
+   572→            </Button>
+   573→          </DialogTrigger>
+   574→          <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
+   575→            <DialogHeader>
+   576→              <DialogTitle className="text-xl text-[#005f73]">إنشاء فاتورة مشتريات جديدة</DialogTitle>
+   577→              <DialogDescription>قم بملء بيانات فاتورة المشتريات من المورد</DialogDescription>
+   578→            </DialogHeader>
+   579→            <InvoiceForm type="purchase" onClose={() => setShowNewPurchase(false)} />
+   580→          </DialogContent>
+   581→        </Dialog>
+   582→      </div>
+   583→
+   584→      {/* Summary Cards */}
+   585→      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+   586→        <Card className="bg-gradient-to-l from-blue-500 to-blue-600 text-white border-0">
+   587→          <CardContent className="p-6">
+   588→            <div className="flex items-center justify-between">
+   589→              <div>
+   590→                <p className="text-sm opacity-90">إجمالي المشتريات</p>
+   591→                <p className="text-3xl font-bold mt-1">25,000 ر.س</p>
+   592→              </div>
+   593→              <Package size={40} className="opacity-50" />
+   594→            </div>
+   595→          </CardContent>
+   596→        </Card>
+   597→        <Card className="bg-gradient-to-l from-emerald-500 to-emerald-600 text-white border-0">
+   598→          <CardContent className="p-6">
+   599→            <div className="flex items-center justify-between">
+   600→              <div>
+   601→                <p className="text-sm opacity-90">مرتجعات المشتريات</p>
+   602→                <p className="text-3xl font-bold mt-1">0 ر.س</p>
+   603→              </div>
+   604→              <RefreshCw size={40} className="opacity-50" />
+   605→            </div>
+   606→          </CardContent>
+   607→        </Card>
+   608→        <Card className="bg-gradient-to-l from-purple-500 to-purple-600 text-white border-0">
+   609→          <CardContent className="p-6">
+   610→            <div className="flex items-center justify-between">
+   611→              <div>
+   612→                <p className="text-sm opacity-90">عدد الموردين</p>
+   613→                <p className="text-3xl font-bold mt-1">3</p>
+   614→              </div>
+   615→              <Users size={40} className="opacity-50" />
+   616→            </div>
+   617→          </CardContent>
+   618→        </Card>
+   619→      </div>
+   620→
+   621→      {/* Purchases Table */}
+   622→      <Card className="shadow-lg">
+   623→        <CardContent className="p-0">
+   624→          <Table>
+   625→            <TableHeader>
+   626→              <TableRow className="bg-[#005f73] text-white hover:bg-[#005f73]">
+   627→                <TableHead className="text-white">رقم الفاتورة</TableHead>
+   628→                <TableHead className="text-white">التاريخ</TableHead>
+   629→                <TableHead className="text-white">المورد</TableHead>
+   630→                <TableHead className="text-white">الإجمالي</TableHead>
+   631→                <TableHead className="text-white">حالة الدفع</TableHead>
+   632→                <TableHead className="text-white">الحالة</TableHead>
+   633→                <TableHead className="text-white text-center">إجراءات</TableHead>
+   634→              </TableRow>
+   635→            </TableHeader>
+   636→            <TableBody>
+   637→              {mockInvoices.filter(inv => inv.type === 'purchase').map((invoice) => (
+   638→                <TableRow key={invoice.id} className="hover:bg-gray-50 transition-colors">
+   639→                  <TableCell className="font-medium font-mono">{invoice.invoiceNumber}</TableCell>
+   640→                  <TableCell>{invoice.date}</TableCell>
+   641→                  <TableCell className="font-medium">{invoice.partyName}</TableCell>
+   642→                  <TableCell className="font-bold">{invoice.total.toLocaleString()} ر.س</TableCell>
+   643→                  <TableCell>
+   644→                    <Badge variant={invoice.paymentStatus === 'paid' ? 'default' : 'secondary'}>
+   645→                      {invoice.paymentStatus === 'paid' ? '✓ مدفوعة' : '◐ جزئية'}
+   646→                    </Badge>
+   647→                  </TableCell>
+   648→                  <TableCell>
+   649→                    <Badge variant="outline" className="border-blue-500 text-blue-700">
+   650→                      مؤكدة
+   651→                    </Badge>
+   652→                  </TableCell>
+   653→                  <TableCell>
+   654→                    <div className="flex items-center justify-center gap-1">
+   655→                      <Button variant="ghost" size="icon" className="h-8 w-8 text-blue-600 hover:bg-blue-50">
+   656→                        <Eye size={16} />
+   657→                      </Button>
+   658→                      <Button variant="ghost" size="icon" className="h-8 w-8 text-amber-600 hover:bg-amber-50">
+   659→                        <Edit2 size={16} />
+   660→                      </Button>
+   661→                      <Button variant="ghost" size="icon" className="h-8 w-8 text-red-600 hover:bg-red-50">
+   662→                        <Printer size={16} />
+   663→                      </Button>
+   664→                    </div>
+   665→                  </TableCell>
+   666→                </TableRow>
+   667→              ))}
+   668→            </TableBody>
+   669→          </Table>
+   670→        </CardContent>
+   671→      </Card>
+   672→    </div>
+   673→  )
+   674→}
+   675→
+   676→// ==================== Invoice Form Component ====================
+   677→const InvoiceForm: React.FC<{ type: 'sale' | 'purchase'; onClose: () => void }> = ({ type, onClose }) => {
+   678→  const [items, setItems] = useState([{ itemId: '', quantity: 1, price: 0, total: 0 }])
+   679→  const [discount, setDiscount] = useState(0)
+   680→  const [tax, setTax] = useState(15)
+   681→
+   682→  const addItem = () => {
+   683→    setItems([...items, { itemId: '', quantity: 1, price: 0, total: 0 }])
+   684→  }
+   685→
+   686→  const removeItem = (index: number) => {
+   687→    if (items.length > 1) {
+   688→      setItems(items.filter((_, i) => i !== index))
+   689→    }
+   690→  }
+   691→
+   692→  const subtotal = items.reduce((sum, item) => sum + (item.quantity * item.price), 0)
+   693→  const discountAmount = subtotal * (discount / 100)
+   694→  const taxableAmount = subtotal - discountAmount
+   695→  const taxAmount = taxableAmount * (tax / 100)
+   696→  const total = taxableAmount + taxAmount
+   697→
+   698→  return (
+   699→    <div className="space-y-6 pt-4">
+   700→      {/* Basic Info */}
+   701→      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+   702→        <div className="space-y-2">
+   703→          <Label>رقم الفاتورة</Label>
+   704→          <Input defaultValue={type === 'sale' ? 'INV-2024-005' : 'PUR-2024-002'} className="font-mono" />
+   705→        </div>
+   706→        <div className="space-y-2">
+   707→          <Label>التاريخ</Label>
+   708→          <Input type="date" defaultValue="2024-01-16" />
+   709→        </div>
+   710→        <div className="space-y-2 md:col-span-2">
+   711→          <Label>{type === 'sale' ? 'العميل' : 'المورد'}</Label>
+   712→          <Select>
+   713→            <SelectTrigger>
+   714→              <SelectValue placeholder={`اختر ${type === 'sale' ? 'العميل' : 'المورد'}`} />
+   715→            </SelectTrigger>
+   716→            <SelectContent>
+   717→              {mockParties
+   718→                .filter(p => type === 'sale' ? p.type === 'customer' || p.type === 'both' : p.type === 'supplier' || p.type === 'both')
+   719→                .map(party => (
+   720→                  <SelectItem key={party.id} value={party.id}>{party.nameAr}</SelectItem>
+   721→                ))
+   722→              }
+   723→            </SelectContent>
+   724→          </Select>
+   725→        </div>
+   726→        <div className="space-y-2 md:col-span-2">
+   727→          <Label>ملاحظات</Label>
+   728→          <Textarea placeholder="أضف ملاحظات إضافية..." rows={2} />
+   729→        </div>
+   730→      </div>
+   731→
+   732→      <Separator />
+   733→
+   734→      {/* Items Section */}
+   735→      <div className="space-y-4">
+   736→        <div className="flex items-center justify-between">
+   737→          <Label className="text-base font-semibold">بنود الفاتورة</Label>
+   738→          <Button type="button" variant="outline" size="sm" onClick={addItem} className="gap-1">
+   739→            <Plus size={16} />
+   740→            إضافة بند
+   741→          </Button>
+   742→        </div>
+   743→
+   744→        <div className="space-y-3">
+   745→          {items.map((item, index) => (
+   746→            <div key={index} className="grid grid-cols-12 gap-2 items-end">
+   747→              <div className="col-span-5 space-y-1">
+   748→                <Label className="text-xs">الصنف</Label>
+   749→                <Select>
+   750→                  <SelectTrigger className="w-full">
+   751→                    <SelectValue placeholder="اختر الصنف" />
+   752→                  </SelectTrigger>
+   753→                  <SelectContent>
+   754→                    {mockItems.map(item => (
+   755→                      <SelectItem key={item.id} value={item.id}>{item.nameAr} ({item.code})</SelectItem>
+   756→                    ))}
+   757→                  </SelectContent>
+   758→                </Select>
+   759→              </div>
+   760→              <div className="col-span-2 space-y-1">
+   761→                <Label className="text-xs">الكمية</Label>
+   762→                <Input type="number" min="1" defaultValue={item.quantity} />
+   763→              </div>
+   764→              <div className="col-span-2 space-y-1">
+   765→                <Label className="text-xs">السعر</Label>
+   766→                <Input type="number" min="0" step="0.01" placeholder="0.00" />
+   767→              </div>
+   768→              <div className="col-span-2 space-y-1">
+   769→                <Label className="text-xs">الإجمالي</Label>
+   770→                <Input value="0.00" readOnly className="bg-gray-50" />
+   771→              </div>
+   772→              <div className="col-span-1">
+   773→                <Button 
+   774→                  type="button" 
+   775→                  variant="ghost" 
+   776→                  size="icon" 
+   777→                  onClick={() => removeItem(index)}
+   778→                  disabled={items.length === 1}
+   779→                  className="text-red-500 hover:text-red-700 hover:bg-red-50"
+   780→                >
+   781→                  <XCircle size={18} />
+   782→                </Button>
+   783→              </div>
+   784→            </div>
+   785→          ))}
+   786→        </div>
+   787→      </div>
+   788→
+   789→      <Separator />
+   790→
+   791→      {/* Totals */}
+   792→      <div className="space-y-3">
+   793→        <div className="flex items-center justify-end gap-4">
+   794→          <Label className="w-32">الخصم (%)</Label>
+   795→          <Input 
+   796→            type="number" 
+   797→            min="0" 
+   798→            max="100" 
+   799→            value={discount} 
+   800→            onChange={(e) => setDiscount(Number(e.target.value))}
+   801→            className="w-24"
+   802→          />
+   803→        </div>
+   804→        <div className="flex items-center justify-end gap-4">
+   805→          <Label className="w-32">الضريبة (%)</Label>
+   806→          <Input 
+   807→            type="number" 
+   808→            min="0" 
+   809→            max="100" 
+   810→            value={tax} 
+   811→            onChange={(e) => setTax(Number(e.target.value))}
+   812→            className="w-24"
+   813→          />
+   814→        </div>
+   815→        
+   816→        <div className="bg-gray-50 rounded-lg p-4 space-y-2">
+   817→          <div className="flex justify-between text-sm">
+   818→            <span>المجموع الفرعي:</span>
+   819→            <span>{subtotal.toFixed(2)} ر.س</span>
+   820→          </div>
+   821→          <div className="flex justify-between text-sm text-amber-600">
+   822→            <span>الخصم ({discount}%):</span>
+   823→            <span>-{discountAmount.toFixed(2)} ر.س</span>
+   824→          </div>
+   825→          <div className="flex justify-between text-sm text-blue-600">
+   826→            <span>الضريبة ({tax}%):</span>
+   827→            <span>+{taxAmount.toFixed(2)} ر.س</span>
+   828→          </div>
+   829→          <Separator />
+   830→          <div className="flex justify-between text-lg font-bold text-[#005f73]">
+   831→            <span>الإجمالي:</span>
+   832→            <span>{total.toFixed(2)} ر.س</span>
+   833→          </div>
+   834→        </div>
+   835→      </div>
+   836→
+   837→      {/* Actions */}
+   838→      <div className="flex justify-end gap-3 pt-4 border-t">
+   839→        <Button variant="outline" onClick={onClose}>إلغاء</Button>
+   840→        <Button variant="outline" className="gap-2">
+   841→          <Save size={18} />
+   842→          حفظ كمسودة
+   843→        </Button>
+   844→        <Button className="bg-[#005f73] hover:bg-[#0a9396] text-white gap-2">
+   845→          <CheckCircle size={18} />
+   846→          تأكيد وحفظ
+   847→        </Button>
+   848→      </div>
+   849→    </div>
+   850→  )
+   851→}
+   852→
+   853→// ==================== Inventory Module ====================
+   854→const Inventory: React.FC = () => {
+   855→  const [showAddItem, setShowAddItem] = useState(false)
+   856→  const [viewMode, setViewMode] = useState<'grid' | 'table'>('table')
+   857→
+   858→  const lowStockItems = mockItems.filter(item => item.quantity <= item.minStock)
+   859→
+   860→  return (
+   861→    <div className="space-y-6 animate-fade-in">
+   862→      {/* Page Header */}
+   863→      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+   864→        <div>
+   865→          <h1 className="text-3xl font-bold text-[#005f73]">إدارة المخزون</h1>
+   866→          <p className="text-gray-500 mt-1">إدارة الأصناف والمخازن والكميات</p>
+   867→        </div>
+   868→        <div className="flex gap-2">
+   869→          <Dialog open={showAddItem} onOpenChange={setShowAddItem}>
+   870→            <DialogTrigger asChild>
+   871→              <Button className="bg-[#005f73] hover:bg-[#0a9396] text-white gap-2">
+   872→                <Plus size={18} />
+   873→                صنف جديد
+   874→              </Button>
+   875→            </DialogTrigger>
+   876→            <DialogContent className="max-w-2xl">
+   877→              <DialogHeader>
+   878→                <DialogTitle className="text-xl text-[#005f73]">إضافة صنف جديد</DialogTitle>
+   879→                <DialogDescription>أدخل بيانات الصنف الجديد</DialogDescription>
+   880→              </DialogHeader>
+   881→              <ItemForm onClose={() => setShowAddItem(false)} />
+   882→            </DialogContent>
+   883→          </Dialog>
+   884→        </div>
+   885→      </div>
+   886→
+   887→      {/* Summary Cards */}
+   888→      <div className="grid grid-cols-1 sm:grid-cols-4 gap-4">
+   889→        <Card className="shadow-md">
+   890→          <CardContent className="p-4 flex items-center gap-4">
+   891→            <div className="p-3 bg-blue-100 rounded-xl">
+   892→              <Package className="text-blue-600" size={24} />
+   893→            </div>
+   894→            <div>
+   895→              <p className="text-sm text-gray-500">إجمالي الأصناف</p>
+   896→              <p className="text-2xl font-bold text-[#005f73]">{mockItems.length}</p>
+   897→            </div>
+   898→          </CardContent>
+   899→        </Card>
+   900→        <Card className="shadow-md">
+   901→          <CardContent className="p-4 flex items-center gap-4">
+   902→            <div className="p-3 bg-emerald-100 rounded-xl">
+   903→              <CheckCircle className="text-emerald-600" size={24} />
+   904→            </div>
+   905→            <div>
+   906→              <p className="text-sm text-gray-500">متوفر</p>
+   907→              <p className="text-2xl font-bold text-emerald-600">{mockItems.length - lowStockItems.length}</p>
+   908→            </div>
+   909→          </CardContent>
+   910→        </Card>
+   911→        <Card className="shadow-md">
+   912→          <CardContent className="p-4 flex items-center gap-4">
+   913→            <div className="p-3 bg-amber-100 rounded-xl">
+   914→              <AlertCircle className="text-amber-600" size={24} />
+   915→            </div>
+   916→            <div>
+   917→              <p className="text-sm text-gray-500">مخزون منخفض</p>
+   918→              <p className="text-2xl font-bold text-amber-600">{lowStockItems.length}</p>
+   919→            </div>
+   920→          </CardContent>
+   921→        </Card>
+   922→        <Card className="shadow-md">
+   923→          <CardContent className="p-4 flex items-center gap-4">
+   924→            <div className="p-3 bg-purple-100 rounded-xl">
+   925→              <Building2 className="text-purple-600" size={24} />
+   926→            </div>
+   927→            <div>
+   928→              <p className="text-sm text-gray-500">المخازن</p>
+   929→              <p className="text-2xl font-bold text-purple-600">1</p>
+   930→            </div>
+   931→          </CardContent>
+   932→        </Card>
+   933→      </div>
+   934→
+   935→      {/* Low Stock Alert */}
+   936→      {lowStockItems.length > 0 && (
+   937→        <Card className="border-amber-200 bg-amber-50">
+   938→          <CardContent className="p-4">
+   939→            <div className="flex items-center gap-3">
+   940→              <AlertCircle className="text-amber-600" size={24} />
+   941→              <div>
+   942→                <p className="font-semibold text-amber-800">تنبيه: أصناف بمخزون منخفض</p>
+   943→                <p className="text-sm text-amber-700">
+   944→                  لديك {lowStockItems.length} أصناف وصلت للحد الأدنى أو أقل: {lowStockItems.map(i => i.nameAr).join('، ')}
+   945→                </p>
+   946→              </div>
+   947→            </div>
+   948→          </CardContent>
+   949→        </Card>
+   950→      )}
+   951→
+   952→      {/* View Toggle & Search */}
+   953→      <Card className="shadow-md">
+   954→        <CardContent className="p-4">
+   955→          <div className="flex flex-col sm:flex-row gap-4 items-start sm:items-center justify-between">
+   956→            <div className="relative flex-1 w-full sm:max-w-md">
+   957→              <Search className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400" size={18} />
+   958→              <Input placeholder="بحث بالاسم أو الكود..." className="pr-10" />
+   959→            </div>
+   960→            <div className="flex gap-2">
+   961→              <Button 
+   962→                variant={viewMode === 'table' ? 'default' : 'outline'}
+   963→                size="sm"
+   964→                onClick={() => setViewMode('table')}
+   965→                className={viewMode === 'table' ? 'bg-[#005f73]' : ''}
+   966→              >
+   967→                جدول
+   968→              </Button>
+   969→              <Button 
+   970→                variant={viewMode === 'grid' ? 'default' : 'outline'}
+   971→                size="sm"
+   972→                onClick={() => setViewMode('grid')}
+   973→                className={viewMode === 'grid' ? 'bg-[#005f73]' : ''}
+   974→              >
+   975→                شبكة
+   976→              </Button>
+   977→            </div>
+   978→          </div>
+   979→        </CardContent>
+   980→      </Card>
+   981→
+   982→      {/* Items Display */}
+   983→      {viewMode === 'table' ? (
+   984→        <Card className="shadow-lg">
+   985→          <CardContent className="p-0">
+   986→            <Table>
+   987→              <TableHeader>
+   988→                <TableRow className="bg-[#005f73] text-white hover:bg-[#005f73]">
+   989→                  <TableHead className="text-white">الكود</TableHead>
+   990→                  <TableHead className="text-white">اسم الصنف</TableHead>
+   991→                  <TableHead className="text-white">الفئة</TableHead>
+   992→                  <TableHead className="text-white">الوحدة</TableHead>
+   993→                  <TableHead className="text-white">سعر الشراء</TableHead>
+   994→                  <TableHead className="text-white">سعر البيع</TableHead>
+   995→                  <TableHead className="text-white">الكمية</TableHead>
+   996→                  <TableHead className="text-white">الحد الأدنى</TableHead>
+   997→                  <TableHead className="text-center text-white">إجراءات</TableHead>
+   998→                </TableRow>
+   999→              </TableHeader>
+  1000→              <TableBody>
+  1001→                {mockItems.map((item) => (
+  1002→                  <TableRow key={item.id} className="hover:bg-gray-50 transition-colors">
+  1003→                    <TableCell className="font-mono font-medium">{item.code}</TableCell>
+  1004→                    <TableCell>
+  1005→                      <div>
+  1006→                        <p className="font-medium">{item.nameAr}</p>
+  1007→                        <p className="text-xs text-gray-500">{item.name}</p>
+  1008→                      </div>
+  1009→                    </TableCell>
+  1010→                    <TableCell><Badge variant="outline">{item.category}</Badge></TableCell>
+  1011→                    <TableCell>{item.unit}</TableCell>
+  1012→                    <TableCell>{item.costPrice.toLocaleString()} ر.س</TableCell>
+  1013→                    <TableCell className="font-medium text-emerald-600">{item.salePrice.toLocaleString()} ر.س</TableCell>
+  1014→                    <TableCell>
+  1015→                      <span className={`font-bold ${item.quantity <= item.minStock ? 'text-red-600' : 'text-[#005f73]'}`}>
+  1016→                        {item.quantity}
+  1017→                      </span>
+  1018→                    </TableCell>
+  1019→                    <TableCell className="text-gray-500">{item.minStock}</TableCell>
+  1020→                    <TableCell>
+  1021→                      <div className="flex items-center justify-center gap-1">
+  1022→                        <Button variant="ghost" size="icon" className="h-8 w-8 text-blue-600 hover:bg-blue-50">
+  1023→                          <Eye size={16} />
+  1024→                        </Button>
+  1025→                        <Button variant="ghost" size="icon" className="h-8 w-8 text-amber-600 hover:bg-amber-50">
+  1026→                          <Edit2 size={16} />
+  1027→                        </Button>
+  1028→                        <Button variant="ghost" size="icon" className="h-8 w-8 text-red-600 hover:bg-red-50">
+  1029→                          <Trash2 size={16} />
+  1030→                        </Button>
+  1031→                      </div>
+  1032→                    </TableCell>
+  1033→                  </TableRow>
+  1034→                ))}
+  1035→              </TableBody>
+  1036→            </Table>
+  1037→          </CardContent>
+  1038→        </Card>
+  1039→      ) : (
+  1040→        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+  1041→          {mockItems.map((item) => (
+  1042→            <Card key={item.id} className="shadow-md hover:shadow-lg transition-shadow">
+  1043→              <CardContent className="p-4">
+  1044→                <div className="flex items-start justify-between mb-3">
+  1045→                  <div className="p-2 bg-[#005f73]/10 rounded-lg">
+  1046→                    <Package className="text-[#005f73]" size={24} />
+  1047→                  </div>
+  1048→                  <Badge variant={item.quantity <= item.minStock ? 'destructive' : 'secondary'}>
+  1049→                    {item.quantity <= item.minStock ? 'منخفض' : 'متوفر'}
+  1050→                  </Badge>
+  1051→                </div>
+  1052→                <h3 className="font-bold text-[#005f73]">{item.nameAr}</h3>
+  1053→                <p className="text-sm text-gray-500 mb-2">{item.name}</p>
+  1054→                <p className="text-xs font-mono text-gray-400 mb-3">{item.code}</p>
+  1055→                
+  1056→                <Separator className="my-3" />
+  1057→                
+  1058→                <div className="space-y-2 text-sm">
+  1059→                  <div className="flex justify-between">
+  1060→                    <span className="text-gray-500">الكمية:</span>
+  1061→                    <span className={`font-bold ${item.quantity <= item.minStock ? 'text-red-600' : ''}`}>{item.quantity} {item.unit}</span>
+  1062→                  </div>
+  1063→                  <div className="flex justify-between">
+  1064→                    <span className="text-gray-500">سعر البيع:</span>
+  1065→                    <span className="font-medium text-emerald-600">{item.salePrice.toLocaleString()} ر.س</span>
+  1066→                  </div>
+  1067→                </div>
+  1068→                
+  1069→                <div className="flex gap-2 mt-4">
+  1070→                  <Button variant="outline" size="sm" className="flex-1">
+  1071→                    <Edit2 size={14} className="ml-1" />
+  1072→                    تعديل
+  1073→                  </Button>
+  1074→                  <Button variant="outline" size="sm" className="flex-1 text-red-600 hover:bg-red-50">
+  1075→                    <Trash2 size={14} className="ml-1" />
+  1076→                    حذف
+  1077→                  </Button>
+  1078→                </div>
+  1079→              </CardContent>
+  1080→            </Card>
+  1081→          ))}
+  1082→        </div>
+  1083→      )}
+  1084→    </div>
+  1085→  )
+  1086→}
+  1087→
+  1088→// ==================== Item Form Component ====================
+  1089→const ItemForm: React.FC<{ onClose: () => void }> = ({ onClose }) => {
+  1090→  return (
+  1091→    <div className="space-y-4 pt-4">
+  1092→      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+  1093→        <div className="space-y-2">
+  1094→          <Label>كود الصنف *</Label>
+  1095→          <Input placeholder="مثال: ITM-006" className="font-mono" dir="ltr" />
+  1096→        </div>
+  1097→        <div className="space-y-2">
+  1098→          <Label>اسم الصنف (عربي) *</Label>
+  1099→          <Input placeholder="اسم الصنف بالعربية" />
+  1100→        </div>
+  1101→        <div className="space-y-2">
+  1102→          <Label>اسم الصنف (إنجليزي)</Label>
+  1103→          <Input placeholder="Item name in English" dir="ltr" />
+  1104→        </div>
+  1105→        <div className="space-y-2">
+  1106→          <Label>الباركود</Label>
+  1107→          <Input placeholder="اختياري" className="font-mono" dir="ltr" />
+  1108→        </div>
+  1109→        <div className="space-y-2">
+  1110→          <Label>الفئة *</Label>
+  1111→          <Select>
+  1112→            <SelectTrigger>
+  1113→              <SelectValue placeholder="اختر الفئة" />
+  1114→            </SelectTrigger>
+  1115→            <SelectContent>
+  1116→              <SelectItem value="electronics">إلكترونيات</SelectItem>
+  1117→              <SelectItem value="accessories">إكسسوارات</SelectItem>
+  1118→              <SelectItem value="other">أخرى</SelectItem>
+  1119→            </SelectContent>
+  1120→          </Select>
+  1121→        </div>
+  1122→        <div className="space-y-2">
+  1123→          <Label>الوحدة *</Label>
+  1124→          <Select>
+  1125→            <SelectTrigger>
+  1126→              <SelectValue placeholder="اختر الوحدة" />
+  1127→            </SelectTrigger>
+  1128→            <SelectContent>
+  1129→              <SelectItem value="piece">قطعة</SelectItem>
+  1130→              <SelectItem value="kg">كيلوجرام</SelectItem>
+  1131→              <SelectItem value="box">علبة</SelectItem>
+  1132→              <SelectItem value="meter">متر</SelectItem>
+  1133→            </SelectContent>
+  1134→          </Select>
+  1135→        </div>
+  1136→        <div className="space-y-2">
+  1137→          <Label>المخزن *</Label>
+  1138→          <Select>
+  1139→            <SelectTrigger>
+  1140→              <SelectValue placeholder="اختر المخزن" />
+  1141→            </SelectTrigger>
+  1142→            <SelectContent>
+  1143→              <SelectItem value="main">المخزن الرئيسي</SelectItem>
+  1144→            </SelectContent>
+  1145→          </Select>
+  1146→        </div>
+  1147→        <div className="space-y-2">
+  1148→          <Label>سعر الشراء *</Label>
+  1149→          <Input type="number" min="0" step="0.01" placeholder="0.00" dir="ltr" />
+  1150→        </div>
+  1151→        <div className="space-y-2">
+  1152→          <Label>سعر البيع *</Label>
+  1153→          <Input type="number" min="0" step="0.01" placeholder="0.00" dir="ltr" />
+  1154→        </div>
+  1155→        <div className="space-y-2">
+  1156→          <Label>الحد الأدنى للمخزون</Label>
+  1157→          <Input type="number" min="0" placeholder="0" />
+  1158→        </div>
+  1159→        <div className="space-y-2">
+  1160→          <Label>الحد الأقصى للمخزون</Label>
+  1161→          <Input type="number" min="0" placeholder="0" />
+  1162→        </div>
+  1163→        <div className="md:col-span-2 space-y-2">
+  1164→          <Label>الوصف</Label>
+  1165→          <Textarea placeholder="وصف الصنف..." rows={2} />
+  1166→        </div>
+  1167→      </div>
+  1168→
+  1169→      <div className="flex justify-end gap-3 pt-4 border-t">
+  1170→        <Button variant="outline" onClick={onClose}>إلغاء</Button>
+  1171→        <Button className="bg-[#005f73] hover:bg-[#0a9396] text-white gap-2">
+  1172→          <CheckCircle size={18} />
+  1173→          حفظ الصنف
+  1174→        </Button>
+  1175→      </div>
+  1176→    </div>
+  1177→  )
+  1178→}
+  1179→
+  1180→// ==================== Parties Module ====================
+  1181→const Parties: React.FC = () => {
+  1182→  const [showAddParty, setShowAddParty] = useState(false)
+  1183→  const [partyType, setPartyType] = useState<'all' | 'customer' | 'supplier'>('all')
+  1184→
+  1185→  const filteredParties = partyType === 'all' 
+  1186→    ? mockParties 
+  1187→    : mockParties.filter(p => p.type === partyType || p.type === 'both')
+  1188→
+  1189→  return (
+  1190→    <div className="space-y-6 animate-fade-in">
+  1191→      {/* Page Header */}
+  1192→      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+  1193→        <div>
+  1194→          <h1 className="text-3xl font-bold text-[#005f73]">إدارة الأطراف</h1>
+  1195→          <p className="text-gray-500 mt-1">إدارة العملاء والموردين</p>
+  1196→        </div>
+  1197→        <Dialog open={showAddParty} onOpenChange={setShowAddParty}>
+  1198→          <DialogTrigger asChild>
+  1199→            <Button className="bg-[#005f73] hover:bg-[#0a9396] text-white gap-2">
+  1200→              <Plus size={18} />
+  1201→              طرف جديد
+  1202→            </Button>
+  1203→          </DialogTrigger>
+  1204→          <DialogContent className="max-w-2xl">
+  1205→            <DialogHeader>
+  1206→              <DialogTitle className="text-xl text-[#005f73]">إضافة طرف جديد</DialogTitle>
+  1207→              <DialogDescription>أدخل بيانات العميل أو المورد</DialogDescription>
+  1208→            </DialogHeader>
+  1209→            <PartyForm onClose={() => setShowAddParty(false)} />
+  1210→          </DialogContent>
+  1211→        </Dialog>
+  1212→      </div>
+  1213→
+  1214→      {/* Type Filter Tabs */}
+  1215→      <Tabs value={partyType} onValueChange={(v) => setPartyType(v as typeof partyType)}>
+  1216→        <TabsList className="bg-[#005f73]/10">
+  1217→          <TabsTrigger value="all" className="data-[state=active]:bg-[#005f73] data-[state=active]:text-white">
+  1218→            <Users size={16} className="ml-2" />
+  1219→            الكل ({mockParties.length})
+  1220→          </TabsTrigger>
+  1221→          <TabsTrigger value="customer" className="data-[state=active]:bg-[#005f73] data-[state=active]:text-white">
+  1222→            <ShoppingCart size={16} className="ml-2" />
+  1223→            العملاء ({mockParties.filter(p => p.type === 'customer' || p.type === 'both').length})
+  1224→          </TabsTrigger>
+  1225→          <TabsTrigger value="supplier" className="data-[state=active]:bg-[#005f73] data-[state=active]:text-white">
+  1226→            <Package size={16} className="ml-2" />
+  1227→            الموردون ({mockParties.filter(p => p.type === 'supplier' || p.type === 'both').length})
+  1228→          </TabsTrigger>
+  1229→        </TabsList>
+  1230→      </Tabs>
+  1231→
+  1232→      {/* Parties Grid */}
+  1233→      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+  1234→        {filteredParties.map((party) => (
+  1235→          <Card key={party.id} className="shadow-md hover:shadow-lg transition-all duration-300 overflow-hidden">
+  1236→            <div className={`h-2 ${
+  1237→              party.type === 'customer' ? 'bg-blue-500' :
+  1238→              party.type === 'supplier' ? 'bg-emerald-500' : 'bg-purple-500'
+  1239→            }`} />
+  1240→            <CardContent className="p-5">
+  1241→              <div className="flex items-start justify-between mb-4">
+  1242→                <div className="flex items-center gap-3">
+  1243→                  <div className={`w-12 h-12 rounded-full flex items-center justify-center text-white font-bold text-lg ${
+  1244→                    party.type === 'customer' ? 'bg-blue-500' :
+  1245→                    party.type === 'supplier' ? 'bg-emerald-500' : 'bg-purple-500'
+  1246→                  }`}>
+  1247→                    {party.nameAr.charAt(0)}
+  1248→                  </div>
+  1249→                  <div>
+  1250→                    <h3 className="font-bold text-[#005f73]">{party.nameAr}</h3>
+  1251→                    <p className="text-sm text-gray-500">{party.name}</p>
+  1252→                  </div>
+  1253→                </div>
+  1254→                <Badge variant="outline" className={
+  1255→                  party.type === 'customer' ? 'border-blue-500 text-blue-700' :
+  1256→                  party.type === 'supplier' ? 'border-emerald-500 text-emerald-700' : 'border-purple-500 text-purple-700'
+  1257→                }>
+  1258→                  {party.type === 'customer' ? 'عميل' : party.type === 'supplier' ? 'مورد' : 'كلاهما'}
+  1259→                </Badge>
+  1260→              </div>
+  1261→
+  1262→              <div className="space-y-2 text-sm">
+  1263→                <div className="flex items-center gap-2 text-gray-600">
+  1264→                  <Phone size={14} />
+  1265→                  <span dir="ltr">{party.phone}</span>
+  1266→                </div>
+  1267→                <div className="flex items-center gap-2 text-gray-600">
+  1268→                  <Mail size={14} />
+  1269→                  <span dir="ltr">{party.email}</span>
+  1270→                </div>
+  1271→              </div>
+  1272→
+  1273→              <Separator className="my-4" />
+  1274→
+  1275→              <div className="flex items-center justify-between">
+  1276→                <div>
+  1277→                  <p className="text-xs text-gray-500">الرصيد الحالي</p>
+  1278→                  <p className={`font-bold text-lg ${
+  1279→                    party.balance > 0 ? 'text-emerald-600' :
+  1280→                    party.balance < 0 ? 'text-red-600' : 'text-gray-600'
+  1281→                  }`}>
+  1282→                    {party.balance > 0 ? '+' : ''}{party.balance.toLocaleString()} ر.س
+  1283→                  </p>
+  1284→                </div>
+  1285→                <div className="flex gap-1">
+  1286→                  <Button variant="ghost" size="icon" className="h-8 w-8 text-blue-600 hover:bg-blue-50">
+  1287→                    <Eye size={16} />
+  1288→                  </Button>
+  1289→                  <Button variant="ghost" size="icon" className="h-8 w-8 text-amber-600 hover:bg-amber-50">
+  1290→                    <Edit2 size={16} />
+  1291→                  </Button>
+  1292→                </div>
+  1293→              </div>
+  1294→            </CardContent>
+  1295→          </Card>
+  1296→        ))}
+  1297→      </div>
+  1298→    </div>
+  1299→  )
+  1300→}
+  1301→
+  1302→// ==================== Party Form Component ====================
+  1303→const PartyForm: React.FC<{ onClose: () => void }> = ({ onClose }) => {
+  1304→  return (
+  1305→    <div className="space-y-4 pt-4">
+  1306→      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+  1307→        <div className="md:col-span-2 space-y-2">
+  1308→          <Label>نوع الطرف *</Label>
+  1309→          <Select>
+  1310→            <SelectTrigger>
+  1311→              <SelectValue placeholder="اختر النوع" />
+  1312→            </SelectTrigger>
+  1313→            <SelectContent>
+  1314→              <SelectItem value="customer">عميل</SelectItem>
+  1315→              <SelectItem value="supplier">مورد</SelectItem>
+  1316→              <SelectItem value="both">عميل ومورد</SelectItem>
+  1317→            </SelectContent>
+  1318→          </Select>
+  1319→        </div>
+  1320→        <div className="space-y-2">
+  1321→          <Label>الاسم (عربي) *</Label>
+  1322→          <Input placeholder="الاسم بالعربية" />
+  1323→        </div>
+  1324→        <div className="space-y-2">
+  1325→          <Label>الاسم (إنجليزي)</Label>
+  1326→          <Input placeholder="Name in English" dir="ltr" />
+  1327→        </div>
+  1328→        <div className="space-y-2">
+  1329→          <Label>الهاتف</Label>
+  1330→          <Input placeholder="+9665XXXXXXXX" dir="ltr" />
+  1331→        </div>
+  1332→        <div className="space-y-2">
+  1333→          <Label>البريد الإلكتروني</Label>
+  1334→          <Input type="email" placeholder="email@example.com" dir="ltr" />
+  1335→        </div>
+  1336→        <div className="md:col-span-2 space-y-2">
+  1337→          <Label>العنوان</Label>
+  1338→          <Input placeholder="العنوان الكامل" />
+  1339→        </div>
+  1340→        <div className="space-y-2">
+  1341→          <Label>الرقم الضريبي</Label>
+  1342→          <Input placeholder="اختياري" dir="ltr" />
+  1343→        </div>
+  1344→        <div className="space-y-2">
+  1345→          <Label>حد الائتمان</Label>
+  1346→          <Input type="number" min="0" step="0.01" placeholder="0.00" dir="ltr" />
+  1347→        </div>
+  1348→        <div className="md:col-span-2 space-y-2">
+  1349→          <Label>ملاحظات</Label>
+  1350→          <Textarea placeholder="ملاحظات إضافية..." rows={2} />
+  1351→        </div>
+  1352→      </div>
+  1353→
+  1354→      <div className="flex justify-end gap-3 pt-4 border-t">
+  1355→        <Button variant="outline" onClick={onClose}>إلغاء</Button>
+  1356→        <Button className="bg-[#005f73] hover:bg-[#0a9396] text-white gap-2">
+  1357→          <CheckCircle size={18} />
+  1358→          حفظ الطرف
+  1359→        </Button>
+  1360→      </div>
+  1361→    </div>
+  1362→  )
+  1363→}
+  1364→
+  1365→// ==================== Treasury Module ====================
+  1366→const Treasury: React.FC = () => {
+  1367→  const [showNewTransaction, setShowNewTransaction] = useState(false)
+  1368→
+  1369→  const totalIncome = mockTransactions
+  1370→    .filter(t => t.type === 'income' || t.type === 'payment_received')
+  1371→    .reduce((sum, t) => sum + t.amount, 0)
+  1372→
+  1373→  const totalExpense = mockTransactions
+  1374→    .filter(t => t.type === 'expense' || t.type === 'payment_sent')
+  1375→    .reduce((sum, t) => sum + t.amount, 0)
+  1376→
+  1377→  const balance = totalIncome - totalExpense
+  1378→
+  1379→  return (
+  1380→    <div className="space-y-6 animate-fade-in">
+  1381→      {/* Page Header */}
+  1382→      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+  1383→        <div>
+  1384→          <h1 className="text-3xl font-bold text-[#005f73]">الخزينة</h1>
+  1385→          <p className="text-gray-500 mt-1">إدارة المعاملات المالية والحركات</p>
+  1386→        </div>
+  1387→        <Dialog open={showNewTransaction} onOpenChange={setShowNewTransaction}>
+  1388→          <DialogTrigger asChild>
+  1389→            <Button className="bg-[#005f73] hover:bg-[#0a9396] text-white gap-2">
+  1390→              <Plus size={18} />
+  1391→              معاملة جديدة
+  1392→            </Button>
+  1393→          </DialogTrigger>
+  1394→          <DialogContent className="max-w-2xl">
+  1395→            <DialogHeader>
+  1396→              <DialogTitle className="text-xl text-[#005f73]">إضافة معاملة مالية</DialogTitle>
+  1397→              <DialogDescription>سجل إيراد أو مصروف جديد</DialogDescription>
+  1398→            </DialogHeader>
+  1399→            <TransactionForm onClose={() => setShowNewTransaction(false)} />
+  1400→          </DialogContent>
+  1401→        </Dialog>
+  1402→      </div>
+  1403→
+  1404→      {/* Balance Cards */}
+  1405→      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+  1406→        <Card className="bg-gradient-to-l from-emerald-500 to-emerald-600 text-white border-0 shadow-lg">
+  1407→          <CardContent className="p-6">
+  1408→            <div className="flex items-center justify-between">
+  1409→              <div>
+  1410→                <p className="text-sm opacity-90">إجمالي الإيرادات</p>
+  1411→                <p className="text-3xl font-bold mt-1">{totalIncome.toLocaleString()} ر.س</p>
+  1412→              </div>
+  1413→              <div className="bg-white/20 p-3 rounded-xl">
+  1414→                <TrendingUp size={28} />
+  1415→              </div>
+  1416→            </div>
+  1417→          </CardContent>
+  1418→        </Card>
+  1419→        
+  1420→        <Card className="bg-gradient-to-l from-red-500 to-red-600 text-white border-0 shadow-lg">
+  1421→          <CardContent className="p-6">
+  1422→            <div className="flex items-center justify-between">
+  1423→              <div>
+  1424→                <p className="text-sm opacity-90">إجمالي المصروفات</p>
+  1425→                <p className="text-3xl font-bold mt-1">{totalExpense.toLocaleString()} ر.س</p>
+  1426→              </div>
+  1427→              <div className="bg-white/20 p-3 rounded-xl">
+  1428→                <TrendingDown size={28} />
+  1429→              </div>
+  1430→            </div>
+  1431→          </CardContent>
+  1432→        </Card>
+  1433→        
+  1434→        <Card className={`bg-gradient-to-l ${balance >= 0 ? 'from-blue-500 to-indigo-600' : 'from-orange-500 to-red-600'} text-white border-0 shadow-lg`}>
+  1435→          <CardContent className="p-6">
+  1436→            <div className="flex items-center justify-between">
+  1437→              <div>
+  1438→                <p className="text-sm opacity-90">الرصيد الحالي</p>
+  1439→                <p className="text-3xl font-bold mt-1">{balance.toLocaleString()} ر.س</p>
+  1440→              </div>
+  1441→              <div className="bg-white/20 p-3 rounded-xl">
+  1442→                <Wallet size={28} />
+  1443→              </div>
+  1444→            </div>
+  1445→          </CardContent>
+  1446→        </Card>
+  1447→      </div>
+  1448→
+  1449→      {/* Transactions List */}
+  1450→      <Card className="shadow-lg">
+  1451→        <CardHeader className="border-b border-gray-100">
+  1452→          <CardTitle className="flex items-center gap-2 text-[#005f73]">
+  1453→            <Receipt size={20} />
+  1454→            سجل المعاملات المالية
+  1455→          </CardTitle>
+  1456→        </CardHeader>
+  1457→        <CardContent className="p-0">
+  1458→          <Table>
+  1459→            <TableHeader>
+  1460→              <TableRow className="bg-[#005f73] text-white hover:bg-[#005f73]">
+  1461→                <TableHead className="text-white">#</TableHead>
+  1462→                <TableHead className="text-white">التاريخ</TableHead>
+  1463→                <TableHead className="text-white">النوع</TableHead>
+  1464→                <TableHead className="text-white">التصنيف</TableHead>
+  1465→                <TableHead className="text-white">الوصف</TableHead>
+  1466→                <TableHead className="text-white">الطرف</TableHead>
+  1467→                <TableHead className="text-white">المبلغ</TableHead>
+  1468→                <TableHead className="text-center text-white">إجراءات</TableHead>
+  1469→              </TableRow>
+  1470→            </TableHeader>
+  1471→            <TableBody>
+  1472→              {mockTransactions.map((tx, index) => (
+  1473→                <TableRow key={tx.id} className="hover:bg-gray-50 transition-colors">
+  1474→                  <TableCell className="font-mono">{index + 1}</TableCell>
+  1475→                  <TableCell>{tx.date}</TableCell>
+  1476→                  <TableCell>
+  1477→                    <Badge variant={
+  1478→                      tx.type === 'income' || tx.type === 'payment_received' ? 'default' : 'destructive'
+  1479→                    } className={
+  1480→                      tx.type === 'income' || tx.type === 'payment_received' 
+  1481→                        ? 'bg-emerald-100 text-emerald-700' 
+  1482→                        : 'bg-red-100 text-red-700'
+  1483→                    }>
+  1484→                      {tx.type === 'income' ? 'إيراد' :
+  1485→                       tx.type === 'expense' ? 'مصروف' :
+  1486→                       tx.type === 'payment_received' ? 'تحصيل' : 'دفع'}
+  1487→                    </Badge>
+  1488→                  </TableCell>
+  1489→                  <TableCell>{tx.category}</TableCell>
+  1490→                  <TableCell className="max-w-xs truncate">{tx.description}</TableCell>
+  1491→                  <TableCell>{tx.partyName || '-'}</TableCell>
+  1492→                  <TableCell>
+  1493→                    <span className={`font-bold ${
+  1494→                      tx.type === 'income' || tx.type === 'payment_received' ? 'text-emerald-600' : 'text-red-600'
+  1495→                    }`}>
+  1496→                      {tx.type === 'income' || tx.type === 'payment_received' ? '+' : '-'}{tx.amount.toLocaleString()} ر.س
+  1497→                    </span>
+  1498→                  </TableCell>
+  1499→                  <TableCell>
+  1500→                    <div className="flex items-center justify-center gap-1">
+  1501→                      <Button variant="ghost" size="icon" className="h-8 w-8 text-blue-600 hover:bg-blue-50">
+  1502→                        <Eye size={16} />
+  1503→                      </Button>
+  1504→                      <Button variant="ghost" size="icon" className="h-8 w-8 text-amber-600 hover:bg-amber-50">
+  1505→                        <Edit2 size={16} />
+  1506→                      </Button>
+  1507→                      <Button variant="ghost" size="icon" className="h-8 w-8 text-red-600 hover:bg-red-50">
+  1508→                        <Trash2 size={16} />
+  1509→                      </Button>
+  1510→                    </div>
+  1511→                  </TableCell>
+  1512→                </TableRow>
+  1513→              ))}
+  1514→            </TableBody>
+  1515→          </Table>
+  1516→        </CardContent>
+  1517→      </Card>
+  1518→    </div>
+  1519→  )
+  1520→}
+  1521→
+  1522→// ==================== Transaction Form Component ====================
+  1523→const TransactionForm: React.FC<{ onClose: () => void }> = ({ onClose }) => {
+  1524→  return (
+  1525→    <div className="space-y-4 pt-4">
+  1526→      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+  1527→        <div className="space-y-2">
+  1528→          <Label>نوع المعاملة *</Label>
+  1529→          <Select>
+  1530→            <SelectTrigger>
+  1531→              <SelectValue placeholder="اختر النوع" />
+  1532→            </SelectTrigger>
+  1533→            <SelectContent>
+  1534→              <SelectItem value="income">إيراد</SelectItem>
+  1535→              <SelectItem value="expense">مصروف</SelectItem>
+  1536→              <SelectItem value="payment_received">تحصيل</SelectItem>
+  1537→              <SelectItem value="payment_sent">دفع</SelectItem>
+  1538→            </SelectContent>
+  1539→          </Select>
+  1540→        </div>
+  1541→        <div className="space-y-2">
+  1542→          <Label>التصنيف *</Label>
+  1543→          <Select>
+  1544→            <SelectTrigger>
+  1545→              <SelectValue placeholder="اختر التصنيف" />
+  1546→            </SelectTrigger>
+  1547→            <SelectContent>
+  1548→              <SelectItem value="sales">مبيعات</SelectItem>
+  1549→              <SelectItem value="purchases">مشتريات</SelectItem>
+  1550→              <SelectItem value="salary">رواتب</SelectItem>
+  1551→              <SelectItem value="rent">إيجار</SelectItem>
+  1552→              <SelectItem value="utilities">مرافق</SelectItem>
+  1553→              <SelectItem value="other">أخرى</SelectItem>
+  1554→            </SelectContent>
+  1555→          </Select>
+  1556→        </div>
+  1557→        <div className="space-y-2">
+  1558→          <Label>المبلغ *</Label>
+  1559→          <Input type="number" min="0" step="0.01" placeholder="0.00" dir="ltr" />
+  1560→        </div>
+  1561→        <div className="space-y-2">
+  1562→          <Label>طريقة الدفع *</Label>
+  1563→          <Select>
+  1564→            <SelectTrigger>
+  1565→              <SelectValue placeholder="اختر الطريقة" />
+  1566→            </SelectTrigger>
+  1567→            <SelectContent>
+  1568→              <SelectItem value="cash">نقدي</SelectItem>
+  1569→              <SelectItem value="bank_transfer">تحويل بنكي</SelectItem>
+  1570→              <SelectItem value="check">شيك</SelectItem>
+  1571→            </SelectContent>
+  1572→          </Select>
+  1573→        </div>
+  1574→        <div className="space-y-2">
+  1575→          <Label>التاريخ *</Label>
+  1576→          <Input type="date" defaultValue={new Date().toISOString().split('T')[0]} />
+  1577→        </div>
+  1578→        <div className="space-y-2">
+  1579→          <Label>الطرف (اختياري)</Label>
+  1580→          <Select>
+  1581→            <SelectTrigger>
+  1582→              <SelectValue placeholder="اختر إن وجد" />
+  1583→            </SelectTrigger>
+  1584→            <SelectContent>
+  1585→              {mockParties.map(party => (
+  1586→                <SelectItem key={party.id} value={party.id}>{party.nameAr}</SelectItem>
+  1587→              ))}
+  1588→            </SelectContent>
+  1589→          </Select>
+  1590→        </div>
+  1591→        <div className="md:col-span-2 space-y-2">
+  1592→          <Label>الوصف *</Label>
+  1593→          <Textarea placeholder="وصف المعاملة..." rows={3} />
+  1594→        </div>
+  1595→      </div>
+  1596→
+  1597→      <div className="flex justify-end gap-3 pt-4 border-t">
+  1598→        <Button variant="outline" onClick={onClose}>إلغاء</Button>
+  1599→        <Button className="bg-[#005f73] hover:bg-[#0a9396] text-white gap-2">
+  1600→          <CheckCircle size={18} />
+  1601→          تسجيل المعاملة
+  1602→        </Button>
+  1603→      </div>
+  1604→    </div>
+  1605→  )
+  1606→}
+  1607→
+  1608→// ==================== Reports Module ====================
+  1609→const Reports: React.FC = () => {
+  1610→  const reportTypes = [
+  1611→    { id: 'sales', title: 'تقرير المبيعات', titleEn: 'Sales Report', icon: <TrendingUp size={32} />, color: 'from-blue-500 to-blue-600', desc: 'تقرير شامل عن المبيعات لفترة محددة' },
+  1612→    { id: 'purchases', title: 'تقرير المشتريات', titleEn: 'Purchases Report', icon: <Package size={32} />, color: 'from-emerald-500 to-emerald-600', desc: 'تقرير شامل عن المشتريات لفترة محددة' },
+  1613→    { id: 'inventory', title: 'تقرير المخزون', titleEn: 'Inventory Report', icon: <Building2 size={32} />, color: 'from-purple-500 to-purple-600', desc: 'حالة المخزون الحالية والأصناف' },
+  1614→    { id: 'profit_loss', title: 'تقرير الأرباح والخسائر', titleEn: 'Profit & Loss', icon: <DollarSign size={32} />, color: 'from-amber-500 to-orange-600', desc: 'تحليل الأرباح والخسائر' },
+  1615→    { id: 'parties', title: 'تقرير الأطراف', titleEn: 'Parties Report', icon: <Users size={32} />, color: 'from-pink-500 to-pink-600', desc: 'كشوف حسابات العملاء والموردين' },
+  1616→    { id: 'treasury', title: 'تقرير الخزينة', titleEn: 'Treasury Report', icon: <Wallet size={32} />, color: 'from-cyan-500 to-cyan-600', desc: 'حركة الخزينة والإيرادات والمصروفات' },
+  1617→  ]
+  1618→
+  1619→  return (
+  1620→    <div className="space-y-6 animate-fade-in">
+  1621→      {/* Page Header */}
+  1622→      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+  1623→        <div>
+  1624→          <h1 className="text-3xl font-bold text-[#005f73]">التقارير</h1>
+  1625→          <p className="text-gray-500 mt-1">تقارير مالية وتحليلات شاملة</p>
+  1626→        </div>
+  1627→        <div className="flex gap-2">
+  1628→          <Button variant="outline" className="gap-2">
+  1629→            <Calendar size={18} />
+  1630→            اختر الفترة
+  1631→          </Button>
+  1632→        </div>
+  1633→      </div>
+  1634→
+  1635→      {/* Date Range Selector */}
+  1636→      <Card className="shadow-md">
+  1637→        <CardContent className="p-4">
+  1638→          <div className="flex flex-col sm:flex-row gap-4 items-end">
+  1639→            <div className="space-y-2 flex-1">
+  1640→              <Label>من تاريخ</Label>
+  1641→              <Input type="date" defaultValue="2024-01-01" />
+  1642→            </div>
+  1643→            <div className="space-y-2 flex-1">
+  1644→              <Label>إلى تاريخ</Label>
+  1645→              <Input type="date" defaultValue="2024-12-31" />
+  1646→            </div>
+  1647→            <Button className="bg-[#005f73] hover:bg-[#0a9396] text-white gap-2">
+  1648→              <Search size={18} />
+  1649→              عرض التقرير
+  1650→            </Button>
+  1651→          </div>
+  1652→        </CardContent>
+  1653→      </Card>
+  1654→
+  1655→      {/* Report Types Grid */}
+  1656→      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+  1657→        {reportTypes.map((report) => (
+  1658→          <Card key={report.id} className="shadow-lg hover:shadow-xl transition-all duration-300 overflow-hidden group cursor-pointer">
+  1659→            <div className={`bg-gradient-to-l ${report.color} p-6 text-white`}>
+  1660→              <div className="flex items-center justify-between">
+  1661→                {report.icon}
+  1662→                <div className="bg-white/20 p-2 rounded-lg group-hover:scale-110 transition-transform">
+  1663→                  <FileText size={20} />
+  1664→                </div>
+  1665→              </div>
+  1666→            </div>
+  1667→            <CardContent className="p-5">
+  1668→              <h3 className="font-bold text-lg text-[#005f73] mb-1">{report.title}</h3>
+  1669→              <p className="text-sm text-gray-500 mb-4">{report.desc}</p>
+  1670→              <Button variant="outline" className="w-full gap-2 hover:bg-[#005f73] hover:text-white transition-colors">
+  1671→                <Download size={16} />
+  1672→                إنشاء التقرير
+  1673→              </Button>
+  1674→            </CardContent>
+  1675→          </Card>
+  1676→        ))}
+  1677→      </div>
+  1678→
+  1679→      {/* Quick Stats */}
+  1680→      <Card className="shadow-lg">
+  1681→        <CardHeader className="border-b border-gray-100">
+  1682→          <CardTitle className="flex items-center gap-2 text-[#005f73]">
+  1683→            <PieChartIcon size={20} />
+  1684→            ملخص سريع - هذا الشهر
+  1685→          </CardTitle>
+  1686→        </CardHeader>
+  1687→        <CardContent className="pt-6">
+  1688→          <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
+  1689→            <div className="text-center p-4 bg-blue-50 rounded-xl">
+  1690→              <p className="text-sm text-gray-500 mb-1">إجمالي المبيعات</p>
+  1691→              <p className="text-2xl font-bold text-blue-600">127,500 ر.س</p>
+  1692→            </div>
+  1693→            <div className="text-center p-4 bg-emerald-50 rounded-xl">
+  1694→              <p className="text-sm text-gray-500 mb-1">إجمالي المشتريات</p>
+  1695→              <p className="text-2xl font-bold text-emerald-600">85,000 ر.س</p>
+  1696→            </div>
+  1697→            <div className="text-center p-4 bg-purple-50 rounded-xl">
+  1698→              <p className="text-sm text-gray-500 mb-1">صافي الربح</p>
+  1699→              <p className="text-2xl font-bold text-purple-600">42,500 ر.س</p>
+  1700→            </div>
+  1701→            <div className="text-center p-4 bg-amber-50 rounded-xl">
+  1702→              <p className="text-sm text-gray-500 mb-1">عدد الفواتير</p>
+  1703→              <p className="text-2xl font-bold text-amber-600">24</p>
+  1704→            </div>
+  1705→          </div>
+  1706→        </CardContent>
+  1707→      </Card>
+  1708→    </div>
+  1709→  )
+  1710→}
+  1711→
+  1712→// ==================== Settings Module ====================
+  1713→const SettingsModule: React.FC = () => {
+  1714→  const [activeTab, setActiveTab] = useState('general')
+  1715→
+  1716→  const settingsSections = [
+  1717→    { id: 'general', label: 'عام', labelEn: 'General', icon: <Settings size={18} /> },
+  1718→    { id: 'company', label: 'بيانات الشركة', labelEn: 'Company', icon: <Building2 size={18} /> },
+  1719→    { id: 'invoice', label: 'إعدادات الفواتير', labelEn: 'Invoice', icon: <Receipt size={18} /> },
+  1720→    { id: 'users', label: 'المستخدمين', labelEn: 'Users', icon: <Users size={18} /> },
+  1721→    { id: 'backup', label: 'النسخ الاحتياطي', labelEn: 'Backup', icon: <RefreshCw size={18} /> },
+  1722→  ]
+  1723→
+  1724→  return (
+  1725→    <div className="space-y-6 animate-fade-in">
+  1726→      {/* Page Header */}
+  1727→      <div>
+  1728→        <h1 className="text-3xl font-bold text-[#005f73]">الإعدادات</h1>
+  1729→        <p className="text-gray-500 mt-1">إعدادات النظام والتخصيصات</p>
+  1730→      </div>
+  1731→
+  1732→      <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
+  1733→        {/* Settings Navigation */}
+  1734→        <Card className="shadow-md h-fit">
+  1735→          <CardContent className="p-2">
+  1736→            <nav className="space-y-1">
+  1737→              {settingsSections.map((section) => (
+  1738→                <button
+  1739→                  key={section.id}
+  1740→                  onClick={() => setActiveTab(section.id)}
+  1741→                  className={`w-full flex items-center gap-3 px-4 py-3 rounded-lg transition-all duration-200 text-right ${
+  1742→                    activeTab === section.id 
+  1743→                      ? 'bg-[#005f73] text-white shadow-md' 
+  1744→                      : 'hover:bg-gray-100 text-gray-700'
+  1745→                  }`}
+  1746→                >
+  1747→                  {section.icon}
+  1748→                  <span className="font-medium">{section.label}</span>
+  1749→                </button>
+  1750→              ))}
+  1751→            </nav>
+  1752→          </CardContent>
+  1753→        </Card>
+  1754→
+  1755→        {/* Settings Content */}
+  1756→        <div className="lg:col-span-3">
+  1757→          {activeTab === 'general' && (
+  1758→            <Card className="shadow-lg">
+  1759→              <CardHeader className="border-b border-gray-100">
+  1760→                <CardTitle className="text-[#005f73]">الإعدادات العامة</CardTitle>
+  1761→                <CardDescription>إعدادات أساسية للنظام</CardDescription>
+  1762→              </CardHeader>
+  1763→              <CardContent className="space-y-6 pt-6">
+  1764→                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+  1765→                  <div className="space-y-2">
+  1766→                    <Label>لغة الواجهة</Label>
+  1767→                    <Select defaultValue="ar">
+  1768→                      <SelectTrigger>
+  1769→                        <SelectValue />
+  1770→                      </SelectTrigger>
+  1771→                      <SelectContent>
+  1772→                        <SelectItem value="ar">العربية</SelectItem>
+  1773→                        <SelectItem value="en">English</SelectItem>
+  1774→                      </SelectContent>
+  1775→                    </Select>
+  1776→                  </div>
+  1777→                  <div className="space-y-2">
+  1778→                    <Label>العملة</Label>
+  1779→                    <Select defaultValue="sar">
+  1780→                      <SelectTrigger>
+  1781→                        <SelectValue />
+  1782→                      </SelectTrigger>
+  1783→                      <SelectContent>
+  1784→                        <SelectItem value="sar">ريال سعودي (ر.س)</SelectItem>
+  1785→                        <SelectItem value="aed">درهم إماراتي (د.إ)</SelectItem>
+  1786→                        <SelectItem value="egp">جنيه مصري (ج.م)</SelectItem>
+  1787→                        <SelectItem value="usd">دولار أمريكي ($)</SelectItem>
+  1788→                      </SelectContent>
+  1789→                    </Select>
+  1790→                  </div>
+  1791→                  <div className="space-y-2">
+  1792→                    <Label>تنسيق التاريخ</Label>
+  1793→                    <Select defaultValue="dd/mm/yyyy">
+  1794→                      <SelectTrigger>
+  1795→                        <SelectValue />
+  1796→                      </SelectTrigger>
+  1797→                      <SelectContent>
+  1798→                        <SelectItem value="dd/mm/yyyy">يوم/شهر/سنة</SelectItem>
+  1799→                        <SelectItem value="mm/dd/yyyy">شهر/يوم/سنة</SelectItem>
+  1800→                        <SelectItem value="yyyy-mm-dd">سنة-شهر-يوم</SelectItem>
+  1801→                      </SelectContent>
+  1802→                    </Select>
+  1803→                  </div>
+  1804→                  <div className="space-y-2">
+  1805→                    <Label>المنطقة الزمنية</Label>
+  1806→                    <Select defaultValue="asia_riyadh">
+  1807→                      <SelectTrigger>
+  1808→                        <SelectValue />
+  1809→                      </SelectTrigger>
+  1810→                      <SelectContent>
+  1811→                        <SelectItem value="asia_riyadh">الرياض (GMT+3)</SelectItem>
+  1812→                        <SelectItem value="asia_dubai">دبي (GMT+4)</SelectItem>
+  1813→                        <SelectItem value="africa_cairo">القاهرة (GMT+2)</SelectItem>
+  1814→                      </SelectContent>
+  1815→                    </Select>
+  1816→                  </div>
+  1817→                </div>
+  1818→
+  1819→                <Separator />
+  1820→
+  1821→                <div className="space-y-4">
+  1822→                  <h3 className="font-semibold text-[#005f73]">تفضيلات العرض</h3>
+  1823→                  <div className="space-y-3">
+  1824→                    <label className="flex items-center justify-between p-3 bg-gray-50 rounded-lg cursor-pointer hover:bg-gray-100">
+  1825→                      <span>تشغيل الإشعارات</span>
+  1826→                      <input type="checkbox" defaultChecked className="h-5 w-5 accent-[#005f73]" />
+  1827→                    </label>
+  1828→                    <label className="flex items-center justify-between p-3 bg-gray-50 rounded-lg cursor-pointer hover:bg-gray-100">
+  1829→                      <span>تنبيهات المخزون المنخفض</span>
+  1830→                      <input type="checkbox" defaultChecked className="h-5 w-5 accent-[#005f73]" />
+  1831→                    </label>
+  1832→                    <label className="flex items-center justify-between p-3 bg-gray-50 rounded-lg cursor-pointer hover:bg-gray-100">
+  1833→                      <span>الوضع الداكن</span>
+  1834→                      <input type="checkbox" className="h-5 w-5 accent-[#005f73]" />
+  1835→                    </label>
+  1836→                  </div>
+  1837→                </div>
+  1838→
+  1839→                <div className="flex justify-end pt-4 border-t">
+  1840→                  <Button className="bg-[#005f73] hover:bg-[#0a9396] text-white gap-2">
+  1841→                    <Save size={18} />
+  1842→                    حفظ الإعدادات
+  1843→                  </Button>
+  1844→                </div>
+  1845→              </CardContent>
+  1846→            </Card>
+  1847→          )}
+  1848→
+  1849→          {activeTab === 'company' && (
+  1850→            <Card className="shadow-lg">
+  1851→              <CardHeader className="border-b border-gray-100">
+  1852→                <CardTitle className="text-[#005f73]">بيانات الشركة</CardTitle>
+  1853→                <CardDescription>معلومات الشركة التي تظهر في الفواتير</CardDescription>
+  1854→              </CardHeader>
+  1855→              <CardContent className="space-y-4 pt-6">
+  1856→                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+  1857→                  <div className="space-y-2">
+  1858→                    <Label>اسم الشركة (عربي)</Label>
+  1859→                    <Input defaultValue="شركة التقنية المتقدمة" />
+  1860→                  </div>
+  1861→                  <div className="space-y-2">
+  1862→                    <Label>اسم الشركة (إنجليزي)</Label>
+  1863→                    <Input defaultValue="Advanced Tech Company" dir="ltr" />
+  1864→                  </div>
+  1865→                  <div className="space-y-2">
+  1866→                    <Label>السجل التجاري</Label>
+  1867→                    <Input defaultValue="1010XXXXX" dir="ltr" />
+  1868→                  </div>
+  1869→                  <div className="space-y-2">
+  1870→                    <Label>الرقم الضريبي</Label>
+  1871→                    <Input defaultValue="3XXXXXXXXXX" dir="ltr" />
+  1872→                  </div>
+  1873→                  <div className="space-y-2">
+  1874→                    <Label>الهاتف</Label>
+  1875→                    <Input defaultValue="+966XXXXXXXXX" dir="ltr" />
+  1876→                  </div>
+  1877→                  <div className="space-y-2">
+  1878→                    <Label>البريد الإلكتروني</Label>
+  1879→                    <Input type="email" defaultValue="info@company.com" dir="ltr" />
+  1880→                  </div>
+  1881→                  <div className="md:col-span-2 space-y-2">
+  1882→                    <Label>العنوان</Label>
+  1883→                    <Input defaultValue="المملكة العربية السعودية، الرياض" />
+  1884→                  </div>
+  1885→                  <div className="md:col-span-2 space-y-2">
+  1886→                    <Label>شعار الشركة</Label>
+  1887→                    <div className="flex items-center gap-4">
+  1888→                      <div className="w-24 h-24 bg-gray-100 rounded-lg flex items-center justify-center border-2 border-dashed border-gray-300">
+  1889→                        <Building2 size={32} className="text-gray-400" />
+  1890→                      </div>
+  1891→                      <Button variant="outline">رفع شعار</Button>
+  1892→                    </div>
+  1893→                  </div>
+  1894→                </div>
+  1895→
+  1896→                <div className="flex justify-end pt-4 border-t">
+  1897→                  <Button className="bg-[#005f73] hover:bg-[#0a9396] text-white gap-2">
+  1898→                    <Save size={18} />
+  1899→                    حفظ البيانات
+  1900→                  </Button>
+  1901→                </div>
+  1902→              </CardContent>
+  1903→            </Card>
+  1904→          )}
+  1905→
+  1906→          {activeTab === 'invoice' && (
+  1907→            <Card className="shadow-lg">
+  1908→              <CardHeader className="border-b border-gray-100">
+  1909→                <CardTitle className="text-[#005f73]">إعدادات الفواتير</CardTitle>
+  1910→                <CardDescription>تخصيص مظهر وسلوك الفواتير</CardDescription>
+  1911→              </CardHeader>
+  1912→              <CardContent className="space-y-6 pt-6">
+  1913→                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+  1914→                  <div className="space-y-2">
+  1915→                    <Label>بادئة رقم فاتورة المبيعات</Label>
+  1916→                    <Input defaultValue="INV-" className="font-mono" dir="ltr" />
+  1917→                  </div>
+  1918→                  <div className="space-y-2">
+  1919→                    <Label>بادئة رقم فاتورة المشتريات</Label>
+  1920→                    <Input defaultValue="PUR-" className="font-mono" dir="ltr" />
+  1921→                  </div>
+  1922→                  <div className="space-y-2">
+  1923→                    <Label>نسبة الضريبة الافتراضية (%)</Label>
+  1924→                    <Input type="number" defaultValue="15" min="0" max="100" dir="ltr" />
+  1925→                  </div>
+  1926→                  <div className="space-y-2">
+  1927→                    <Label>شروط الدفع الافتراضية (يوم)</Label>
+  1928→                    <Input type="number" defaultValue="30" min="0" dir="ltr" />
+  1929→                  </div>
+  1930→                </div>
+  1931→
+  1932→                <Separator />
+  1933→
+  1934→                <div className="space-y-4">
+  1935→                  <h3 className="font-semibold text-[#005f73]">حقول الفاتورة</h3>
+  1936→                  <div className="space-y-3">
+  1937→                    <label className="flex items-center justify-between p-3 bg-gray-50 rounded-lg cursor-pointer hover:bg-gray-100">
+  1938→                      <span>إظهار الباركود</span>
+  1939→                      <input type="checkbox" defaultChecked className="h-5 w-5 accent-[#005f73]" />
+  1940→                    </label>
+  1941→                    <label className="flex items-center justify-between p-3 bg-gray-50 rounded-lg cursor-pointer hover:bg-gray-100">
+  1942→                      <span>إظهار الضريبة بشكل منفصل</span>
+  1943→                      <input type="checkbox" defaultChecked className="h-5 w-5 accent-[#005f73]" />
+  1944→                    </label>
+  1945→                    <label className="flex items-center justify-between p-3 bg-gray-50 rounded-lg cursor-pointer hover:bg-gray-100">
+  1946→                      <span>إضافة ملاحظات أسفل الفاتورة</span>
+  1947→                      <input type="checkbox" defaultChecked className="h-5 w-5 accent-[#005f73]" />
+  1948→                    </label>
+  1949→                    <label className="flex items-center justify-between p-3 bg-gray-50 rounded-lg cursor-pointer hover:bg-gray-100">
+  1950→                      <span>إظهار شعار الشركة</span>
+  1951→                      <input type="checkbox" defaultChecked className="h-5 w-5 accent-[#005f73]" />
+  1952→                    </label>
+  1953→                  </div>
+  1954→                </div>
+  1955→
+  1956→                <div className="flex justify-end pt-4 border-t">
+  1957→                  <Button className="bg-[#005f73] hover:bg-[#0a9396] text-white gap-2">
+  1958→                    <Save size={18} />
+  1959→                    حفظ الإعدادات
+  1960→                  </Button>
+  1961→                </div>
+  1962→              </CardContent>
+  1963→            </Card>
+  1964→          )}
+  1965→
+  1966→          {activeTab === 'users' && (
+  1967→            <Card className="shadow-lg">
+  1968→              <CardHeader className="border-b border-gray-100 flex flex-row items-center justify-between">
+  1969→                <div>
+  1970→                  <CardTitle className="text-[#005f73]">إدارة المستخدمين</CardTitle>
+  1971→                  <CardDescription>إدارة صلاحيات المستخدمين</CardDescription>
+  1972→                </div>
+  1973→                <Button size="sm" className="bg-[#005f73] hover:bg-[#0a9396] text-white gap-1">
+  1974→                  <Plus size={16} />
+  1975→                  مستخدم جديد
+  1976→                </Button>
+  1977→              </CardHeader>
+  1978→              <CardContent className="pt-6">
+  1979→                <div className="space-y-4">
+  1980→                  {[
+  1981→                    { name: 'أحمد محمد', email: 'ahmed@company.com', role: 'مدير', roleEn: 'Admin', status: 'نشط' },
+  1982→                    { name: 'سارة علي', email: 'sara@company.com', role: 'محاسب', roleEn: 'Accountant', status: 'نشط' },
+  1983→                    { name: 'خالد عبدالله', email: 'khaled@company.com', role: 'مشاهد', roleEn: 'Viewer', status: 'معطل' },
+  1984→                  ].map((user, index) => (
+  1985→                    <div key={index} className="flex items-center justify-between p-4 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors">
+  1986→                      <div className="flex items-center gap-4">
+  1987→                        <div className="w-12 h-12 bg-[#005f73] rounded-full flex items-center justify-center text-white font-bold">
+  1988→                          {user.name.charAt(0)}
+  1989→                        </div>
+  1990→                        <div>
+  1991→                          <p className="font-semibold text-[#005f73]">{user.name}</p>
+  1992→                          <p className="text-sm text-gray-500" dir="ltr">{user.email}</p>
+  1993→                        </div>
+  1994→                      </div>
+  1995→                      <div className="flex items-center gap-4">
+  1996→                        <Badge variant="outline" className="border-[#005f73] text-[#005f73]">
+  1997→                          {user.role}
+  1998→                        </Badge>
+  1999→                        <Badge variant={user.status === 'نشط' ? 'default' : 'secondary'}>
+  2000→                          {user.status}
+
+[showing lines 1-2000 of 2224; use offset=2001 with limit to continue reading]

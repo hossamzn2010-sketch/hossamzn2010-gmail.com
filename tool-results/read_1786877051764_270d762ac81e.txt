@@ -1,0 +1,502 @@
+     1→     1→'use client'
+     2→     2→
+     3→     3→import React, { useState, useEffect, useCallback } from 'react'
+     4→     4→import { 
+     5→     5→  LayoutDashboard, ShoppingCart, Package, Users, Wallet, FileText, Settings,
+     6→     6→  Menu, X, Plus, Search, Filter, Download, Printer, Eye, Edit2, Trash2,
+     7→     7→  TrendingUp, TrendingDown, DollarSign, AlertCircle, CheckCircle, Clock,
+     8→     8→  ArrowUpRight, ArrowDownLeft, Receipt, Send, BarChart3, PieChart as PieChartIcon,
+     9→     9→  ChevronDown, ChevronLeft, RefreshCw, Save, XCircle, Calendar, Building2,
+    10→    10→  Phone, Mail, MapPin, Hash, Percent, CreditCard, Banknote, Calculator
+    11→    11→} from 'lucide-react'
+    12→    12→import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
+    13→    13→import { Button } from '@/components/ui/button'
+    14→    14→import { Input } from '@/components/ui/input'
+    15→    15→import { Label } from '@/components/ui/label'
+    16→    16→import { Badge } from '@/components/ui/badge'
+    17→    17→import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
+    18→    18→import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog'
+    19→    19→import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
+    20→    20→import { Textarea } from '@/components/ui/textarea'
+    21→    21→import { Separator } from '@/components/ui/separator'
+    22→    22→import { ScrollArea } from '@/components/ui/scroll-area'
+    23→    23→import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table'
+    24→    24→
+    25→    25→// ==================== Types ====================
+    26→    26→type ModuleType = 'dashboard' | 'sales' | 'purchases' | 'inventory' | 'parties' | 'treasury' | 'reports' | 'settings'
+    27→    27→
+    28→    28→interface Invoice {
+    29→    29→  id: string
+    30→    30→  invoiceNumber: string
+    31→    31→  type: 'sale' | 'purchase' | 'sale_return' | 'purchase_return'
+    32→    32→  partyName: string
+    33→    33→  date: string
+    34→    34→  total: number
+    35→    35→  paidAmount: number
+    36→    36→  remainingAmount: number
+    37→    37→  status: 'draft' | 'confirmed' | 'cancelled'
+    38→    38→  paymentStatus: 'unpaid' | 'partial' | 'paid'
+    39→    39→}
+    40→    40→
+    41→    41→interface Item {
+    42→    42→  id: string
+    43→    43→  code: string
+    44→    44→  name: string
+    45→    45→  nameAr: string
+    46→    46→  category: string
+    47→    47→  unit: string
+    48→    48→  costPrice: number
+    49→    49→  salePrice: number
+    50→    50→  quantity: number
+    51→    51→  minStock: number
+    52→    52→}
+    53→    53→
+    54→    54→interface Party {
+    55→    55→  id: string
+    56→    56→  type: 'customer' | 'supplier' | 'both'
+    57→    57→  name: string
+    58→    58→  nameAr: string
+    59→    59→  phone: string
+    60→    60→  email: string
+    61→    61→  balance: number
+    62→    62→}
+    63→    63→
+    64→    64→interface Transaction {
+    65→    65→  id: string
+    66→    66→  type: 'income' | 'expense' | 'payment_received' | 'payment_sent'
+    67→    67→  category: string
+    68→    68→  amount: number
+    69→    69→  date: string
+    70→    70→  description: string
+    71→    71→  partyName?: string
+    72→    72→}
+    73→    73→
+    74→    74→// ==================== Mock Data ====================
+    75→    75→const mockInvoices: Invoice[] = [
+    76→    76→  { id: '1', invoiceNumber: 'INV-2024-001', type: 'sale', partyName: 'شركة النور للتجارة', date: '2024-01-15', total: 15000, paidAmount: 10000, remainingAmount: 5000, status: 'confirmed', paymentStatus: 'partial' },
+    77→    77→  { id: '2', invoiceNumber: 'INV-2024-002', type: 'sale', partyName: 'مؤسسة الأمل', date: '2024-01-14', total: 8500, paidAmount: 8500, remainingAmount: 0, status: 'confirmed', paymentStatus: 'paid' },
+    78→    78→  { id: '3', invoiceNumber: 'PUR-2024-001', type: 'purchase', partyName: 'مورد الخير', date: '2024-01-13', total: 25000, paidAmount: 25000, remainingAmount: 0, status: 'confirmed', paymentStatus: 'paid' },
+    79→    79→  { id: '4', invoiceNumber: 'INV-2024-003', type: 'sale', partyName: 'محلات السعادة', date: '2024-01-12', total: 4200, paidAmount: 0, remainingAmount: 4200, status: 'draft', paymentStatus: 'unpaid' },
+    80→    80→  { id: '5', invoiceNumber: 'INV-2024-004', type: 'sale_return', partyName: 'شركة النور للتجارة', date: '2024-01-11', total: 2000, paidAmount: 2000, remainingAmount: 0, status: 'confirmed', paymentStatus: 'paid' },
+    81→    81→]
+    82→    82→
+    83→    83→const mockItems: Item[] = [
+    84→    84→  { id: '1', code: 'ITM-001', name: 'Laptop Dell', nameAr: 'لابتوب ديل', category: 'إلكترونيات', unit: 'قطعة', costPrice: 12000, salePrice: 14500, quantity: 25, minStock: 5 },
+    85→    85→  { id: '2', code: 'ITM-002', name: 'Mouse Wireless', nameAr: 'ماوس لاسلكي', category: 'إكسسوارات', unit: 'قطعة', costPrice: 80, salePrice: 150, quantity: 150, minStock: 20 },
+    86→    86→  { id: '3', code: 'ITM-003', name: 'Keyboard Mechanical', nameAr: 'كيبورد ميكانيكي', category: 'إكسسوارات', unit: 'قطعة', costPrice: 250, salePrice: 400, quantity: 45, minStock: 10 },
+    87→    87→  { id: '4', code: 'ITM-004', name: 'Monitor 27"', nameAr: 'شاشة 27 بوصة', category: 'إلكترونيات', unit: 'قطعة', costPrice: 3500, salePrice: 4500, quantity: 12, minStock: 3 },
+    88→    88→  { id: '5', code: 'ITM-005', name: 'USB Cable', nameAr: 'كابل USB', category: 'إكسسوارات', unit: 'قطعة', costPrice: 15, salePrice: 35, quantity: 300, minStock: 50 },
+    89→    89→]
+    90→    90→
+    91→    91→const mockParties: Party[] = [
+    92→    92→  { id: '1', type: 'customer', name: 'Al-Nour Trading Co.', nameAr: 'شركة النور للتجارة', phone: '+966501234567', email: 'info@alnour.com', balance: 5000 },
+    93→    93→  { id: '2', type: 'supplier', name: 'Al-Khair Supplier', nameAr: 'مورد الخير', phone: '+966509876543', email: 'supply@alkhair.com', balance: -8000 },
+    94→    94→  { id: '3', type: 'customer', name: 'Al-Amal Establishment', nameAr: 'مؤسسة الأمل', phone: '+966501112233', email: 'amal@est.com', balance: 0 },
+    95→    95→  { id: '4', type: 'both', name: 'Al-Saada Stores', nameAr: 'محلات السعادة', phone: '+966504445566', email: 'saada@store.com', balance: 4200 },
+    96→    96→  { id: '5', type: 'supplier', name: 'Tech Wholesale', nameAr: 'تقنية الجملة', phone: '+966506677889', email: 'sales@techwh.com', balance: -15000 },
+    97→    97→]
+    98→    98→
+    99→    99→const mockTransactions: Transaction[] = [
+   100→   100→  { id: '1', type: 'income', category: 'مبيعات', amount: 15000, date: '2024-01-15', description: 'تحصيل فاتورة مبيعات INV-2024-001', partyName: 'شركة النور للتجارة' },
+   101→   101→  { id: '2', type: 'expense', category: 'مشتريات', amount: 25000, date: '2024-01-13', description: 'دفع فاتورة مشتريات PUR-2024-001', partyName: 'مورد الخير' },
+   102→   102→  { id: '3', type: 'payment_received', category: 'تحصيل', amount: 8500, date: '2024-01-14', description: 'تحصيل كامل الفاتورة', partyName: 'مؤسسة الأمل' },
+   103→   103→  { id: '4', type: 'expense', category: 'رواتب', amount: 18000, date: '2024-01-10', description: 'رواتب شهر يناير' },
+   104→   104→  { id: '5', type: 'income', category: 'أخرى', amount: 2000, date: '2024-01-11', description: 'مرتجع مبيعات - شركة النور' },
+   105→   105→]
+   106→   106→
+   107→   107→// ==================== Sidebar Component ====================
+   108→   108→const Sidebar: React.FC<{
+   109→   109→  activeModule: ModuleType
+   110→   110→  setActiveModule: (module: ModuleType) => void
+   111→   111→  isOpen: boolean
+   112→   112→  setIsOpen: (open: boolean) => void
+   113→   113→}> = ({ activeModule, setActiveModule, isOpen, setIsOpen }) => {
+   114→   114→  
+   115→   115→  const menuItems: { id: ModuleType; icon: React.ReactNode; label: string; labelAr: string }[] = [
+   116→   116→    { id: 'dashboard', icon: <LayoutDashboard size={20} />, label: 'Dashboard', labelAr: 'لوحة التحكم' },
+   117→   117→    { id: 'sales', icon: <ShoppingCart size={20} />, label: 'Sales', labelAr: 'المبيعات' },
+   118→   118→    { id: 'purchases', icon: <Package size={20} />, label: 'Purchases', labelAr: 'المشتريات' },
+   119→   119→    { id: 'inventory', icon: <Package size={20} />, label: 'Inventory', labelAr: 'المخزون' },
+   120→   120→    { id: 'parties', icon: <Users size={20} />, label: 'Parties', labelAr: 'الأطراف' },
+   121→   121→    { id: 'treasury', icon: <Wallet size={20} />, label: 'Treasury', labelAr: 'الخزينة' },
+   122→   122→    { id: 'reports', icon: <BarChart3 size={20} />, label: 'Reports', labelAr: 'التقارير' },
+   123→   123→    { id: 'settings', icon: <Settings size={20} />, label: 'Settings', labelAr: 'الإعدادات' },
+   124→   124→  ]
+   125→   125→
+   126→   126→  return (
+   127→   127→    <>
+   128→   128→      {/* Mobile Overlay */}
+   129→   129→      {isOpen && (
+   130→   130→        <div 
+   131→   131→          className="fixed inset-0 bg-black/50 z-40 lg:hidden"
+   132→   132→          onClick={() => setIsOpen(false)}
+   133→   133→        />
+   134→   134→      )}
+   135→   135→      
+   136→   136→      {/* Sidebar */}
+   137→   137→      <aside className={`fixed top-0 right-0 z-50 h-full w-72 bg-gradient-to-b from-[#005f73] to-[#0a9396] text-white transform transition-transform duration-300 ease-in-out lg:translate-x-0 ${isOpen ? 'translate-x-0' : 'translate-x-full'} lg:translate-x-0`}>
+   138→   138→        {/* Logo Header */}
+   139→   139→        <div className="p-6 border-b border-white/20">
+   140→   140→          <div className="flex items-center justify-between">
+   141→   141→            <div className="flex items-center gap-3">
+   142→   142→              <div className="w-12 h-12 bg-white rounded-xl flex items-center justify-center shadow-lg">
+   143→   143→                <Wallet className="text-[#005f73]" size={28} />
+   144→   144→              </div>
+   145→   145→              <div>
+   146→   146→                <h1 className="text-xl font-bold">Accounting Pro</h1>
+   147→   147→                <p className="text-xs text-white/70">نظام المحاسبة الاحترافي</p>
+   148→   148→              </div>
+   149→   149→            </div>
+   150→   150→            <Button 
+   151→   151→              variant="ghost" 
+   152→   152→              size="icon" 
+   153→   153→              className="lg:hidden text-white hover:bg-white/20"
+   154→   154→              onClick={() => setIsOpen(false)}
+   155→   155→            >
+   156→   156→              <X size={20} />
+   157→   157→            </Button>
+   158→   158→          </div>
+   159→   159→        </div>
+   160→   160→
+   161→   161→        {/* Navigation */}
+   162→   162→        <nav className="p-4 space-y-2">
+   163→   163→          {menuItems.map((item) => (
+   164→   164→            <button
+   165→   165→              key={item.id}
+   166→   166→              onClick={() => {
+   167→   167→                setActiveModule(item.id)
+   168→   168→                setIsOpen(false)
+   169→   169→              }}
+   170→   170→              className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl transition-all duration-200 group ${
+   171→   171→                activeModule === item.id 
+   172→   172→                  ? 'bg-white text-[#005f73] shadow-lg scale-[1.02]' 
+   173→   173→                  : 'text-white hover:bg-white/10 hover:translate-x-1'
+   174→   174→              }`}
+   175→   175→            >
+   176→   176→              <span className={`${activeModule === item.id ? 'text-[#005f73]' : 'text-white/80 group-hover:text-white'}`}>
+   177→   177→                {item.icon}
+   178→   178→              </span>
+   179→   179→              <div className="text-right flex-1">
+   180→   180→                <span className="block font-semibold text-sm">{item.labelAr}</span>
+   181→   181→                <span className={`block text-xs ${activeModule === item.id ? 'text-[#005f73]/70' : 'text-white/60'}`}>{item.label}</span>
+   182→   182→              </div>
+   183→   183→              {activeModule === item.id && (
+   184→   184→                <ChevronDown size={16} className="rotate-[-90deg] text-[#005f73]" />
+   185→   185→              )}
+   186→   186→            </button>
+   187→   187→          ))}
+   188→   188→        </nav>
+   189→   189→
+   190→   190→        {/* Footer Info */}
+   191→   191→        <div className="absolute bottom-0 left-0 right-0 p-4 border-t border-white/20">
+   192→   192→          <div className="bg-white/10 rounded-xl p-4 backdrop-blur-sm">
+   193→   193→            <p className="text-xs text-white/70 mb-1">الإصدار 1.0.0</p>
+   194→   194→            <p className="text-xs text-white/50">© 2024 Accounting Pro</p>
+   195→   195→          </div>
+   196→   196→        </div>
+   197→   197→      </aside>
+   198→   198→    </>
+   199→   199→  )
+   200→   200→}
+   201→   201→
+   202→   202→// ==================== Dashboard Module ====================
+   203→   203→const Dashboard: React.FC = () => {
+   204→   204→  const kpis = [
+   205→   205→    { title: 'إجمالي المبيعات', titleEn: 'Total Sales', value: '127,500 ر.س', change: '+12.5%', trend: 'up', icon: <TrendingUp size={24} />, color: 'from-emerald-500 to-green-600' },
+   206→   206→    { title: 'إجمالي المشتريات', titleEn: 'Total Purchases', value: '85,000 ر.س', change: '-3.2%', trend: 'down', icon: <TrendingDown size={24} />, color: 'from-orange-500 to-red-600' },
+   207→   207→    { title: 'صافي الربح', titleEn: 'Net Profit', value: '42,500 ر.س', change: '+8.7%', trend: 'up', icon: <DollarSign size={24} />, color: 'from-blue-500 to-indigo-600' },
+   208→   208→    { title: 'الفواتير المستحقة', titleEn: 'Pending Invoices', value: '9,200 ر.س', change: '+2', trend: 'up', icon: <Clock size={24} />, color: 'from-amber-500 to-yellow-600' },
+   209→   209→  ]
+   210→   210→
+   211→   211→  const recentInvoices = mockInvoices.slice(0, 5)
+   212→   212→  const recentTransactions = mockTransactions.slice(0, 5)
+   213→   213→
+   214→   214→  return (
+   215→   215→    <div className="space-y-6 animate-fade-in">
+   216→   216→      {/* Page Header */}
+   217→   217→      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+   218→   218→        <div>
+   219→   219→          <h1 className="text-3xl font-bold text-[#005f73]">لوحة التحكم</h1>
+   220→   220→          <p className="text-gray-500 mt-1">نظرة عامة على أداء أعمالك المالية</p>
+   221→   221→        </div>
+   222→   222→        <div className="flex gap-2">
+   223→   223→          <Button className="bg-[#005f73] hover:bg-[#0a9396] text-white gap-2">
+   224→   224→            <RefreshCw size={18} />
+   225→   225→            تحديث
+   226→   226→          </Button>
+   227→   227→          <Button variant="outline" className="gap-2">
+   228→   228→            <Download size={18} />
+   229→   229→            تصدير التقرير
+   230→   230→          </Button>
+   231→   231→        </div>
+   232→   232→      </div>
+   233→   233→
+   234→   234→      {/* KPI Cards */}
+   235→   235→      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+   236→   236→        {kpis.map((kpi, index) => (
+   237→   237→          <Card key={index} className="overflow-hidden border-0 shadow-lg hover:shadow-xl transition-shadow duration-300">
+   238→   238→            <CardContent className="p-0">
+   239→   239→              <div className={`bg-gradient-to-l ${kpi.color} p-6 text-white`}>
+   240→   240→                <div className="flex justify-between items-start">
+   241→   241→                  <div>
+   242→   242→                    <p className="text-sm opacity-90">{kpi.title}</p>
+   243→   243→                    <p className="text-2xl font-bold mt-2">{kpi.value}</p>
+   244→   244→                    <div className={`flex items-center gap-1 mt-2 text-sm ${kpi.trend === 'up' ? 'text-green-100' : 'text-red-100'}`}>
+   245→   245→                      {kpi.trend === 'up' ? <ArrowUpRight size={16} /> : <ArrowDownLeft size={16} />}
+   246→   246→                      <span>{kpi.change}</span>
+   247→   247→                      <span className="opacity-75">من الشهر الماضي</span>
+   248→   248→                    </div>
+   249→   249→                  </div>
+   250→   250→                  <div className="bg-white/20 p-3 rounded-xl backdrop-blur-sm">
+   251→   251→                    {kpi.icon}
+   252→   252→                  </div>
+   253→   253→                </div>
+   254→   254→              </div>
+   255→   255→            </CardContent>
+   256→   256→          </Card>
+   257→   257→        ))}
+   258→   258→      </div>
+   259→   259→
+   260→   260→      {/* Charts & Recent Activity */}
+   261→   261→      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+   262→   262→        {/* Sales Chart Placeholder */}
+   263→   263→        <Card className="shadow-lg">
+   264→   264→          <CardHeader className="border-b border-gray-100">
+   265→   265→            <CardTitle className="flex items-center gap-2 text-[#005f73]">
+   266→   266→              <BarChart3 size={20} />
+   267→   267→              نظرة على المبيعات
+   268→   268→            </CardTitle>
+   269→   269→            <CardDescription>آخر 6 أشهر</CardDescription>
+   270→   270→          </CardHeader>
+   271→   271→          <CardContent className="pt-6">
+   272→   272→            <div className="h-64 flex items-end justify-around gap-2 px-4">
+   273→   273→              {[65, 85, 45, 90, 70, 95].map((height, i) => (
+   274→   274→                <div key={i} className="flex-1 flex flex-col items-center gap-2">
+   275→   275→                  <div 
+   276→   276→                    className="w-full bg-gradient-to-t from-[#005f73] to-[#94d2bd] rounded-t-lg transition-all duration-500 hover:opacity-80 cursor-pointer"
+   277→   277→                    style={{ height: `${height}%` }}
+   278→   278→                  />
+   279→   279→                  <span className="text-xs text-gray-500">
+   280→   280→                    {['يوليو', 'أغسطس', 'سبتمبر', 'أكتوبر', 'نوفمبر', 'ديسمبر'][i]}
+   281→   281→                  </span>
+   282→   282→                </div>
+   283→   283→              ))}
+   284→   284→            </div>
+   285→   285→          </CardContent>
+   286→   286→        </Card>
+   287→   287→
+   288→   288→        {/* Expense Categories */}
+   289→   289→        <Card className="shadow-lg">
+   290→   290→          <CardHeader className="border-b border-gray-100">
+   291→   291→            <CardTitle className="flex items-center gap-2 text-[#005f73]">
+   292→   292→              <PieChartIcon size={20} />
+   293→   293→              توزيع المصروفات
+   294→   294→            </CardTitle>
+   295→   295→            <CardDescription>هذا الشهر</CardDescription>
+   296→   296→          </CardHeader>
+   297→   297→          <CardContent className="pt-6">
+   298→   298→            <div className="space-y-4">
+   299→   299→              {[
+   300→   300→                { label: 'مشتريات', percent: 45, color: '#005f73', amount: '38,250 ر.س' },
+   301→   301→                { label: 'رواتب', percent: 30, color: '#0a9396', amount: '25,500 ر.س' },
+   302→   302→                { label: 'إيجار', percent: 15, color: '#94d2bd', amount: '12,750 ر.س' },
+   303→   303→                { label: 'أخرى', percent: 10, color: '#f8f9fa', amount: '8,500 ر.س' },
+   304→   304→              ].map((item, i) => (
+   305→   305→                <div key={i} className="space-y-2">
+   306→   306→                  <div className="flex justify-between text-sm">
+   307→   307→                    <span className="font-medium">{item.label}</span>
+   308→   308→                    <span className="text-gray-500">{item.amount}</span>
+   309→   309→                  </div>
+   310→   310→                  <div className="h-3 bg-gray-100 rounded-full overflow-hidden">
+   311→   311→                    <div 
+   312→   312→                      className="h-full rounded-full transition-all duration-700"
+   313→   313→                      style={{ width: `${item.percent}%`, backgroundColor: item.color }}
+   314→   314→                    />
+   315→   315→                  </div>
+   316→   316→                </div>
+   317→   317→              ))}
+   318→   318→            </div>
+   319→   319→          </CardContent>
+   320→   320→        </Card>
+   321→   321→      </div>
+   322→   322→
+   323→   323→      {/* Recent Invoices & Transactions */}
+   324→   324→      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+   325→   325→        {/* Recent Invoices */}
+   326→   326→        <Card className="shadow-lg">
+   327→   327→          <CardHeader className="border-b border-gray-100 flex flex-row items-center justify-between">
+   328→   328→            <div>
+   329→   329→              <CardTitle className="flex items-center gap-2 text-[#005f73]">
+   330→   330→                <Receipt size={20} />
+   331→   331→                آخر الفواتير
+   332→   332→              </CardTitle>
+   333→   333→              <CardDescription>أحدث 5 فواتير</CardDescription>
+   334→   334→            </div>
+   335→   335→            <Button variant="ghost" size="sm" className="text-[#0a9396]">
+   336→   336→              عرض الكل
+   337→   337→            </Button>
+   338→   338→          </CardHeader>
+   339→   339→          <CardContent className="pt-4">
+   340→   340→            <Table>
+   341→   341→              <TableHeader>
+   342→   342→                <TableRow>
+   343→   343→                  <TableHead className="text-right">رقم الفاتورة</TableHead>
+   344→   344→                  <TableHead className="text-right">الطرف</TableHead>
+   345→   345→                  <TableHead className="text-right">المبلغ</TableHead>
+   346→   346→                  <TableHead className="text-right">الحالة</TableHead>
+   347→   347→                </TableRow>
+   348→   348→              </TableHeader>
+   349→   349→              <TableBody>
+   350→   350→                {recentInvoices.map((invoice) => (
+   351→   351→                  <TableRow key={invoice.id} className="hover:bg-gray-50">
+   352→   352→                    <TableCell className="font-medium">{invoice.invoiceNumber}</TableCell>
+   353→   353→                    <TableCell>{invoice.partyName}</TableCell>
+   354→   354→                    <TableCell>{invoice.total.toLocaleString()} ر.س</TableCell>
+   355→   355→                    <TableCell>
+   356→   356→                      <Badge variant={
+   357→   357→                        invoice.paymentStatus === 'paid' ? 'default' :
+   358→   358→                        invoice.paymentStatus === 'partial' ? 'secondary' : 'destructive'
+   359→   359→                      }>
+   360→   360→                        {invoice.paymentStatus === 'paid' ? 'مدفوعة' :
+   361→   361→                         invoice.paymentStatus === 'partial' ? 'جزئية' : 'غير مدفوعة'}
+   362→   362→                      </Badge>
+   363→   363→                    </TableCell>
+   364→   364→                  </TableRow>
+   365→   365→                ))}
+   366→   366→              </TableBody>
+   367→   367→            </Table>
+   368→   368→          </CardContent>
+   369→   369→        </Card>
+   370→   370→
+   371→   371→        {/* Recent Transactions */}
+   372→   372→        <Card className="shadow-lg">
+   373→   373→          <CardHeader className="border-b border-gray-100 flex flex-row items-center justify-between">
+   374→   374→            <div>
+   375→   375→              <CardTitle className="flex items-center gap-2 text-[#005f73]">
+   376→   376→                <Wallet size={20} />
+   377→   377→                آخر المعاملات المالية
+   378→   378→              </CardTitle>
+   379→   379→              <CardDescription>أحدث 5 معاملات</CardDescription>
+   380→   380→            </div>
+   381→   381→            <Button variant="ghost" size="sm" className="text-[#0a9396]">
+   382→   382→              عرض الكل
+   383→   383→            </Button>
+   384→   384→          </CardHeader>
+   385→   385→          <CardContent className="pt-4">
+   386→   386→            <div className="space-y-3">
+   387→   387→              {recentTransactions.map((tx) => (
+   388→   388→                <div key={tx.id} className="flex items-center justify-between p-3 rounded-lg hover:bg-gray-50 transition-colors">
+   389→   389→                  <div className="flex items-center gap-3">
+   390→   390→                    <div className={`p-2 rounded-lg ${tx.type.includes('income') || tx.type === 'payment_received' ? 'bg-emerald-100 text-emerald-600' : 'bg-red-100 text-red-600'}`}>
+   391→   391→                      {tx.type.includes('income') || tx.type === 'payment_received' ? <ArrowDownLeft size={18} /> : <ArrowUpRight size={18} />}
+   392→   392→                    </div>
+   393→   393→                    <div>
+   394→   394→                      <p className="font-medium text-sm">{tx.description}</p>
+   395→   395→                      <p className="text-xs text-gray-500">{tx.partyName || tx.category}</p>
+   396→   396→                    </div>
+   397→   397→                  </div>
+   398→   398→                  <div className="text-left">
+   399→   399→                    <p className={`font-bold ${tx.type.includes('income') || tx.type === 'payment_received' ? 'text-emerald-600' : 'text-red-600'}`}>
+   400→   400→                      {tx.type.includes('income') || tx.type === 'payment_received' ? '+' : '-'}{tx.amount.toLocaleString()} ر.س
+   401→   401→                    </p>
+   402→   402→                    <p className="text-xs text-gray-400">{tx.date}</p>
+   403→   403→                  </div>
+   404→   404→                </div>
+   405→   405→              ))}
+   406→   406→            </div>
+   407→   407→          </CardContent>
+   408→   408→        </Card>
+   409→   409→      </div>
+   410→   410→    </div>
+   411→   411→  )
+   412→   412→}
+   413→   413→
+   414→   414→// ==================== Sales Module ====================
+   415→   415→const Sales: React.FC = () => {
+   416→   416→  const [showNewInvoice, setShowNewInvoice] = useState(false)
+   417→   417→  const [searchTerm, setSearchTerm] = useState('')
+   418→   418→  const [filterStatus, setFilterStatus] = useState<string>('all')
+   419→   419→
+   420→   420→  const filteredInvoices = mockInvoices.filter(inv => {
+   421→   421→    const matchesSearch = inv.partyName.includes(searchTerm) || inv.invoiceNumber.toLowerCase().includes(searchTerm.toLowerCase())
+   422→   422→    const matchesFilter = filterStatus === 'all' || inv.status === filterStatus || inv.paymentStatus === filterStatus
+   423→   423→    return matchesSearch && matchesFilter
+   424→   424→  })
+   425→   425→
+   426→   426→  return (
+   427→   427→    <div className="space-y-6 animate-fade-in">
+   428→   428→      {/* Page Header */}
+   429→   429→      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+   430→   430→        <div>
+   431→   431→          <h1 className="text-3xl font-bold text-[#005f73]">المبيعات</h1>
+   432→   432→          <p className="text-gray-500 mt-1">إدارة فواتير المبيعات والمرتجعات</p>
+   433→   433→        </div>
+   434→   434→        <Dialog open={showNewInvoice} onOpenChange={setShowNewInvoice}>
+   435→   435→          <DialogTrigger asChild>
+   436→   436→            <Button className="bg-[#005f73] hover:bg-[#0a9396] text-white gap-2">
+   437→   437→              <Plus size={18} />
+   438→   438→              فاتورة جديدة
+   439→   439→            </Button>
+   440→   440→          </DialogTrigger>
+   441→   441→          <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
+   442→   442→            <DialogHeader>
+   443→   443→              <DialogTitle className="text-xl text-[#005f73]">إنشاء فاتورة مبيعات جديدة</DialogTitle>
+   444→   444→              <DialogDescription>قم بملء بيانات الفاتورة وإضافة المنتجات</DialogDescription>
+   445→   445→            </DialogHeader>
+   446→   446→            <InvoiceForm type="sale" onClose={() => setShowNewInvoice(false)} />
+   447→   447→          </DialogContent>
+   448→   448→        </Dialog>
+   449→   449→      </div>
+   450→   450→
+   451→   451→      {/* Filters */}
+   452→   452→      <Card className="shadow-md">
+   453→   453→        <CardContent className="p-4">
+   454→   454→          <div className="flex flex-col sm:flex-row gap-4">
+   455→   455→            <div className="relative flex-1">
+   456→   456→              <Search className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400" size={18} />
+   457→   457→              <Input
+   458→   458→                placeholder="بحث بالرقم أو اسم العميل..."
+   459→   459→                value={searchTerm}
+   460→   460→                onChange={(e) => setSearchTerm(e.target.value)}
+   461→   461→                className="pr-10"
+   462→   462→              />
+   463→   463→            </div>
+   464→   464→            <Select value={filterStatus} onValueChange={setFilterStatus}>
+   465→   465→              <SelectTrigger className="w-full sm:w-48">
+   466→   466→                <SelectValue placeholder="الحالة" />
+   467→   467→              </SelectTrigger>
+   468→   468→              <SelectContent>
+   469→   469→                <SelectItem value="all">جميع الحالات</SelectItem>
+   470→   470→                <SelectItem value="paid">مدفوعة</SelectItem>
+   471→   471→                <SelectItem value="partial">جزئية</SelectItem>
+   472→   472→                <SelectItem value="unpaid">غير مدفوعة</SelectItem>
+   473→   473→              </SelectContent>
+   474→   474→            </Select>
+   475→   475→            <Button variant="outline" className="gap-2">
+   476→   476→              <Filter size={18} />
+   477→   477→              فلترة متقدمة
+   478→   478→            </Button>
+   479→   479→          </div>
+   480→   480→        </CardContent>
+   481→   481→      </Card>
+   482→   482→
+   483→   483→      {/* Invoices Table */}
+   484→   484→      <Card className="shadow-lg">
+   485→   485→        <CardContent className="p-0">
+   486→   486→          <Table>
+   487→   487→            <TableHeader>
+   488→   488→              <TableRow className="bg-[#005f73] text-white hover:bg-[#005f73]">
+   489→   489→                <TableHead className="text-white">رقم الفاتورة</TableHead>
+   490→   490→                <TableHead className="text-white">التاريخ</TableHead>
+   491→   491→                <TableHead className="text-white">العميل</TableHead>
+   492→   492→                <TableHead className="text-white">الإجمالي</TableHead>
+   493→   493→                <TableHead className="text-white">المدفوع</TableHead>
+   494→   494→                <TableHead className="text-white">المتبقي</TableHead>
+   495→   495→                <TableHead className="text-white">حالة الدفع</TableHead>
+   496→   496→                <TableHead className="text-white">حالة الفاتورة</TableHead>
+   497→   497→                <TableHead className="text-white text-center">إجراءات</TableHead>
+   498→   498→              </TableRow>
+   499→   499→            </TableHeader>
+   500→   500→            <TableBody>
+
+[showing lines 1-500 of 2002; use offset=501 with limit to continue reading]
