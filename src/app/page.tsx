@@ -477,87 +477,331 @@ export default function AccountingApp() {
 
         {/* Content Area */}
         <div className="p-6">
-          {/* ============ DASHBOARD MODULE ============ */}
+          {/* ============ DASHBOARD MODULE (DYNAMIC) ============ */}
           {activeModule === 'dashboard' && (
             <div className="space-y-6">
-              {/* KPI Cards */}
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-                <Card className="border-r-4 border-r-green-500"><CardContent className="pt-6"><div className="flex items-center justify-between"><div><p className="text-sm text-gray-500">إجمالي المبيعات</p><p className="text-2xl font-bold text-green-600">76,300 ر.س</p></div><div className="w-12 h-12 bg-green-100 rounded-full flex items-center justify-center"><TrendingUp className="w-6 h-6 text-green-600" /></div></div><p className="text-xs text-green-600 mt-2">↑ 12% عن الشهر السابق</p></CardContent></Card>
+              {/* Calculate Dynamic KPI Values */}
+              {(() => {
+                // Sales calculations
+                const totalSales = invoices.reduce((sum, inv) => sum + inv.total, 0)
+                const paidInvoices = invoices.filter(i => i.status === 'paid')
+                const pendingInvoices = invoices.filter(i => i.status === 'draft' || i.status === 'posted')
                 
-                <Card className="border-r-4 border-r-red-500"><CardContent className="pt-6"><div className="flex items-center justify-between"><div><p className="text-sm text-gray-500">إجمالي المشتريات</p><p className="text-2xl font-bold text-red-600">95,000 ر.س</p></div><div className="w-12 h-12 bg-red-100 rounded-full flex items-center justify-center"><TrendingDown className="w-6 h-6 text-red-600" /></div></div><p className="text-xs text-red-600 mt-2">↑ 5% عن الشهر السابق</p></CardContent></Card>
+                // Transaction calculations
+                const totalIncome = transactions.filter(t => t.type === 'income').reduce((sum, t) => sum + t.amount, 0)
+                const totalExpenses = transactions.filter(t => t.type === 'expense').reduce((sum, t) => sum + t.amount, 0)
+                const netProfit = totalSales - totalExpenses
                 
-                <Card className="border-r-4 border-r-blue-500"><CardContent className="pt-6"><div className="flex items-center justify-between"><div><p className="text-sm text-gray-500">صافي الربح</p><p className="text-2xl font-bold text-blue-600">18,700 ر.س</p></div><div className="w-12 h-12 bg-blue-100 rounded-full flex items-center justify-center"><DollarSign className="w-6 h-6 text-blue-600" /></div></div><p className="text-xs text-blue-600 mt-2">↑ 8% عن الشهر السابق</p></CardContent></Card>
+                // Parties calculations
+                const customersCount = parties.filter(p => p.type === 'customer' || p.type === 'both').length
+                const suppliersCount = parties.filter(p => p.type === 'supplier' || p.type === 'both').length
                 
-                <Card className="border-r-4 border-r-orange-500"><CardContent className="pt-6"><div className="flex items-center justify-between"><div><p className="text-sm text-gray-500">الفواتير المعلقة</p><p className="text-2xl font-bold text-orange-600">7 فواتير</p></div><div className="w-12 h-12 bg-orange-100 rounded-full flex items-center justify-center"><Clock className="w-6 h-6 text-orange-600" /></div></div><p className="text-xs text-orange-600 mt-2">3 تحتاج متابعة عاجلة</p></CardContent></Card>
-              </div>
+                // Treasury balance
+                const treasuryBalance = totalIncome - totalExpenses
 
-              {/* Additional KPIs */}
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-                <Card className="border-r-4 border-r-purple-500"><CardContent className="pt-6"><div className="flex items-center justify-between"><div><p className="text-sm text-gray-500">العملاء النشطون</p><p className="text-2xl font-bold text-purple-600">24 عميل</p></div><div className="w-12 h-12 bg-purple-100 rounded-full flex items-center justify-center"><Users className="w-6 h-6 text-purple-600" /></div></div></CardContent></Card>
-                
-                <Card className="border-r-4 border-r-cyan-500"><CardContent className="pt-6"><div className="flex items-center justify-between"><div><p className="text-sm text-gray-500">الموردين</p><p className="text-2xl font-bold text-cyan-600">18 مورد</p></div><div className="w-12 h-12 bg-cyan-100 rounded-full flex items-center justify-center"><Truck className="w-6 h-6 text-cyan-600" /></div></div></CardContent></Card>
-                
-                <Card className="border-r-4 border-r-pink-500"><CardContent className="pt-6"><div className="flex items-center justify-between"><div><p className="text-sm text-gray-500">المصروفات الشهرية</p><p className="text-2xl font-bold text-pink-600">26,000 ر.س</p></div><div className="w-12 h-12 bg-pink-100 rounded-full flex items-center justify-center"><Receipt className="w-6 h-6 text-pink-600" /></div></div></CardContent></Card>
-                
-                <Card className="border-r-4 border-r-indigo-500"><CardContent className="pt-6"><div className="flex items-center justify-between"><div><p className="text-sm text-gray-500">رصيد الخزينة</p><p className="text-2xl font-bold text-indigo-600">125,000 ر.س</p></div><div className="w-12 h-12 bg-indigo-100 rounded-full flex items-center justify-center"><Wallet className="w-6 h-6 text-indigo-600" /></div></div></CardContent></Card>
-              </div>
+                return (
+                  <>
+                    {/* Main KPI Cards - Row 1 */}
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+                      <Card className="border-r-4 border-r-green-500 hover:shadow-lg transition-shadow">
+                        <CardContent className="pt-6">
+                          <div className="flex items-center justify-between">
+                            <div>
+                              <p className="text-sm text-gray-500">إجمالي المبيعات</p>
+                              <p className="text-2xl font-bold text-green-600">{totalSales.toLocaleString()} ر.س</p>
+                            </div>
+                            <div className="w-12 h-12 bg-green-100 rounded-full flex items-center justify-center">
+                              <TrendingUp className="w-6 h-6 text-green-600" />
+                            </div>
+                          </div>
+                          <p className="text-xs text-gray-400 mt-2">
+                            {invoices.length > 0 ? `${invoices.length} فاتورة` : 'لا توجد فواتير بعد'}
+                          </p>
+                        </CardContent>
+                      </Card>
 
-              {/* Charts and Quick Actions */}
-              <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-                <Card className="lg:col-span-2">
-                  <CardHeader><CardTitle>المبيعات والمشتريات (آخر 6 أشهر)</CardTitle></CardHeader>
-                  <CardContent>
-                    <div className="h-64 flex items-end justify-around gap-4 px-4">
-                      {['أغسطس','سبتمبر','أكتوبر','نوفمبر','ديسمبر','يناير'].map((month, idx) => {
-                        const sh = [65,72,68,85,90,100][idx], ph = [45,55,50,60,70,75][idx]
-                        return (<div key={month} className="flex-1 flex flex-col items-center gap-2"><div className="w-full flex gap-1 items-end justify-center h-48"><div className="w-5 bg-gradient-to-t from-[#005f73] to-[#0a9396] rounded-t" style={{height:`${sh}%`}}/><div className="w-5 bg-gradient-to-t from-red-400 to-red-500 rounded-t" style={{height:`${ph}%`}}/></div><span className="text-xs text-gray-500">{month}</span></div>)
-                      })}
+                      <Card className="border-r-4 border-r-red-500 hover:shadow-lg transition-shadow">
+                        <CardContent className="pt-6">
+                          <div className="flex items-center justify-between">
+                            <div>
+                              <p className="text-sm text-gray-500">إجمالي المشتريات</p>
+                              <p className="text-2xl font-bold text-red-600">{totalExpenses.toLocaleString()} ر.س</p>
+                            </div>
+                            <div className="w-12 h-12 bg-red-100 rounded-full flex items-center justify-center">
+                              <TrendingDown className="w-6 h-6 text-red-600" />
+                            </div>
+                          </div>
+                          <p className="text-xs text-gray-400 mt-2">
+                            {transactions.filter(t => t.type === 'expense').length > 0 
+                              ? `${transactions.filter(t => t.type === 'expense').length} عملية` 
+                              : 'لا توجد مشتريات بعد'}
+                          </p>
+                        </CardContent>
+                      </Card>
+
+                      <Card className="border-r-4 border-r-blue-500 hover:shadow-lg transition-shadow">
+                        <CardContent className="pt-6">
+                          <div className="flex items-center justify-between">
+                            <div>
+                              <p className="text-sm text-gray-500">صافي الربح</p>
+                              <p className={`text-2xl font-bold ${netProfit >= 0 ? 'text-blue-600' : 'text-red-600'}`}>
+                                {netProfit.toLocaleString()} ر.س
+                              </p>
+                            </div>
+                            <div className="w-12 h-12 bg-blue-100 rounded-full flex items-center justify-center">
+                              <DollarSign className="w-6 h-6 text-blue-600" />
+                            </div>
+                          </div>
+                          <p className={`text-xs mt-2 ${netProfit >= 0 ? 'text-blue-600' : 'text-red-600'}`}>
+                            {netProfit >= 0 ? '↑ ربح' : '↓ خسارة'}
+                          </p>
+                        </CardContent>
+                      </Card>
+
+                      <Card className="border-r-4 border-r-orange-500 hover:shadow-lg transition-shadow">
+                        <CardContent className="pt-6">
+                          <div className="flex items-center justify-between">
+                            <div>
+                              <p className="text-sm text-gray-500">الفواتير المعلقة</p>
+                              <p className="text-2xl font-bold text-orange-600">{pendingInvoices.length} فاتورة</p>
+                            </div>
+                            <div className="w-12 h-12 bg-orange-100 rounded-full flex items-center justify-center">
+                              <Clock className="w-6 h-6 text-orange-600" />
+                            </div>
+                          </div>
+                          <p className="text-xs text-orange-600 mt-2">
+                            {pendingInvoices.length > 0 ? `${pendingInvoices.length} تحتاج متابعة` : 'جميع الفواتير مكتملة'}
+                          </p>
+                        </CardContent>
+                      </Card>
                     </div>
-                  </CardContent>
-                </Card>
 
-                <Card>
-                  <CardHeader><CardTitle>إجراءات سريعة</CardTitle></CardHeader>
-                  <CardContent className="space-y-3">
-                    <Button onClick={() => setActiveModule('sales')} className="w-full justify-start bg-green-50 text-green-700 hover:bg-green-100" variant="outline"><Plus className="ml-2 h-4 w-4" />فاتورة مبيعات جديدة</Button>
-                    <Button onClick={() => setActiveModule('purchases')} className="w-full justify-start bg-blue-50 text-blue-700 hover:bg-blue-100" variant="outline"><Plus className="ml-2 h-4 w-4" />طلب شراء جديد</Button>
-                    <Button onClick={() => setActiveModule('treasury')} className="w-full justify-start bg-purple-50 text-purple-700 hover:bg-purple-100" variant="outline"><Wallet className="ml-2 h-4 w-4" />تحصيل جديد</Button>
-                    <Button onClick={() => setActiveModule('expenses')} className="w-full justify-start bg-orange-50 text-orange-700 hover:bg-orange-100" variant="outline"><Receipt className="ml-2 h-4 w-4" />مصروف جديد</Button>
-                    <Button onClick={() => setActiveModule('reports')} className="w-full justify-start bg-gray-50 text-gray-700 hover:bg-gray-100" variant="outline"><FileText className="ml-2 h-4 w-4" />عرض التقارير</Button>
-                  </CardContent>
-                </Card>
-              </div>
+                    {/* Additional KPIs - Row 2 */}
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+                      <Card className="border-r-4 border-r-purple-500 hover:shadow-lg transition-shadow">
+                        <CardContent className="pt-6">
+                          <div className="flex items-center justify-between">
+                            <div>
+                              <p className="text-sm text-gray-500">العملاء النشطون</p>
+                              <p className="text-2xl font-bold text-purple-600">{customersCount} عميل</p>
+                            </div>
+                            <div className="w-12 h-12 bg-purple-100 rounded-full flex items-center justify-center">
+                              <Users className="w-6 h-6 text-purple-600" />
+                            </div>
+                          </div>
+                        </CardContent>
+                      </Card>
 
-              {/* Recent Invoices & Transactions */}
-              <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                <Card>
-                  <CardHeader className="flex flex-row items-center justify-between"><CardTitle>آخر الفواتير</CardTitle><Button variant="ghost" size="sm" onClick={() => setActiveModule('sales')}>عرض الكل</Button></CardHeader>
-                  <CardContent>
-                    <div className="space-y-3">
-                      {invoices.slice(0, 5).map(inv => (
-                        <div key={inv.id} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
-                          <div><p className="font-medium">{inv.number}</p><p className="text-xs text-gray-500">{inv.customerName}</p></div>
-                          <div className="text-left"><p className="font-bold">{inv.total.toLocaleString()} ر.س</p><Badge variant={inv.status === 'paid' ? 'default' : inv.status === 'posted' ? 'secondary' : 'outline'}>{inv.status === 'draft' ? 'مسودة' : inv.status === 'posted' ? 'مرحلة' : inv.status === 'paid' ? 'مدفوعة' : 'ملغاة'}</Badge></div>
-                        </div>
-                      ))}
+                      <Card className="border-r-4 border-r-cyan-500 hover:shadow-lg transition-shadow">
+                        <CardContent className="pt-6">
+                          <div className="flex items-center justify-between">
+                            <div>
+                              <p className="text-sm text-gray-500">الموردين</p>
+                              <p className="text-2xl font-bold text-cyan-600">{suppliersCount} مورد</p>
+                            </div>
+                            <div className="w-12 h-12 bg-cyan-100 rounded-full flex items-center justify-center">
+                              <Truck className="w-6 h-6 text-cyan-600" />
+                            </div>
+                          </div>
+                        </CardContent>
+                      </Card>
+
+                      <Card className="border-r-4 border-r-pink-500 hover:shadow-lg transition-shadow">
+                        <CardContent className="pt-6">
+                          <div className="flex items-center justify-between">
+                            <div>
+                              <p className="text-sm text-gray-500">الأصناف</p>
+                              <p className="text-2xl font-bold text-pink-600">{items.length} صنف</p>
+                            </div>
+                            <div className="w-12 h-12 bg-pink-100 rounded-full flex items-center justify-center">
+                              <Package className="w-6 h-6 text-pink-600" />
+                            </div>
+                          </div>
+                        </CardContent>
+                      </Card>
+
+                      <Card className="border-r-4 border-r-indigo-500 hover:shadow-lg transition-shadow">
+                        <CardContent className="pt-6">
+                          <div className="flex items-center justify-between">
+                            <div>
+                              <p className="text-sm text-gray-500">رصيد الخزينة</p>
+                              <p className="text-2xl font-bold text-indigo-600">{treasuryBalance.toLocaleString()} ر.س</p>
+                            </div>
+                            <div className="w-12 h-12 bg-indigo-100 rounded-full flex items-center justify-center">
+                              <Wallet className="w-6 h-6 text-indigo-600" />
+                            </div>
+                          </div>
+                        </CardContent>
+                      </Card>
                     </div>
-                  </CardContent>
-                </Card>
 
-                <Card>
-                  <CardHeader className="flex flex-row items-center justify-between"><CardTitle>آخر العمليات المالية</CardTitle><Button variant="ghost" size="sm" onClick={() => setActiveModule('treasury')}>عرض الكل</Button></CardHeader>
-                  <CardContent>
-                    <div className="space-y-3">
-                      {transactions.slice(0, 5).map(trans => (
-                        <div key={trans.id} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
-                          <div className="flex items-center gap-3"><div className={`w-10 h-10 rounded-full flex items-center justify-center ${trans.type === 'income' ? 'bg-green-100' : 'bg-red-100'}`}>{trans.type === 'income' ? <ArrowDownLeft className="w-5 h-5 text-green-600" /> : <ArrowUpRight className="w-5 h-5 text-red-600" />}</div><div><p className="font-medium">{trans.description}</p><p className="text-xs text-gray-500">{trans.category}</p></div></div>
-                          <p className={`font-bold ${trans.type === 'income' ? 'text-green-600' : 'text-red-600'}`}>{trans.type === 'income' ? '+' : '-'}{trans.amount.toLocaleString()} ر.س</p>
-                        </div>
-                      ))}
+                    {/* Charts and Quick Actions */}
+                    <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                      <Card className="lg:col-span-2">
+                        <CardHeader>
+                          <CardTitle>نظرة عامة على الحركات</CardTitle>
+                          <CardDescription>إحصائيات مباشرة من بياناتك</CardDescription>
+                        </CardHeader>
+                        <CardContent>
+                          {invoices.length > 0 || transactions.length > 0 ? (
+                            <div className="h-64 flex items-end justify-around gap-4 px-4">
+                              {/* Dynamic chart based on actual data */}
+                              <div className="flex-1 flex flex-col items-center gap-2">
+                                <div className="w-full flex gap-1 items-end justify-center h-48">
+                                  <div 
+                                    className="w-full bg-gradient-to-t from-[#005f73] to-[#0a9396] rounded-t"
+                                    style={{height: `${Math.min(100, Math.max(5, (totalSales / Math.max(totalSales + totalExpenses, 1)) * 100))}%`}}
+                                  />
+                                </div>
+                                <span className="text-xs text-gray-500 font-medium">المبيعات</span>
+                                <span className="text-xs text-green-600 font-bold">{totalSales.toLocaleString()}</span>
+                              </div>
+                              <div className="flex-1 flex flex-col items-center gap-2">
+                                <div className="w-full flex gap-1 items-end justify-center h-48">
+                                  <div 
+                                    className="w-full bg-gradient-to-t from-red-400 to-red-500 rounded-t"
+                                    style={{height: `${Math.min(100, Math.max(5, (totalExpenses / Math.max(totalSales + totalExpenses, 1)) * 100))}%`}}
+                                  />
+                                </div>
+                                <span className="text-xs text-gray-500 font-medium">المصروفات</span>
+                                <span className="text-xs text-red-600 font-bold">{totalExpenses.toLocaleString()}</span>
+                              </div>
+                              <div className="flex-1 flex flex-col items-center gap-2">
+                                <div className="w-full flex gap-1 items-end justify-center h-48">
+                                  <div 
+                                    className="w-full bg-gradient-to-t from-blue-400 to-blue-500 rounded-t"
+                                    style={{height: `${Math.min(100, Math.max(5, (paidInvoices.reduce((s,i) => s+i.total,0) / Math.max(totalSales, 1)) * 100))}%`}}
+                                  />
+                                </div>
+                                <span className="text-xs text-gray-500 font-medium">المدفوعة</span>
+                                <span className="text-xs text-blue-600 font-bold">{paidInvoices.reduce((s,i) => s+i.total,0).toLocaleString()}</span>
+                              </div>
+                            </div>
+                          ) : (
+                            <div className="h-64 flex flex-col items-center justify-center text-gray-400">
+                              <BarChart3 className="w-16 h-16 mb-3 opacity-50" />
+                              <p className="text-lg font-medium">لا توجد بيانات بعد</p>
+                              <p className="text-sm">ابدأ بإضافة فاتورة أو عملية مالية</p>
+                              <Button 
+                                onClick={openNewInvoice}
+                                className="mt-4 bg-gradient-to-r from-[#005f73] to-[#0a9396]"
+                              >
+                                <Plus className="ml-2 h-4 w-4" />
+                                أول فاتورة
+                              </Button>
+                            </div>
+                          )}
+                        </CardContent>
+                      </Card>
+
+                      <Card>
+                        <CardHeader><CardTitle>إجراءات سريعة</CardTitle></CardHeader>
+                        <CardContent className="space-y-3">
+                          <Button onClick={() => setActiveModule('sales')} className="w-full justify-start bg-green-50 text-green-700 hover:bg-green-100" variant="outline"><Plus className="ml-2 h-4 w-4" />فاتورة مبيعات جديدة</Button>
+                          <Button onClick={() => setActiveModule('purchases')} className="w-full justify-start bg-blue-50 text-blue-700 hover:bg-blue-100" variant="outline"><Plus className="ml-2 h-4 w-4" />طلب شراء جديد</Button>
+                          <Button onClick={() => setActiveModule('treasury')} className="w-full justify-start bg-purple-50 text-purple-700 hover:bg-purple-100" variant="outline"><Wallet className="ml-2 h-4 w-4" />تحصيل جديد</Button>
+                          <Button onClick={() => setActiveModule('expenses')} className="w-full justify-start bg-orange-50 text-orange-700 hover:bg-orange-100" variant="outline"><Receipt className="ml-2 h-4 w-4" />مصروف جديد</Button>
+                          <Button onClick={() => setActiveModule('parties')} className="w-full justify-start bg-cyan-50 text-cyan-700 hover:bg-cyan-100" variant="outline"><Users className="ml-2 h-4 w-4" />إضافة طرف جديد</Button>
+                          <Button onClick={() => setActiveModule('inventory')} className="w-full justify-start bg-pink-50 text-pink-700 hover:bg-pink-100" variant="outline"><Package className="ml-2 h-4 w-4" />إضافة صنف جديد</Button>
+                          <Button onClick={() => setActiveModule('reports')} className="w-full justify-start bg-gray-50 text-gray-700 hover:bg-gray-100" variant="outline"><FileText className="ml-2 h-4 w-4" />عرض التقارير</Button>
+                        </CardContent>
+                      </Card>
                     </div>
-                  </CardContent>
-                </Card>
-              </div>
+
+                    {/* Recent Invoices & Transactions */}
+                    <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                      <Card>
+                        <CardHeader className="flex flex-row items-center justify-between">
+                          <CardTitle>آخر الفواتير</CardTitle>
+                          <Button variant="ghost" size="sm" onClick={() => setActiveModule('sales')}>
+                            عرض الكل ({invoices.length})
+                          </Button>
+                        </CardHeader>
+                        <CardContent>
+                          {invoices.length > 0 ? (
+                            <div className="space-y-3">
+                              {invoices.slice(0, 5).map(inv => (
+                                <div key={inv.id} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors">
+                                  <div>
+                                    <p className="font-medium">{inv.number}</p>
+                                    <p className="text-xs text-gray-500">{inv.customerName}</p>
+                                  </div>
+                                  <div className="text-left">
+                                    <p className="font-bold">{inv.total.toLocaleString()} ر.س</p>
+                                    <Badge 
+                                      variant={inv.status === 'paid' ? 'default' : inv.status === 'posted' ? 'secondary' : 'outline'}
+                                      className={
+                                        inv.status === 'draft' ? 'bg-gray-100 text-gray-800' :
+                                        inv.status === 'posted' ? 'bg-blue-100 text-blue-800' :
+                                        inv.status === 'paid' ? 'bg-green-100 text-green-800' :
+                                        'bg-red-100 text-red-800'
+                                      }
+                                    >
+                                      {inv.status === 'draft' ? 'مسودة' : inv.status === 'posted' ? 'مرحلة' : inv.status === 'paid' ? 'مدفوعة' : 'ملغاة'}
+                                    </Badge>
+                                  </div>
+                                </div>
+                              ))}
+                            </div>
+                          ) : (
+                            <div className="text-center py-8 text-gray-400">
+                              <FileText className="w-12 h-12 mx-auto mb-3 opacity-50" />
+                              <p>لا توجد فواتير بعد</p>
+                              <Button variant="outline" className="mt-3" onClick={openNewInvoice}>
+                                <Plus className="ml-2 h-4 w-4" />
+                                أضف فاتورة الأولى
+                              </Button>
+                            </div>
+                          )}
+                        </CardContent>
+                      </Card>
+
+                      <Card>
+                        <CardHeader className="flex flex-row items-center justify-between">
+                          <CardTitle>آخر العمليات المالية</CardTitle>
+                          <Button variant="ghost" size="sm" onClick={() => setActiveModule('treasury')}>
+                            عرض الكل ({transactions.length})
+                          </Button>
+                        </CardHeader>
+                        <CardContent>
+                          {transactions.length > 0 ? (
+                            <div className="space-y-3">
+                              {transactions.slice(0, 5).map(trans => (
+                                <div key={trans.id} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors">
+                                  <div className="flex items-center gap-3">
+                                    <div className={`w-10 h-10 rounded-full flex items-center justify-center ${trans.type === 'income' ? 'bg-green-100' : 'bg-red-100'}`}>
+                                      {trans.type === 'income' ? 
+                                        <ArrowDownLeft className="w-5 h-5 text-green-600" /> : 
+                                        <ArrowUpRight className="w-5 h-5 text-red-600" />
+                                      }
+                                    </div>
+                                    <div>
+                                      <p className="font-medium">{trans.description}</p>
+                                      <p className="text-xs text-gray-500">{trans.category}</p>
+                                    </div>
+                                  </div>
+                                  <p className={`font-bold ${trans.type === 'income' ? 'text-green-600' : 'text-red-600'}`}>
+                                    {trans.type === 'income' ? '+' : '-'}{trans.amount.toLocaleString()} ر.س
+                                  </p>
+                                </div>
+                              ))}
+                            </div>
+                          ) : (
+                            <div className="text-center py-8 text-gray-400">
+                              <Receipt className="w-12 h-12 mx-auto mb-3 opacity-50" />
+                              <p>لا توجد عمليات مالية بعد</p>
+                              <Button variant="outline" className="mt-3" onClick={() => setActiveModule('treasury')}>
+                                <Plus className="ml-2 h-4 w-4" />
+                                أضف عملية أولى
+                              </Button>
+                            </div>
+                          )}
+                        </CardContent>
+                      </Card>
+                    </div>
+                  </>
+                )
+              })()}
             </div>
           )}
 
