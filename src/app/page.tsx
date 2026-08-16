@@ -29,7 +29,7 @@ import { Separator } from '@/components/ui/separator'
 import { ScrollArea } from '@/components/ui/scroll-area'
 
 // ============ TYPES ============
-type ModuleType = 'dashboard' | 'sales' | 'purchases' | 'inventory' | 'parties' | 'treasury' | 'reports' | 'settings' | 'accounts' | 'banks' | 'hr' | 'expenses'
+type ModuleType = 'dashboard' | 'sales' | 'purchases' | 'inventory' | 'parties' | 'treasury' | 'reports' | 'settings' | 'accounts' | 'banks' | 'hr' | 'expenses' | 'chart-of-accounts'
 
 interface Invoice {
   id: string
@@ -75,6 +75,16 @@ interface Transaction {
   category: string
 }
 
+interface Account {
+  id: string
+  code: string
+  name: string
+  type: 'asset' | 'liability' | 'equity' | 'revenue' | 'expense'
+  level: number
+  parentId: string | null
+  balance: number
+}
+
 // ============ EMPTY DATA ARRAYS FOR MANUAL ENTRY ============
 const mockInvoices: Invoice[] = []
 const mockQuotations: any[] = []
@@ -90,7 +100,80 @@ const mockItems: Item[] = [
 const mockParties: Party[] = []
 const mockTransactions: Transaction[] = []
 const mockPurchaseOrders: any[] = []
-const mockAccounts: any[] = []
+const mockAccounts: Account[] = [
+  // ============ الأصول ============
+  { id: 'acc-1000', code: '1000', name: 'الأصول', type: 'asset', level: 1, parentId: null, balance: 0 },
+  
+  // الأصول المتداولة
+  { id: 'acc-1100', code: '1100', name: 'الأصول المتداولة', type: 'asset', level: 2, parentId: 'acc-1000', balance: 0 },
+  { id: 'acc-1110', code: '1110', name: 'النقدية بالصندوق', type: 'asset', level: 3, parentId: 'acc-1100', balance: 0 },
+  { id: 'acc-11101', code: '11101', name: 'المصاريف', type: 'asset', level: 4, parentId: 'acc-1110', balance: 0 },
+  { id: 'acc-11102', code: '11102', name: 'البنك - الرصيد الجاري', type: 'asset', level: 4, parentId: 'acc-1110', balance: 0 },
+  { id: 'acc-1200', code: '1200', name: 'المدينون', type: 'asset', level: 3, parentId: 'acc-1100', balance: 0 },
+  { id: 'acc-1210', code: '1210', name: 'العملاء', type: 'asset', level: 4, parentId: 'acc-1200', balance: 0 },
+  { id: 'acc-1220', code: '1220', name: 'أوراق قبض', type: 'asset', level: 4, parentId: 'acc-1200', balance: 0 },
+  { id: 'acc-1230', code: '1230', name: 'مقدمات مدفوعة', type: 'asset', level: 4, parentId: 'acc-1200', balance: 0 },
+  { id: 'acc-1300', code: '1300', name: 'المخزون', type: 'asset', level: 3, parentId: 'acc-1100', balance: 0 },
+  { id: 'acc-1310', code: '1310', name: 'مشتريات بضاعة', type: 'asset', level: 4, parentId: 'acc-1300', balance: 0 },
+  { id: 'acc-1320', code: '1320', name: 'المخزون التجاري', type: 'asset', level: 4, parentId: 'acc-1300', balance: 0 },
+  { id: 'acc-1400', code: '1400', name: 'الإيرادات المقدمة', type: 'asset', level: 3, parentId: 'acc-1100', balance: 0 },
+  { id: 'acc-1401', code: '1401', name: 'الأرباح والخسائر', type: 'asset', level: 4, parentId: 'acc-1400', balance: 0 },
+  { id: 'acc-1402', code: '1402', name: 'المصروفات', type: 'asset', level: 4, parentId: 'acc-1400', balance: 0 },
+  { id: 'acc-1403', code: '1403', name: 'المصروفات', type: 'asset', level: 4, parentId: 'acc-1400', balance: 0 },
+  { id: 'acc-1404', code: '1404', name: 'المصروف', type: 'asset', level: 4, parentId: 'acc-1400', balance: 0 },
+  { id: 'acc-1405', code: '1405', name: 'الأرباح', type: 'asset', level: 4, parentId: 'acc-1400', balance: 0 },
+  { id: 'acc-1410', code: '1410', name: 'مصروف الإيجار', type: 'asset', level: 4, parentId: 'acc-1400', balance: 0 },
+
+  // الأصول الثابتة
+  { id: 'acc-2000', code: '2000', name: 'الأصول الثابتة', type: 'asset', level: 2, parentId: 'acc-1000', balance: 0 },
+  { id: 'acc-2100', code: '2100', name: 'الأجهزة والمعدات', type: 'asset', level: 3, parentId: 'acc-2000', balance: 0 },
+  { id: 'acc-2101', code: '2101', name: 'الأثاث والتجهيزات', type: 'asset', level: 4, parentId: 'acc-2100', balance: 0 },
+  { id: 'acc-2110', code: '2110', name: 'السيارات ومركبات النقل', type: 'asset', level: 4, parentId: 'acc-2000', balance: 0 },
+  { id: 'acc-2120', code: '2120', name: 'أرض وبناء', type: 'asset', level: 4, parentId: 'acc-2000', balance: 0 },
+  { id: 'acc-2130', code: '2130', name: 'تراكم الإهلاك', type: 'asset', level: 4, parentId: 'acc-2000', balance: 0 },
+  { id: 'acc-2140', code: '2140', name: 'التجهيزات المكتبية', type: 'asset', level: 4, parentId: 'acc-2000', balance: 0 },
+  { id: 'acc-2150', code: '2150', name: 'برمجيات مستخدمة', type: 'asset', level: 4, parentId: 'acc-2000', balance: 0 },
+  { id: 'acc-2160', code: '2160', name: 'إيرادات مستحقة', type: 'asset', level: 4, parentId: 'acc-2000', balance: 0 },
+  { id: 'acc-2170', code: '2170', name: 'رأس مال الشركة', type: 'asset', level: 4, parentId: 'acc-2000', balance: 0 },
+  { id: 'acc-2180', code: '2180', name: 'الأسهم النقدية', type: 'asset', level: 4, parentId: 'acc-2000', balance: 0 },
+
+  // ============ الخصوم ============
+  { id: 'acc-3000', code: '3000', name: 'قروض النشاط', type: 'liability', level: 1, parentId: null, balance: 0 },
+  { id: 'acc-3100', code: '3100', name: 'قرض بنكي', type: 'liability', level: 2, parentId: 'acc-3000', balance: 0 },
+  { id: 'acc-3200', code: '3200', name: 'مستحقات دائنة', type: 'liability', level: 2, parentId: 'acc-3000', balance: 0 },
+  { id: 'acc-3300', code: '3300', name: 'الموردون', type: 'liability', level: 3, parentId: 'acc-3200', balance: 0 },
+  { id: 'acc-3400', code: '3400', name: 'الأجور', type: 'liability', level: 3, parentId: 'acc-3200', balance: 0 },
+
+  // ============ الإيرادات ============
+  { id: 'acc-4000', code: '4000', name: 'الإيرادات', type: 'revenue', level: 1, parentId: null, balance: 0 },
+  { id: 'acc-4100', code: '4100', name: 'إيرادات المبيعات', type: 'revenue', level: 2, parentId: 'acc-4000', balance: 0 },
+  { id: 'acc-4200', code: '4200', name: 'إيرادات الخدمات', type: 'revenue', level: 2, parentId: 'acc-4000', balance: 0 },
+  { id: 'acc-4300', code: '4300', name: 'الإيرادات الأخرى', type: 'revenue', level: 2, parentId: 'acc-4000', balance: 0 },
+  { id: 'acc-4400', code: '4400', name: 'مصروفات المشتريات', type: 'revenue', level: 2, parentId: 'acc-4000', balance: 0 },
+  { id: 'acc-4500', code: '4500', name: 'جملة مباع مسموح بها', type: 'revenue', level: 3, parentId: 'acc-4400', balance: 0 },
+
+  // ============ المصروفات ============
+  { id: 'acc-5000', code: '5000', name: 'المصروفات', type: 'expense', level: 1, parentId: null, balance: 0 },
+  { id: 'acc-5100', code: '5100', name: 'كلفة المبيعات', type: 'expense', level: 2, parentId: 'acc-5000', balance: 0 },
+  { id: 'acc-5200', code: '5200', name: 'رواتب', type: 'expense', level: 2, parentId: 'acc-5000', balance: 0 },
+  { id: 'acc-5300', code: '5300', name: 'الإيجار والمصروفات', type: 'expense', level: 2, parentId: 'acc-5000', balance: 0 },
+  { id: 'acc-5400', code: '5400', name: 'مصروفات الراتب ومصاريف', type: 'expense', level: 2, parentId: 'acc-5000', balance: 0 },
+  { id: 'acc-5401', code: '5401', name: 'الضرائب', type: 'expense', level: 3, parentId: 'acc-5400', balance: 0 },
+  { id: 'acc-5402', code: '5402', name: 'مر (كهرباء/مياه)', type: 'expense', level: 3, parentId: 'acc-5400', balance: 0 },
+  { id: 'acc-5403', code: '5403', name: 'الصيانة والترميم', type: 'expense', level: 3, parentId: 'acc-5400', balance: 0 },
+  { id: 'acc-5404', code: '5404', name: 'قائمة هاتف وإنترنت', type: 'expense', level: 3, parentId: 'acc-5400', balance: 0 },
+  { id: 'acc-5405', code: '5405', name: 'مصروفات نقل', type: 'expense', level: 3, parentId: 'acc-5400', balance: 0 },
+  { id: 'acc-5406', code: '5406', name: 'إعلانات', type: 'expense', level: 3, parentId: 'acc-5400', balance: 0 },
+  { id: 'acc-5407', code: '5407', name: 'سفر وإقامة', type: 'expense', level: 3, parentId: 'acc-5400', balance: 0 },
+  { id: 'acc-5408', code: '5408', name: 'إعانة رسمية', type: 'expense', level: 3, parentId: 'acc-5400', balance: 0 },
+  { id: 'acc-5500', code: '5500', name: 'مصروفات بيعية', type: 'expense', level: 2, parentId: 'acc-5000', balance: 0 },
+  { id: 'acc-5501', code: '5501', name: 'عمولات المبيعات', type: 'expense', level: 3, parentId: 'acc-5500', balance: 0 },
+  { id: 'acc-5502', code: '5502', name: 'مصروفات تسويق', type: 'expense', level: 3, parentId: 'acc-5500', balance: 0 },
+  { id: 'acc-5600', code: '5600', name: 'مصروفات إدارية', type: 'expense', level: 2, parentId: 'acc-5000', balance: 0 },
+  { id: 'acc-5601', code: '5601', name: 'مصروفات الهاتف', type: 'expense', level: 3, parentId: 'acc-5600', balance: 0 },
+  { id: 'acc-5602', code: '5602', name: 'مصاريف', type: 'expense', level: 3, parentId: 'acc-5600', balance: 0 },
+  { id: 'acc-5700', code: '5700', name: 'الإهلاك', type: 'expense', level: 2, parentId: 'acc-5000', balance: 0 }
+]
 const mockBankAccounts: any[] = []
 const mockChecks: any[] = []
 const mockEmployees: any[] = []
@@ -105,7 +188,21 @@ export default function AccountingApp() {
   const [items, setItems] = useState<Item[]>(mockItems)
   const [parties, setParties] = useState<Party[]>([])
   const [transactions, setTransactions] = useState<Transaction[]>([])
+  const [expandedAccounts, setExpandedAccounts] = useState<Set<string>>(new Set(['acc-1000', 'acc-3000', 'acc-4000', 'acc-5000']))
   const [searchTerm, setSearchTerm] = useState('')
+
+  // Toggle account expansion
+  const toggleAccountExpansion = (accountId: string) => {
+    setExpandedAccounts(prev => {
+      const newSet = new Set(prev)
+      if (newSet.has(accountId)) {
+        newSet.delete(accountId)
+      } else {
+        newSet.add(accountId)
+      }
+      return newSet
+    })
+  }
   
   // Invoice Form States
   const [showInvoiceDialog, setShowInvoiceDialog] = useState(false)
@@ -1625,98 +1722,141 @@ export default function AccountingApp() {
           {/* ============ CHART OF ACCOUNTS MODULE ============ */}
           {activeModule === 'accounts' && (
             <div className="space-y-6">
-              <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+              <div className="grid grid-cols-1 md:grid-cols-5 gap-4">
                 <Card><CardContent className="pt-6"><div className="flex items-center gap-3"><div className="w-12 h-12 bg-blue-100 rounded-full flex items-center justify-center"><BookOpen className="w-6 h-6 text-blue-600" /></div><div><p className="text-sm text-gray-500">إجمالي الحسابات</p><p className="text-xl font-bold text-blue-600">{mockAccounts.length}</p></div></div></CardContent></Card>
-                <Card><CardContent className="pt-6"><div className="flex items-center gap-3"><div className="w-12 h-12 bg-green-100 rounded-full flex items-center justify-center"><TrendingUp className="w-6 h-6 text-green-600" /></div><div><p className="text-sm text-gray-500">الأصول</p><p className="text-xl font-bold text-green-600">150,000 ر.س</p></div></div></CardContent></Card>
-                <Card><CardContent className="pt-6"><div className="flex items-center gap-3"><div className="w-12 h-12 bg-red-100 rounded-full flex items-center justify-center"><TrendingDown className="w-6 h-6 text-red-600" /></div><div><p className="text-sm text-gray-500">الخصوم</p><p className="text-xl font-bold text-red-600">75,000 ر.س</p></div></div></CardContent></Card>
-                <Card><CardContent className="pt-6"><div className="flex items-center gap-3"><div className="w-12 h-12 bg-purple-100 rounded-full flex items-center justify-center"><DollarSign className="w-6 h-6 text-purple-600" /></div><div><p className="text-sm text-gray-500">حقوق الملكية</p><p className="text-xl font-bold text-purple-600">100,000 ر.س</p></div></div></CardContent></Card>
+                <Card><CardContent className="pt-6"><div className="flex items-center gap-3"><div className="w-12 h-12 bg-green-100 rounded-full flex items-center justify-center"><TrendingUp className="w-6 h-6 text-green-600" /></div><div><p className="text-sm text-gray-500">الأصول</p><p className="text-xl font-bold text-green-600">{mockAccounts.filter(a => a.type === 'asset').length} حساب</p></div></div></CardContent></Card>
+                <Card><CardContent className="pt-6"><div className="flex items-center gap-3"><div className="w-12 h-12 bg-red-100 rounded-full flex items-center justify-center"><TrendingDown className="w-6 h-6 text-red-600" /></div><div><p className="text-sm text-gray-500">الخصوم</p><p className="text-xl font-bold text-red-600">{mockAccounts.filter(a => a.type === 'liability').length} حساب</p></div></div></CardContent></Card>
+                <Card><CardContent className="pt-6"><div className="flex items-center gap-3"><div className="w-12 h-12 bg-emerald-100 rounded-full flex items-center justify-center"><DollarSign className="w-6 h-6 text-emerald-600" /></div><div><p className="text-sm text-gray-500">الإيرادات</p><p className="text-xl font-bold text-emerald-600">{mockAccounts.filter(a => a.type === 'revenue').length} حساب</p></div></div></CardContent></Card>
+                <Card><CardContent className="pt-6"><div className="flex items-center gap-3"><div className="w-12 h-12 bg-orange-100 rounded-full flex items-center justify-center"><Receipt className="w-6 h-6 text-orange-600" /></div><div><p className="text-sm text-gray-500">المصروفات</p><p className="text-xl font-bold text-orange-600">{mockAccounts.filter(a => a.type === 'expense').length} حساب</p></div></div></CardContent></Card>
               </div>
 
-              <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-                {/* Account Tree */}
-                <Card className="lg:col-span-2">
-                  <CardHeader className="flex flex-row items-center justify-between">
-                    <CardTitle>شجرة الحسابات</CardTitle>
+              <Card>
+                <CardHeader className="flex flex-row items-center justify-between">
+                  <CardTitle>📊 دليل الحسابات الشامل</CardTitle>
+                  <div className="flex items-center gap-2">
+                    <div className="flex items-center bg-gray-100 rounded-lg px-3 py-2">
+                      <Search className="w-4 h-4 text-gray-400 ml-2" />
+                      <input 
+                        type="text" 
+                        placeholder="بحث في الحسابات..." 
+                        className="bg-transparent border-none outline-none text-sm w-48"
+                        value={searchTerm}
+                        onChange={(e) => setSearchTerm(e.target.value)}
+                      />
+                    </div>
                     <Button className="bg-gradient-to-r from-[#005f73] to-[#0a9396]"><Plus className="ml-2 h-4 w-4" />حساب جديد</Button>
-                  </CardHeader>
-                  <CardContent>
-                    <div className="space-y-2">
-                      {mockAccounts.filter(a => a.parentId === null).map(account => (
-                        <div key={account.id} className="border rounded-lg">
-                          <div className="flex items-center justify-between p-3 bg-gray-50 cursor-pointer hover:bg-gray-100">
-                            <div className="flex items-center gap-3">
-                              <ChevronLeft className="w-4 h-4" />
-                              <span className="font-mono text-sm text-gray-500">{account.code}</span>
-                              <span className="font-medium">{account.name}</span>
-                            </div>
-                            <div className="flex items-center gap-2">
-                              <span className="font-bold">{account.balance.toLocaleString()} ر.س</span>
-                              <Badge className={
-                                account.type === 'asset' ? 'bg-blue-100 text-blue-800' :
-                                account.type === 'liability' ? 'bg-red-100 text-red-800' :
-                                account.type === 'equity' ? 'bg-purple-100 text-purple-800' :
-                                account.type === 'revenue' ? 'bg-green-100 text-green-800' :
-                                'bg-orange-100 text-orange-800'
-                              }>
-                                {account.type === 'asset' ? 'أصل' : account.type === 'liability' ? 'خصم' : account.type === 'equity' ? 'ملكية' : account.type === 'revenue' ? 'إيراد' : 'مصروف'}
-                              </Badge>
-                              <Button variant="ghost" size="icon" title="تعديل"><Edit2 className="w-4 h-4" /></Button>
-                              <Button variant="ghost" size="icon" title="حذف"><Trash2 className="w-4 h-4 text-red-600" /></Button>
-                            </div>
-                          </div>
-                          {/* Sub Accounts */}
-                          {mockAccounts.filter(sub => sub.parentId === account.id).map(sub => (
-                            <div key={sub.id} className="flex items-center justify-between p-3 pr-10 border-t hover:bg-gray-50">
-                              <div className="flex items-center gap-3">
-                                <GitBranch className="w-4 h-4 text-gray-400" />
-                                <span className="font-mono text-sm text-gray-500">{sub.code}</span>
-                                <span>{sub.name}</span>
-                              </div>
-                              <div className="flex items-center gap-2">
-                                <span className="font-bold">{sub.balance.toLocaleString()} ر.س</span>
-                                <Button variant="ghost" size="icon" title="تعديل"><Edit2 className="w-4 h-4" /></Button>
-                                <Button variant="ghost" size="icon" title="حذف"><Trash2 className="w-4 h-4 text-red-600" /></Button>
-                              </div>
-                            </div>
-                          ))}
-                        </div>
-                      ))}
-                    </div>
-                  </CardContent>
-                </Card>
+                    <Button variant="outline" onClick={() => window.print()}><Printer className="ml-2 h-4 w-4" />طباعة الدليل</Button>
+                  </div>
+                </CardHeader>
+                <CardContent>
+                  {/* Account Type Legend */}
+                  <div className="flex items-center gap-4 mb-4 p-3 bg-gray-50 rounded-lg text-sm">
+                    <span className="font-medium">أنواع الحسابات:</span>
+                    <Badge className="bg-blue-100 text-blue-800">أصول</Badge>
+                    <Badge className="bg-red-100 text-red-800">خصوم</Badge>
+                    <Badge className="bg-purple-100 text-purple-800">ملكية</Badge>
+                    <Badge className="bg-green-100 text-green-800">إيرادات</Badge>
+                    <Badge className="bg-orange-100 text-orange-800">مصروفات</Badge>
+                  </div>
 
-                {/* Journal Entry Form */}
-                <Card>
-                  <CardHeader><CardTitle>قيود محاسبية</CardTitle></CardHeader>
-                  <CardContent className="space-y-4">
-                    <Button className="w-full bg-gradient-to-r from-[#005f73] to-[#0a9396]"><Plus className="ml-2 h-4 w-4" />قيده جديد</Button>
-                    
-                    <Separator />
-                    
-                    <div className="space-y-3">
-                      <h4 className="font-medium">آخر القيود</h4>
-                      {[1, 2, 3].map(i => (
-                        <div key={i} className="p-3 bg-gray-50 rounded-lg">
-                          <div className="flex items-center justify-between mb-2">
-                            <span className="font-mono text-sm">JE-{String(i).padStart(3, '0')}</span>
-                            <span className="text-xs text-gray-500">2024-01-{15 + i}</span>
-                          </div>
-                          <p className="text-sm text-gray-600">قيود يومية - مبيعات نقدية</p>
-                          <div className="flex items-center justify-between mt-2">
-                            <span className="text-sm text-green-600">مدين: 5,000</span>
-                            <span className="text-sm text-red-600">دائن: 5,000</span>
-                          </div>
-                          <div className="flex items-center gap-1 mt-2">
-                            <Button variant="ghost" size="sm" title="عرض"><Eye className="w-3 h-3" /></Button>
-                            <Button variant="ghost" size="sm" title="طباعة"><Printer className="w-3 h-3" /></Button>
-                            <Button variant="ghost" size="sm" title="حذف"><Trash2 className="w-3 h-3 text-red-600" /></Button>
-                          </div>
-                        </div>
-                      ))}
+                  {/* Account Tree Table */}
+                  <div className="overflow-x-auto border rounded-lg">
+                    <table className="w-full text-sm">
+                      <thead>
+                        <tr className="border-b bg-[#005f73] text-white">
+                          <th className="text-right p-3 font-medium w-12">#</th>
+                          <th className="text-right p-3 font-medium w-24">رقم الحساب</th>
+                          <th className="text-right p-3 font-medium">اسم الحساب</th>
+                          <th className="text-right p-3 font-medium w-28">نوع الحساب</th>
+                          <th className="text-right p-3 font-medium w-20">المستوى</th>
+                          <th className="text-right p-3 font-medium w-32">الحساب الأب/الإجمالي</th>
+                          <th className="text-right p-3 font-medium w-32">إجمالي الأرصدة</th>
+                          <th className="text-right p-3 font-medium w-32">الإجراءات</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {mockAccounts
+                          .filter(account => {
+                            if (!searchTerm) return true
+                            return account.name.includes(searchTerm) || account.code.includes(searchTerm)
+                          })
+                          .map((account, idx) => {
+                            const hasChildren = mockAccounts.some(a => a.parentId === account.id)
+                            const isExpanded = expandedAccounts.has(account.id)
+                            const parentAccount = account.parentId ? mockAccounts.find(a => a.id === account.parentId) : null
+                            
+                            return (
+                              <React.Fragment key={account.id}>
+                                <tr className={`border-b hover:bg-gray-50 ${account.level === 1 ? 'bg-gray-100 font-bold' : ''}`}>
+                                  <td className="p-3 text-gray-500">{idx + 1}</td>
+                                  <td className="p-3 font-mono text-[#005f73]">{account.code}</td>
+                                  <td className="p-3">
+                                    <div className="flex items-center gap-2">
+                                      {hasChildren && (
+                                        <button 
+                                          onClick={() => toggleAccountExpansion(account.id)}
+                                          className="p-1 hover:bg-gray-200 rounded"
+                                        >
+                                          {isExpanded ? (
+                                            <ChevronDown className="w-4 h-4" />
+                                          ) : (
+                                            <ChevronLeft className="w-4 h-4" />
+                                          )}
+                                        </button>
+                                      )}
+                                      {!hasChildren && account.level > 1 && (
+                                        <span className="w-4"></span>
+                                      )}
+                                      <span style={{ paddingRight: `${(account.level - 1) * 16}px` }}>
+                                        {account.name}
+                                      </span>
+                                    </div>
+                                  </td>
+                                  <td className="p-3">
+                                    <Badge className={
+                                      account.type === 'asset' ? 'bg-blue-100 text-blue-800' :
+                                      account.type === 'liability' ? 'bg-red-100 text-red-800' :
+                                      account.type === 'equity' ? 'bg-purple-100 text-purple-800' :
+                                      account.type === 'revenue' ? 'bg-green-100 text-green-800' :
+                                      'bg-orange-100 text-orange-800'
+                                    }>
+                                      {account.type === 'asset' ? 'أصل' : 
+                                       account.type === 'liability' ? 'خصم' : 
+                                       account.type === 'equity' ? 'ملكية' : 
+                                       account.type === 'revenue' ? 'إيراد' : 'مصروف'}
+                                    </Badge>
+                                  </td>
+                                  <td className="p-3 text-center">{account.level}</td>
+                                  <td className="p-3">{parentAccount?.name || '-'}</td>
+                                  <td className="p-3 font-bold">{account.balance.toLocaleString()}</td>
+                                  <td className="p-3">
+                                    <div className="flex items-center gap-1">
+                                      <Button variant="ghost" size="icon" title="عرض التفاصيل"><Eye className="w-4 h-4 text-blue-600" /></Button>
+                                      <Button variant="ghost" size="icon" title="تعديل"><Edit2 className="w-4 h-4 text-purple-600" /></Button>
+                                      {account.level > 2 && (
+                                        <Button variant="ghost" size="icon" title="حذف"><Trash2 className="w-4 h-4 text-red-600" /></Button>
+                                      )}
+                                    </div>
+                                  </td>
+                                </tr>
+                              </React.Fragment>
+                            )
+                          })}
+                      </tbody>
+                    </table>
+                  </div>
+
+                  {mockAccounts.filter(account => {
+                    if (!searchTerm) return false
+                    return account.name.includes(searchTerm) || account.code.includes(searchTerm)
+                  }).length === 0 && searchTerm && (
+                    <div className="text-center py-8 text-gray-500">
+                      <Search className="w-12 h-12 mx-auto mb-2 opacity-30" />
+                      <p>لا توجد نتائج لـ "{searchTerm}"</p>
                     </div>
-                  </CardContent>
-                </Card>
-              </div>
+                  )}
+                </CardContent>
+              </Card>
             </div>
           )}
 
