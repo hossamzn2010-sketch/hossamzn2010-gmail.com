@@ -2489,40 +2489,41 @@ export default function AccountingApp() {
 
       {/* ============ INVOICE DIALOG (MATCHING SCREENSHOT DESIGN) ============ */}
       <Dialog open={showInvoiceDialog} onOpenChange={setShowInvoiceDialog}>
-        <DialogContent className="max-w-[95%] w-full max-h-[96vh] overflow-y-auto" dir="rtl">
-          <DialogHeader className="flex flex-row items-center justify-between pb-4 border-b">
+        <DialogContent className="max-w-[98%] w-[98%] h-[96vh] max-h-[96vh] overflow-y-auto p-8" dir="rtl" style={{ width: '98vw', maxWidth: '98vw' }}>
+          <DialogHeader className="flex flex-row items-center justify-between pb-6 border-b-2">
             <div>
-              <DialogTitle className="text-2xl font-bold text-[#005f73]">
+              <DialogTitle className="text-4xl font-bold text-[#005f73]">
                 {editingInvoice ? '✏️ تعديل فاتورة مبيعات' : '📄 إشعار فاتورة مبيعات جديد'}
               </DialogTitle>
             </div>
             <Button 
               type="button"
               variant="outline" 
-              size="sm"
+              size="lg"
               onClick={() => setShowInvoiceDialog(false)}
+              className="h-14 w-14 text-2xl rounded-xl"
             >
               ✕
             </Button>
           </DialogHeader>
           
-          <div className="space-y-6 mt-4">
+          <div className="space-y-8 mt-6">
             {/* Top Row: Date | Customer | Tax */}
-            <div className="grid grid-cols-4 gap-6">
+            <div className="grid grid-cols-4 gap-8">
               <div>
-                <Label className="text-lg font-bold text-gray-700">📅 التاريخ</Label>
+                <Label className="text-2xl font-bold text-gray-800">📅 التاريخ</Label>
                 <Input 
                   type="date" 
-                  className="mt-2 border-2 border-gray-300 focus:border-[#0a9396] text-xl p-4 h-14 rounded-xl"
+                  className="mt-3 border-3 border-gray-300 focus:border-[#0a9396] focus:ring-4 focus:ring-[#0a9396]/20 text-2xl p-5 h-18 rounded-2xl"
                   value={invoiceForm.date}
                   onChange={(e) => setInvoiceForm(prev => ({ ...prev, date: e.target.value }))}
                 />
               </div>
               <div>
-                <Label className="text-lg font-bold text-gray-700">👤 اختر العميل</Label>
-                <div className="flex gap-2 mt-2">
+                <Label className="text-2xl font-bold text-gray-800">👤 اختر العميل</Label>
+                <div className="flex gap-3 mt-3">
                   <Select value={invoiceForm.customerId} onValueChange={(value) => setInvoiceForm(prev => ({ ...prev, customerId: value }))}>
-                    <SelectTrigger className="flex-1 border-2 border-gray-300 focus:border-[#0a9396] h-14 text-xl rounded-xl">
+                    <SelectTrigger className="flex-1 border-3 border-gray-300 focus:border-[#0a9396] focus:ring-4 focus:ring-[#0a9396]/20 h-18 text-2xl rounded-2xl">
                       <SelectValue placeholder="اختر العميل" />
                     </SelectTrigger>
                     <SelectContent>
@@ -2537,19 +2538,19 @@ export default function AccountingApp() {
                     size="icon"
                     onClick={() => setShowAddCustomerDialog(true)}
                     title="إضافة عميل جديد"
-                    className="border-dashed border-2 border-emerald-300 text-emerald-600 hover:bg-emerald-50 h-14 w-14 rounded-xl"
+                    className="border-dashed border-3 border-emerald-400 text-emerald-700 hover:bg-emerald-100 h-18 w-18 rounded-2xl"
                   >
-                    <Plus className="w-6 h-6" />
+                    <Plus className="w-7 h-7" />
                   </Button>
                 </div>
               </div>
               <div>
-                <Label className="text-lg font-bold text-gray-700">🧾 الضريبة (%)</Label>
+                <Label className="text-2xl font-bold text-gray-800">🧾 الضريبة (%)</Label>
                 <Select 
                   value={invoiceForm.taxRate.toString()} 
                   onValueChange={(value) => setInvoiceForm(prev => ({ ...prev, taxRate: parseInt(value) }))}
                 >
-                  <SelectTrigger className="mt-2 border-2 border-gray-300 focus:border-[#0a9396] h-14 text-xl rounded-xl">
+                  <SelectTrigger className="mt-3 border-3 border-gray-300 focus:border-[#0a9396] focus:ring-4 focus:ring-[#0a9396]/20 h-18 text-2xl rounded-2xl">
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
@@ -2561,12 +2562,12 @@ export default function AccountingApp() {
                 </Select>
               </div>
               <div>
-                <Label className="text-lg font-bold text-gray-700">💳 طريقة السداد</Label>
+                <Label className="text-2xl font-bold text-gray-800">💳 طريقة السداد</Label>
                 <Select 
                   value={invoiceForm.paymentMethod} 
                   onValueChange={(value: any) => setInvoiceForm(prev => ({ ...prev, paymentMethod: value }))}
                 >
-                  <SelectTrigger className="mt-2 border-2 border-gray-300 focus:border-[#0a9396] h-14 text-xl rounded-xl">
+                  <SelectTrigger className="mt-3 border-3 border-gray-300 focus:border-[#0a9396] focus:ring-4 focus:ring-[#0a9396]/20 h-18 text-2xl rounded-2xl">
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
@@ -2580,40 +2581,40 @@ export default function AccountingApp() {
             </div>
 
             {/* Items Section with Summary Side by Side */}
-            <div className="grid grid-cols-3 gap-8">
+            <div className="grid grid-cols-3 gap-10">
               {/* Items Table - Takes 2/3 width */}
               <div className="col-span-2">
-                <div className="border-3 border-gray-300 rounded-2xl overflow-hidden shadow-md">
+                <div className="border-[3px] border-gray-400 rounded-3xl overflow-hidden shadow-lg">
                   {/* Table Header */}
-                  <div className="grid grid-cols-[2.5fr_1.2fr_1.2fr_1.2fr_auto] bg-gradient-to-l from-[#005f73] to-[#0a9396] p-5">
-                    <div className="text-white font-bold text-xl">الصنف</div>
-                    <div className="text-white font-bold text-xl text-center">الكمية</div>
-                    <div className="text-white font-bold text-xl text-center">السعر</div>
-                    <div className="text-white font-bold text-xl text-center">الإجمالي</div>
-                    <div className="w-12"></div>
+                  <div className="grid grid-cols-[3fr_1.5fr_1.5fr_1.5fr_auto] bg-gradient-to-l from-[#005f73] to-[#0a9396] p-6">
+                    <div className="text-white font-bold text-2xl">الصنف</div>
+                    <div className="text-white font-bold text-2xl text-center">الكمية</div>
+                    <div className="text-white font-bold text-2xl text-center">السعر</div>
+                    <div className="text-white font-bold text-2xl text-center">الإجمالي</div>
+                    <div className="w-14"></div>
                   </div>
                   
                   {/* Items List or Empty State */}
                   {invoiceForm.items.length === 0 ? (
                     <div className="p-10 text-center bg-gray-50">
                       <Package className="w-16 h-16 mx-auto mb-4 text-gray-300" />
-                      <p className="text-gray-500 text-xl font-medium mb-6">لم يتم إضافة أصناف بعد</p>
-                      <div className="space-y-4 max-w-lg mx-auto">
-                        <div className="grid grid-cols-4 gap-4 px-3 py-4">
-                          <Input placeholder="اسم الصنف" className="border-2 border-gray-300 h-14 text-lg rounded-xl" disabled />
-                          <Input type="number" placeholder="1" className="border-2 border-gray-300 h-14 text-lg text-center rounded-xl" disabled />
-                          <Input type="number" placeholder="0.00" className="border-2 border-gray-300 h-14 text-lg text-center rounded-xl" disabled />
-                          <Input type="number" placeholder="0.00" className="border-2 border-gray-300 h-14 text-lg text-center rounded-xl" disabled />
+                      <p className="text-gray-600 text-2xl font-bold mb-8">لم يتم إضافة أصناف بعد</p>
+                      <div className="space-y-6 max-w-2xl mx-auto">
+                        <div className="grid grid-cols-4 gap-5 px-4 py-6">
+                          <Input placeholder="اسم الصنف" className="border-3 border-gray-300 h-20 text-xl rounded-2xl" disabled />
+                          <Input type="number" placeholder="1" className="border-3 border-gray-300 h-20 text-2xl text-center font-bold rounded-2xl" disabled />
+                          <Input type="number" placeholder="0.00" className="border-3 border-gray-300 h-20 text-2xl text-center font-bold rounded-2xl" disabled />
+                          <Input type="number" placeholder="0.00" className="border-3 border-gray-300 h-20 text-2xl text-center font-bold rounded-2xl" disabled />
                         </div>
                       </div>
                     </div>
                   ) : (
-                    <div className="divide-y divide-gray-100 max-h-96 overflow-y-auto">
+                    <div className="divide-y divide-gray-200 max-h-[500px] overflow-y-auto">
                       {invoiceForm.items.map((item, idx) => {
                         const lineTotal = item.quantity * item.price
                         return (
-                          <div key={idx} className="grid grid-cols-[2.5fr_1.2fr_1.2fr_1.2fr_auto] gap-4 p-5 hover:bg-blue-50 items-center transition-colors">
-                            <div className="flex gap-3">
+                          <div key={idx} className="grid grid-cols-[3fr_1.5fr_1.5fr_1.5fr_auto] gap-6 p-6 hover:bg-blue-50 items-center transition-colors">
+                            <div className="flex gap-4">
                               <Select value={item.itemId} onValueChange={(value) => {
                                 updateInvoiceItem(idx, 'itemId', value)
                                 const selected = items.find(i => i.id === value)
@@ -2621,7 +2622,7 @@ export default function AccountingApp() {
                                   updateInvoiceItem(idx, 'price', selected.price)
                                 }
                               }}>
-                                <SelectTrigger className="w-full border-2 border-gray-300 text-lg h-14 rounded-xl">
+                                <SelectTrigger className="w-full border-3 border-gray-300 text-xl h-20 rounded-2xl focus:ring-4 focus:ring-[#0a9396]/20">
                                   <SelectValue placeholder="اسم الصنف" />
                                 </SelectTrigger>
                                 <SelectContent>
@@ -2638,16 +2639,16 @@ export default function AccountingApp() {
                                 size="icon"
                                 onClick={() => { setItemEditIndex(idx); setShowAddItemDialog(true); }}
                                 title="إضافة صنف جديد"
-                                className="h-14 w-14 border-dashed border-2 border-emerald-400 text-emerald-600 hover:bg-emerald-50 flex-shrink-0 rounded-xl"
+                                className="h-20 w-20 border-dashed border-3 border-emerald-400 text-emerald-700 hover:bg-emerald-100 flex-shrink-0 rounded-2xl"
                               >
-                                <Plus className="w-5 h-5" />
+                                <Plus className="w-7 h-7" />
                               </Button>
                             </div>
                             <div>
                               <Input 
                                 type="number" 
                                 min="1"
-                                className="border-2 border-gray-300 text-xl h-14 text-center font-bold p-4 rounded-xl focus:border-[#0a9396] focus:ring-2 focus:ring-[#0a9396]/20"
+                                className="border-3 border-gray-400 text-2xl h-20 text-center font-bold p-6 rounded-2xl focus:border-[#0a9396] focus:ring-4 focus:ring-[#0a9396]/30 bg-white"
                                 value={item.quantity || ''}
                                 onChange={(e) => updateInvoiceItem(idx, 'quantity', parseInt(e.target.value) || 0)}
                                 placeholder="1"
@@ -2658,22 +2659,22 @@ export default function AccountingApp() {
                                 type="number"
                                 min="0"
                                 step="0.01"
-                                className="border-2 border-gray-300 text-xl h-14 text-center font-bold p-4 rounded-xl focus:border-[#0a9396] focus:ring-2 focus:ring-[#0a9396]/20"
+                                className="border-3 border-gray-400 text-2xl h-20 text-center font-bold p-6 rounded-2xl focus:border-[#0a9396] focus:ring-4 focus:ring-[#0a9396]/30 bg-white"
                                 value={item.price || ''}
                                 onChange={(e) => updateInvoiceItem(idx, 'price', parseFloat(e.target.value) || 0)}
                                 placeholder="0.00"
                               />
                             </div>
-                            <div className="flex items-center justify-between bg-gray-50 rounded-xl px-4 py-3">
-                              <span className="font-bold text-xl text-[#005f73]">{lineTotal.toLocaleString()}</span>
+                            <div className="flex items-center justify-between bg-gray-100 rounded-2xl px-5 py-4">
+                              <span className="font-bold text-2xl text-[#005f73]">{lineTotal.toLocaleString()}</span>
                               <Button 
                                 type="button"
                                 variant="ghost" 
                                 size="icon"
-                                className="h-11 w-11 text-red-500 hover:text-red-700 hover:bg-red-100"
+                                className="h-14 w-14 text-red-500 hover:text-red-700 hover:bg-red-100"
                                 onClick={() => removeInvoiceItem(idx)}
                               >
-                                <Trash2 className="w-6 h-6" />
+                                <Trash2 className="w-7 h-7" />
                               </Button>
                             </div>
                           </div>
@@ -2683,14 +2684,14 @@ export default function AccountingApp() {
                   )}
                   
                   {/* Add Item Button */}
-                  <div className="p-5 border-t-2 bg-gradient-to-r from-gray-50 to-emerald-50">
+                  <div className="p-6 border-t-[3px] bg-gradient-to-r from-gray-100 to-emerald-100">
                     <Button 
                       type="button" 
                       variant="ghost" 
-                      className="text-emerald-600 hover:text-emerald-700 hover:bg-emerald-100 w-full justify-start py-4 text-xl font-bold"
+                      className="text-emerald-700 hover:text-emerald-800 hover:bg-emerald-200 w-full justify-start py-6 text-2xl font-bold"
                       onClick={addInvoiceItem}
                     >
-                      <Plus className="ml-2 h-6 w-6" />
+                      <Plus className="ml-3 h-8 w-8" />
                       ➕ إضافة صنف جديد
                     </Button>
                   </div>
@@ -2698,47 +2699,47 @@ export default function AccountingApp() {
               </div>
 
               {/* Summary Section - Takes 1/3 width */}
-              <div className="bg-gradient-to-br from-gray-50 to-blue-50 rounded-2xl p-6 space-y-5 h-fit border-2 border-gray-200 shadow-md">
-                <h3 className="font-bold text-2xl text-gray-800 border-b-2 border-gray-200 pb-4 mb-4 flex items-center gap-2">
+              <div className="bg-gradient-to-br from-blue-50 to-cyan-50 rounded-3xl p-8 space-y-6 h-fit border-[3px] border-gray-300 shadow-lg">
+                <h3 className="font-bold text-3xl text-gray-800 border-b-[3px] border-gray-300 pb-5 mb-5 flex items-center gap-3">
                   📊 ملخص الفاتورة
                 </h3>
                 
-                <div className="space-y-5 text-lg">
-                  <div className="flex justify-between items-center p-3 bg-white rounded-xl shadow-sm">
-                    <span className="text-gray-700 font-bold">المجموع الفرعي:</span>
-                    <span className="font-bold text-xl text-gray-800">{getInvoiceTotal().toLocaleString()} ر.س</span>
+                <div className="space-y-6 text-xl">
+                  <div className="flex justify-between items-center p-4 bg-white rounded-2xl shadow-md">
+                    <span className="text-gray-800 font-bold text-xl">المجموع الفرعي:</span>
+                    <span className="font-bold text-2xl text-gray-900">{getInvoiceTotal().toLocaleString()} ر.س</span>
                   </div>
 
-                  <div className="flex justify-between items-center p-3 bg-white rounded-xl shadow-sm">
-                    <span className="text-gray-700 font-bold">الخصم (%):</span>
-                    <div className="flex items-center gap-3">
+                  <div className="flex justify-between items-center p-4 bg-white rounded-2xl shadow-md">
+                    <span className="text-gray-800 font-bold text-xl">الخصم (%):</span>
+                    <div className="flex items-center gap-4">
                       <Input 
                         type="number"
                         min="0"
                         max="100"
-                        className="w-24 h-12 text-center border-2 border-gray-300 text-lg font-bold rounded-xl"
+                        className="w-28 h-16 text-center border-3 border-gray-400 text-xl font-bold rounded-2xl focus:border-red-400 focus:ring-4 focus:ring-red-200"
                         value={invoiceForm.discount || 0}
                         onChange={(e) => setInvoiceForm(prev => ({ ...prev, discount: parseFloat(e.target.value) || 0 }))}
                         placeholder="0"
                       />
-                      <span className="font-bold text-red-500 text-lg">
+                      <span className="font-bold text-red-600 text-xl">
                         -{((getInvoiceTotal() * invoiceForm.discount) / 100).toLocaleString()} ر.س
                       </span>
                     </div>
                   </div>
                   
-                  <div className="flex justify-between items-center p-3 bg-white rounded-xl shadow-sm">
-                    <span className="text-gray-700 font-bold">الضريبة ({invoiceForm.taxRate}%):</span>
-                    <span className="font-bold text-purple-600 text-lg">
+                  <div className="flex justify-between items-center p-4 bg-white rounded-2xl shadow-md">
+                    <span className="text-gray-800 font-bold text-xl">الضريبة ({invoiceForm.taxRate}%):</span>
+                    <span className="font-bold text-purple-700 text-xl">
                       +{(((getInvoiceTotal() * (100 - invoiceForm.discount)) / 100) * invoiceForm.taxRate / 100).toLocaleString()} ر.س
                     </span>
                   </div>
                   
-                  <Separator className="my-3" />
+                  <Separator className="my-4" />
                   
-                  <div className="flex justify-between items-center p-4 bg-gradient-to-r from-[#005f73] to-[#0a9396] rounded-xl text-white shadow-lg">
-                    <span className="font-bold text-xl">الإجمالي الكلي:</span>
-                    <span className="font-bold text-3xl">
+                  <div className="flex justify-between items-center p-6 bg-gradient-to-r from-[#005f73] to-[#0a9396] rounded-2xl text-white shadow-xl">
+                    <span className="font-bold text-2xl">الإجمالي الكلي:</span>
+                    <span className="font-bold text-4xl">
                       {(
                         ((getInvoiceTotal() * (100 - invoiceForm.discount)) / 100) + 
                         (((getInvoiceTotal() * (100 - invoiceForm.discount)) / 100) * invoiceForm.taxRate / 100)
@@ -2746,30 +2747,30 @@ export default function AccountingApp() {
                     </span>
                   </div>
 
-                  <Separator className="my-3" />
+                  <Separator className="my-4" />
 
                   {/* Payment Section */}
-                  <div className="bg-yellow-50 rounded-xl p-5 space-y-4 border-2 border-yellow-300 shadow-sm">
-                    <h4 className="font-bold text-xl text-yellow-800 flex items-center gap-2">
+                  <div className="bg-yellow-100 rounded-2xl p-6 space-y-5 border-[3px] border-yellow-400 shadow-md">
+                    <h4 className="font-bold text-2xl text-yellow-900 flex items-center gap-3">
                       💰 تفاصيل السداد
                     </h4>
                     
                     <div className="flex justify-between items-center">
-                      <span className="text-gray-700 font-bold text-lg">المبلغ المدفوع:</span>
+                      <span className="text-gray-800 font-bold text-xl">المبلغ المدفوع:</span>
                       <Input 
                         type="number"
                         min="0"
                         step="0.01"
-                        className="w-36 h-12 text-left font-bold text-green-600 border-2 border-green-400 text-lg rounded-xl focus:border-green-500 focus:ring-2 focus:ring-green-200"
+                        className="w-40 h-16 text-left font-bold text-green-700 border-3 border-green-500 text-xl rounded-2xl focus:border-green-600 focus:ring-4 focus:ring-green-200"
                         value={invoiceForm.paidAmount || ''}
                         onChange={(e) => setInvoiceForm(prev => ({ ...prev, paidAmount: parseFloat(e.target.value) || 0 }))}
                         placeholder="0.00"
                       />
                     </div>
 
-                    <div className="flex justify-between items-center p-3 bg-white rounded-xl shadow-sm">
-                      <span className="text-gray-700 font-bold text-lg">المتبقي:</span>
-                      <span className={`font-bold text-xl ${
+                    <div className="flex justify-between items-center p-4 bg-white rounded-2xl shadow-md">
+                      <span className="text-gray-800 font-bold text-xl">المتبقي:</span>
+                      <span className={`font-bold text-2xl ${
                         Math.max(0, (
                           ((getInvoiceTotal() * (100 - invoiceForm.discount)) / 100) + 
                           (((getInvoiceTotal() * (100 - invoiceForm.discount)) / 100) * invoiceForm.taxRate / 100)
@@ -2783,15 +2784,15 @@ export default function AccountingApp() {
                     </div>
 
                     {invoiceForm.paidAmount > 0 && (
-                      <div className="flex items-center gap-2 p-3 bg-white rounded-xl shadow-sm">
+                      <div className="flex items-center gap-3 p-4 bg-white rounded-2xl shadow-md">
                         {(() => {
                           const total = ((getInvoiceTotal() * (100 - invoiceForm.discount)) / 100) + 
                                        (((getInvoiceTotal() * (100 - invoiceForm.discount)) / 100) * invoiceForm.taxRate / 100)
                           const paid = invoiceForm.paidAmount || 0
                           if (paid >= total) {
-                            return <Badge className="bg-green-100 text-green-800 text-base py-2 px-3">✅ مدفوع بالكامل</Badge>
+                            return <Badge className="bg-green-200 text-green-900 text-lg py-3 px-4 text-xl">✅ مدفوع بالكامل</Badge>
                           } else if (paid > 0) {
-                            return <Badge className="bg-orange-100 text-orange-800 text-base py-2 px-3">⏳ دفع جزئي</Badge>
+                            return <Badge className="bg-orange-200 text-orange-900 text-lg py-3 px-4 text-xl">⏳ دفع جزئي</Badge>
                           }
                           return null
                         })()}
@@ -2804,9 +2805,9 @@ export default function AccountingApp() {
 
             {/* Notes Section */}
             <div>
-              <Label className="text-lg font-bold text-gray-700 block mb-3">📝 ملاحظات</Label>
+              <Label className="text-2xl font-bold text-gray-800 block mb-4">📝 ملاحظات</Label>
               <Textarea 
-                className="border-2 border-gray-300 focus:border-[#0a9396] min-h-[120px] text-lg p-4 rounded-xl"
+                className="border-3 border-gray-400 focus:border-[#0a9396] focus:ring-4 focus:ring-[#0a9396]/20 min-h-[150px] text-xl p-6 rounded-2xl"
                 placeholder="أدخل ملاحظات إضافية على الفاتورة..."
                 value={invoiceForm.notes}
                 onChange={(e) => setInvoiceForm(prev => ({ ...prev, notes: e.target.value }))}
@@ -2814,18 +2815,18 @@ export default function AccountingApp() {
             </div>
 
             {/* Action Buttons */}
-            <div className="flex items-center justify-start gap-4 pt-6 border-t-2">
+            <div className="flex items-center justify-start gap-6 pt-8 border-t-[3px] border-gray-300">
               <Button 
                 type="button"
                 variant="outline" 
-                className="px-10 border-2 border-gray-300 text-gray-700 hover:bg-gray-50 text-xl py-4 rounded-xl"
+                className="px-14 border-3 border-gray-400 text-gray-800 hover:bg-gray-100 text-2xl py-6 rounded-2xl h-auto"
                 onClick={() => setShowInvoiceDialog(false)}
               >
                 ❌ إلغاء
               </Button>
               <Button 
                 type="button"
-                className="bg-gradient-to-r from-emerald-500 to-emerald-600 hover:from-emerald-600 hover:to-emerald-700 text-white px-12 text-xl py-4 shadow-lg rounded-xl"
+                className="bg-gradient-to-r from-emerald-500 to-emerald-600 hover:from-emerald-600 hover:to-emerald-700 text-white px-16 text-2xl py-6 shadow-2xl rounded-2xl h-auto"
                 onClick={saveInvoice}
                 disabled={!invoiceForm.customerId || invoiceForm.items.length === 0}
               >
