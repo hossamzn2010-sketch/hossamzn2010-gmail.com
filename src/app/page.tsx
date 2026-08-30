@@ -44,6 +44,19 @@ interface Invoice {
   items: InvoiceItem[]
 }
 
+interface PurchaseInvoice {
+  id: string
+  number: string
+  date: string
+  supplierName: string
+  total: number
+  paidAmount: number
+  remainingAmount: number
+  paymentMethod: 'cash' | 'bank' | 'check' | 'partial'
+  status: 'draft' | 'posted' | 'paid' | 'cancelled'
+  items: InvoiceItem[]
+}
+
 interface InvoiceItem {
   id: string
   name: string
@@ -188,6 +201,7 @@ export default function AccountingApp() {
   const [sidebarOpen, setSidebarOpen] = useState(true)
   const [isLoggedIn, setIsLoggedIn] = useState(false)
   const [invoices, setInvoices] = useState<Invoice[]>([])
+  const [purchaseInvoices, setPurchaseInvoices] = useState<PurchaseInvoice[]>([])
   const [items, setItems] = useState<Item[]>(mockItems)
   const [parties, setParties] = useState<Party[]>([])
   const [transactions, setTransactions] = useState<Transaction[]>([])
@@ -210,6 +224,8 @@ export default function AccountingApp() {
   // Invoice Form States
   const [showInvoiceDialog, setShowInvoiceDialog] = useState(false)
   const [editingInvoice, setEditingInvoice] = useState<Invoice | null>(null)
+  const [invoiceJustSaved, setInvoiceJustSaved] = useState(false)
+  const [currentInvoiceForPrint, setCurrentInvoiceForPrint] = useState<Invoice | null>(null)
   const [invoiceForm, setInvoiceForm] = useState({
     customerId: '',
     date: new Date().toISOString().split('T')[0],
@@ -220,6 +236,24 @@ export default function AccountingApp() {
     discount: 0,
     items: [] as { itemId: string; quantity: number; price: number; discount: number }[]
   })
+
+  // Purchase Invoice Form States
+  const [showPurchaseDialog, setShowPurchaseDialog] = useState(false)
+  const [editingPurchase, setEditingPurchase] = useState<PurchaseInvoice | null>(null)
+  const [purchaseJustSaved, setPurchaseJustSaved] = useState(false)
+  const [currentPurchaseForPrint, setCurrentPurchaseForPrint] = useState<PurchaseInvoice | null>(null)
+  const [purchaseForm, setPurchaseForm] = useState({
+    supplierId: '',
+    date: new Date().toISOString().split('T')[0],
+    notes: '',
+    paymentMethod: 'cash' as 'cash' | 'bank' | 'check' | 'partial',
+    paidAmount: 0,
+    taxRate: 15,
+    discount: 0,
+    items: [] as { itemId: string; quantity: number; price: number; discount: number }[]
+  })
+  const [showAddSupplierDialog, setShowAddSupplierDialog] = useState(false)
+  const [newSupplier, setNewSupplier] = useState({ nameAr: '', type: 'supplier' as 'supplier' | 'customer' | 'both', phone: '' })
 
   // Delete Confirmation State
   const [deleteConfirm, setDeleteConfirm] = useState<{ show: boolean; type: string; id: string; name: string }>({ show: false, type: '', id: '', name: '' })
@@ -700,10 +734,197 @@ export default function AccountingApp() {
         }))
       }
       setInvoices(prev => [...prev, newInvoice])
+      setCurrentInvoiceForPrint(newInvoice)
     }
     
-    setShowInvoiceDialog(false)
-    setEditingInvoice(null)
+    // تعيين حالة الحفظ لإظهار زر الطباعة
+    setInvoiceJustSaved(true)
+  }
+
+  const printInvoice = () => {
+    const selectedCustomer = parties.find(p => p.id === invoiceForm.customerId)
+    
+    // حساب المجاميع
+    const subtotal = invoiceForm.items.reduce((sum, item) => sum + (item.quantity * item.price), 0)
+    const discountAmount = (subtotal * invoiceForm.discount) / 100
+    const afterDiscount = subtotal - discountAmount
+    const taxAmount = (afterDiscount * invoiceForm.taxRate) / 100
+    const grandTotal = afterDiscount + taxAmount
+    const paidAmount = invoiceForm.paidAmount || 0
+    const remainingAmount = Math.max(0, grandTotal - paidAmount)
+
+    // تحديد نص طريقة السداد
+    const paymentMethodText = invoiceForm.paymentMethod === 'cash' ? 'نقدى' : 
+                             invoiceForm.paymentMethod === 'bank' ? 'تحويل بنكي' :
+                             invoiceForm.paymentMethod === 'check' ? 'شيك' : 'جزئي'
+
+    // إنشاء محتوى الفاتورة للطباعة
+    const printContent = `
+      <!DOCTYPE html>
+      <html dir="rtl" lang="ar">
+        <head>
+          <meta charset="UTF-8">
+          <title>فاتورة مبيعات</title>
+          <style>
+            * { margin: 0; padding: 0; box-sizing: border-box; }
+            body { 
+              font-family: 'Cairo', 'Tahoma', Arial, sans-serif; 
+              direction: rtl;
+              padding: 20px;
+              color: #333;
+            }
+            .invoice-header {
+              text-align: center;
+              border-bottom: 3px solid #005f73;
+              padding-bottom: 20px;
+              margin-bottom: 30px;
+            }
+            .invoice-title { font-size: 28px; font-weight: bold; color: #005f73; margin-bottom: 10px; }
+            .invoice-number { font-size: 18px; color: #666; }
+            .invoice-info {
+              display: flex;
+              justify-content: space-between;
+              margin-bottom: 30px;
+              background: #f8f9fa;
+              padding: 15px;
+              border-radius: 10px;
+            }
+            .info-item { margin-bottom: 5px; }
+            .info-label { font-weight: bold; color: #555; }
+            table { width: 100%; border-collapse: collapse; margin-bottom: 30px; }
+            th { background: #005f73; color: white; padding: 12px; text-align: right; }
+            td { padding: 12px; border-bottom: 1px solid #ddd; text-align: right; }
+            .totals { width: 50%; margin-right: auto; margin-left: 0; }
+            .totals tr td { padding: 8px 12px; }
+            .total-row { font-weight: bold; }
+            .grand-total { 
+              background: #005f73; 
+              color: white; 
+              font-size: 18px;
+            }
+            .payment-info {
+              background: #fff3cd;
+              border: 2px solid #ffc107;
+              padding: 15px;
+              border-radius: 10px;
+              margin-top: 20px;
+            }
+            .payment-info h3 { color: #856404; margin-bottom: 10px; }
+            .footer {
+              text-align: center;
+              margin-top: 40px;
+              padding-top: 20px;
+              border-top: 2px solid #ddd;
+              color: #666;
+            }
+            @media print {
+              body { padding: 0; }
+              .no-print { display: none; }
+            }
+          </style>
+        </head>
+        <body>
+          <div class="invoice-header">
+            <div class="invoice-title">📄 فاتورة مبيعات</div>
+            <div class="invoice-number">رقم الفاتورة: ${currentInvoiceForPrint?.number || 'NEW'}</div>
+            <div>التاريخ: ${invoiceForm.date}</div>
+          </div>
+
+          <div class="invoice-info">
+            <div>
+              <div class="info-item"><span class="info-label">العميل:</span> ${selectedCustomer?.nameAr || '-'}</div>
+              <div class="info-item"><span class="info-label">طريقة السداد:</span> ${paymentMethodText}</div>
+            </div>
+            <div style="text-align: left;">
+              <div class="info-item"><span class="info-label">التاريخ:</span> ${invoiceForm.date}</div>
+              <div class="info-item"><span class="info-label">الحالة:</span> ${paidAmount >= grandTotal ? '✅ مدفوع بالكامل' : paidAmount > 0 ? '⏳ دفع جزئي' : '📋 غير مدفوع'}</div>
+            </div>
+          </div>
+
+          <table>
+            <thead>
+              <tr>
+                <th>#</th>
+                <th>الصنف</th>
+                <th>الكمية</th>
+                <th>سعر الوحدة</th>
+                <th>الإجمالي</th>
+              </tr>
+            </thead>
+            <tbody>
+              ${invoiceForm.items.map((item, idx) => {
+                const itemName = items.find(i => i.id === item.itemId)?.nameAr || 'منتج'
+                return `
+                  <tr>
+                    <td>${idx + 1}</td>
+                    <td>${itemName}</td>
+                    <td>${item.quantity}</td>
+                    <td>${item.price.toLocaleString()} ر.س</td>
+                    <td>${(item.quantity * item.price).toLocaleString()} ر.س</td>
+                  </tr>
+                `
+              }).join('')}
+            </tbody>
+          </table>
+
+          <table class="totals">
+            <tr>
+              <td>المجموع الفرعي:</td>
+              <td>${subtotal.toLocaleString()} ر.س</td>
+            </tr>
+            ${invoiceForm.discount > 0 ? `
+            <tr>
+              <td>الخصم (${invoiceForm.discount}%):</td>
+              <td>-${discountAmount.toLocaleString()} ر.س</td>
+            </tr>
+            ` : ''}
+            <tr>
+              <td>الضريبة (${invoiceForm.taxRate}%):</td>
+              <td>+${taxAmount.toLocaleString()} ر.س</td>
+            </tr>
+            <tr class="grand-total">
+              <td>الإجمالي الكلي:</td>
+              <td>${grandTotal.toLocaleString()} ر.س</td>
+            </tr>
+          </table>
+
+          <div class="payment-info">
+            <h3>💰 تفاصيل السداد</h3>
+            <p><strong>المبلغ المدفوع:</strong> ${paidAmount.toLocaleString()} ر.س</p>
+            <p><strong>المتبقي:</strong> ${remainingAmount.toLocaleString()} ر.س</p>
+          </div>
+
+          ${invoiceForm.notes ? `
+          <div style="margin-top: 20px; padding: 15px; background: #e9ecef; border-radius: 10px;">
+            <strong>📝 ملاحظات:</strong><br>
+            ${invoiceForm.notes}
+          </div>
+          ` : ''}
+
+          <div class="footer">
+            <p>شكراً لتعاملكم معنا - نظام إنجاز المحاسبي</p>
+          </div>
+
+          <script>
+            window.onload = function() {
+              window.print();
+              window.onafterprint = function() {
+                window.close();
+              }
+            }
+          </script>
+        </body>
+      </html>
+    `
+
+    // فتح نافذة الطباعة
+    const printWindow = window.open('', '_blank', 'width=800,height=600')
+    if (printWindow) {
+      printWindow.document.write(printContent)
+      printWindow.document.close()
+    } else {
+      alert('يرجى السماح بالنوافذ المنبثقة لطباعة الفاتورة')
+    }
   }
 
   const postInvoice = (invoiceId: string) => {
@@ -739,50 +960,6 @@ export default function AccountingApp() {
     setDeleteConfirm({ show: false, type: '', id: '', name: '' })
   }
 
-  const printInvoice = (invoice: Invoice) => {
-    const printWindow = window.open('', '_blank')
-    if (printWindow) {
-      printWindow.document.write(`
-        <html dir="rtl">
-        <head><title>فاتورة ${invoice.number}</title>
-        <style>
-          body { font-family: Arial; padding: 20px; direction: rtl; }
-          .header { text-align: center; margin-bottom: 30px; }
-          table { width: 100%; border-collapse: collapse; margin-top: 20px; }
-          th, td { border: 1px solid #ddd; padding: 8px; text-align: right; }
-          th { background: #f5f5f5; }
-          .total { font-size: 18px; font-weight: bold; margin-top: 20px; }
-        </style>
-        </head>
-        <body>
-        <div class="header">
-          <h1>نظام إنجاز المحاسبي</h1>
-          <h2>فاتورة مبيعات</h2>
-        </div>
-        <p><strong>رقم الفاتورة:</strong> ${invoice.number}</p>
-        <p><strong>التاريخ:</strong> ${invoice.date}</p>
-        <p><strong>العميل:</strong> ${invoice.customerName}</p>
-        <p><strong>الحالة:</strong> ${invoice.status === 'draft' ? 'مسودة' : invoice.status === 'posted' ? 'مرحلة' : invoice.status === 'paid' ? 'مدفوعة' : 'ملغاة'}</p>
-        <table>
-          <tr><th>#</th><th>الصنف</th><th>الكمية</th><th>السعر</th><th>الإجمالي</th></tr>
-          ${invoice.items.map((item, idx) => `
-            <tr>
-              <td>${idx + 1}</td>
-              <td>${item.name}</td>
-              <td>${item.quantity}</td>
-              <td>${item.price.toFixed(2)}</td>
-              <td>${item.total.toFixed(2)}</td>
-            </tr>
-          `).join('')}
-        </table>
-        <div class="total">الإجمالي الكلي: ${invoice.total.toFixed(2)} ريال</div>
-        </body></html>
-      `)
-      printWindow.document.close()
-      printWindow.print()
-    }
-  }
-
   // Calculate invoice totals
   const getInvoiceSubtotal = () => {
     return invoiceForm.items.reduce((sum, item) => sum + (item.quantity * item.price), 0)
@@ -794,6 +971,279 @@ export default function AccountingApp() {
 
   const getInvoiceTotal = () => {
     return getInvoiceSubtotal() - getInvoiceDiscount()
+  }
+
+  // ============ PURCHASE INVOICE ACTIONS ============
+  const openNewPurchase = () => {
+    setEditingPurchase(null)
+    setPurchaseForm({ 
+      supplierId: '', 
+      date: new Date().toISOString().split('T')[0], 
+      notes: '', 
+      paymentMethod: 'cash',
+      paidAmount: 0,
+      taxRate: 15,
+      discount: 0,
+      items: [] 
+    })
+    setPurchaseJustSaved(false)
+    setCurrentPurchaseForPrint(null)
+    setShowPurchaseDialog(true)
+  }
+
+  const openEditPurchase = (purchase: PurchaseInvoice) => {
+    if (purchase.status === 'posted' || purchase.status === 'paid') {
+      alert('لا يمكن تعديل فاتورة مرحلة')
+      return
+    }
+    setEditingPurchase(purchase)
+    setPurchaseForm({
+      supplierId: parties.find(p => p.nameAr === purchase.supplierName)?.id || '',
+      date: purchase.date,
+      notes: '',
+      paymentMethod: purchase.paymentMethod,
+      paidAmount: purchase.paidAmount,
+      taxRate: 15,
+      discount: 0,
+      items: purchase.items.map(item => ({
+        itemId: items.find(i => i.nameAr === item.name)?.id || '',
+        quantity: item.quantity,
+        price: item.price,
+        discount: 0
+      }))
+    })
+    setPurchaseJustSaved(false)
+    setShowPurchaseDialog(true)
+  }
+
+  const addPurchaseItem = () => {
+    setPurchaseForm(prev => ({
+      ...prev,
+      items: [...prev.items, { itemId: '', quantity: 1, price: 0, discount: 0 }]
+    }))
+  }
+
+  const updatePurchaseItem = (index: number, field: string, value: any) => {
+    setPurchaseForm(prev => ({
+      ...prev,
+      items: prev.items.map((item, idx) => idx === index ? { ...item, [field]: value } : item)
+    }))
+  }
+
+  const removePurchaseItem = (index: number) => {
+    setPurchaseForm(prev => ({
+      ...prev,
+      items: prev.items.filter((_, i) => i !== index)
+    }))
+  }
+
+  const getPurchaseTotal = () => {
+    return purchaseForm.items.reduce((sum, item) => sum + (item.quantity * item.price), 0)
+  }
+
+  const savePurchase = () => {
+    if (!purchaseForm.supplierId) {
+      alert('يرجى اختيار المورد')
+      return
+    }
+    if (purchaseForm.items.length === 0) {
+      alert('يرجى إضافة بند واحد على الأقل')
+      return
+    }
+
+    const selectedSupplier = parties.find(p => p.id === purchaseForm.supplierId)
+    
+    // حساب المجاميع
+    const subtotal = purchaseForm.items.reduce((sum, item) => sum + (item.quantity * item.price), 0)
+    const discountAmount = (subtotal * purchaseForm.discount) / 100
+    const afterDiscount = subtotal - discountAmount
+    const taxAmount = (afterDiscount * purchaseForm.taxRate) / 100
+    const grandTotal = afterDiscount + taxAmount
+    
+    // التحقق من المبلغ المدفوع
+    const paidAmount = purchaseForm.paidAmount || 0
+    const remainingAmount = grandTotal - paidAmount
+    
+    let paymentMethod = purchaseForm.paymentMethod
+    let status: 'draft' | 'posted' | 'paid' | 'cancelled' = 'draft'
+    
+    if (paidAmount >= grandTotal) {
+      status = 'paid'
+      paymentMethod = purchaseForm.paymentMethod === 'partial' ? 'cash' : purchaseForm.paymentMethod
+    } else if (paidAmount > 0 && paidAmount < grandTotal) {
+      paymentMethod = 'partial'
+    }
+
+    if (editingPurchase) {
+      setPurchaseInvoices(prev => prev.map(pur => pur.id === editingPurchase.id ? {
+        ...pur,
+        supplierName: selectedSupplier?.nameAr || '',
+        date: purchaseForm.date,
+        total: grandTotal,
+        paidAmount: paidAmount,
+        remainingAmount: Math.max(0, remainingAmount),
+        paymentMethod: paymentMethod,
+        status: status,
+        items: purchaseForm.items.map((item, idx) => ({
+          id: `new-${idx}`,
+          name: items.find(i => i.id === item.itemId)?.nameAr || 'منتج',
+          quantity: item.quantity,
+          price: item.price,
+          total: item.quantity * item.price
+        }))
+      } : pur))
+    } else {
+      const newPurchase: PurchaseInvoice = {
+        id: Date.now().toString(),
+        number: `PUR-${String(purchaseInvoices.length + 1).padStart(3, '0')}`,
+        date: purchaseForm.date,
+        supplierName: selectedSupplier?.nameAr || '',
+        total: grandTotal,
+        paidAmount: paidAmount,
+        remainingAmount: Math.max(0, remainingAmount),
+        paymentMethod: paymentMethod,
+        status: status,
+        items: purchaseForm.items.map((item, idx) => ({
+          id: `new-${idx}`,
+          name: items.find(i => i.id === item.itemId)?.nameAr || 'منتج',
+          quantity: item.quantity,
+          price: item.price,
+          total: item.quantity * item.price
+        }))
+      }
+      setPurchaseInvoices(prev => [...prev, newPurchase])
+      setCurrentPurchaseForPrint(newPurchase)
+    }
+    
+    setPurchaseJustSaved(true)
+  }
+
+  const printPurchaseInvoice = () => {
+    const selectedSupplier = parties.find(p => p.id === purchaseForm.supplierId)
+    
+    const subtotal = purchaseForm.items.reduce((sum, item) => sum + (item.quantity * item.price), 0)
+    const discountAmount = (subtotal * purchaseForm.discount) / 100
+    const afterDiscount = subtotal - discountAmount
+    const taxAmount = (afterDiscount * purchaseForm.taxRate) / 100
+    const grandTotal = afterDiscount + taxAmount
+    const paidAmount = purchaseForm.paidAmount || 0
+    const remainingAmount = Math.max(0, grandTotal - paidAmount)
+
+    const paymentMethodText = purchaseForm.paymentMethod === 'cash' ? 'نقدى' : 
+                             purchaseForm.paymentMethod === 'bank' ? 'تحويل بنكي' :
+                             purchaseForm.paymentMethod === 'check' ? 'شيك' : 'جزئي'
+
+    const printContent = `
+      <!DOCTYPE html>
+      <html dir="rtl" lang="ar">
+        <head>
+          <meta charset="UTF-8">
+          <title>فاتورة مشتريات</title>
+          <style>
+            * { margin: 0; padding: 0; box-sizing: border-box; }
+            body { font-family: 'Cairo', 'Tahoma', Arial, sans-serif; direction: rtl; padding: 20px; color: #333; }
+            .invoice-header { text-align: center; border-bottom: 3px solid #dc2626; padding-bottom: 20px; margin-bottom: 30px; }
+            .invoice-title { font-size: 28px; font-weight: bold; color: #dc2626; margin-bottom: 10px; }
+            .invoice-info { display: flex; justify-content: space-between; margin-bottom: 30px; background: #fef2f2; padding: 15px; border-radius: 10px; }
+            table { width: 100%; border-collapse: collapse; margin-bottom: 30px; }
+            th { background: #dc2626; color: white; padding: 12px; text-align: right; }
+            td { padding: 12px; border-bottom: 1px solid #ddd; text-align: right; }
+            .totals { width: 50%; margin-right: auto; margin-left: 0; }
+            .grand-total { background: #dc2626; color: white; font-size: 18px; }
+            .payment-info { background: #fff3cd; border: 2px solid #ffc107; padding: 15px; border-radius: 10px; margin-top: 20px; }
+            .footer { text-align: center; margin-top: 40px; padding-top: 20px; border-top: 2px solid #ddd; color: #666; }
+          </style>
+        </head>
+        <body>
+          <div class="invoice-header">
+            <div class="invoice-title">📋 فاتورة مشتريات</div>
+            <div>رقم الفاتورة: ${currentPurchaseForPrint?.number || 'NEW'}</div>
+            <div>التاريخ: ${purchaseForm.date}</div>
+          </div>
+
+          <div class="invoice-info">
+            <div>
+              <div><strong>المورد:</strong> ${selectedSupplier?.nameAr || '-'}</div>
+              <div><strong>طريقة السداد:</strong> ${paymentMethodText}</div>
+            </div>
+            <div style="text-align: left;">
+              <div><strong>التاريخ:</strong> ${purchaseForm.date}</div>
+              <div><strong>الحالة:</strong> ${paidAmount >= grandTotal ? '✅ مدفوع بالكامل' : paidAmount > 0 ? '⏳ دفع جزئي' : '📋 غير مدفوع'}</div>
+            </div>
+          </div>
+
+          <table>
+            <thead>
+              <tr><th>#</th><th>الصنف</th><th>الكمية</th><th>سعر الوحدة</th><th>الإجمالي</th></tr>
+            </thead>
+            <tbody>
+              ${purchaseForm.items.map((item, idx) => {
+                const itemName = items.find(i => i.id === item.itemId)?.nameAr || 'منتج'
+                return `<tr><td>${idx + 1}</td><td>${itemName}</td><td>${item.quantity}</td><td>${item.price.toLocaleString()} ر.س</td><td>${(item.quantity * item.price).toLocaleString()} ر.س</td></tr>`
+              }).join('')}
+            </tbody>
+          </table>
+
+          <table class="totals">
+            <tr><td>المجموع الفرعي:</td><td>${subtotal.toLocaleString()} ر.س</td></tr>
+            ${purchaseForm.discount > 0 ? `<tr><td>الخصم (${purchaseForm.discount}%):</td><td>-${discountAmount.toLocaleString()} ر.س</td></tr>` : ''}
+            <tr><td>الضريبة (${purchaseForm.taxRate}%):</td><td>+${taxAmount.toLocaleString()} ر.س</td></tr>
+            <tr class="grand-total"><td>الإجمالي الكلي:</td><td>${grandTotal.toLocaleString()} ر.س</td></tr>
+          </table>
+
+          <div class="payment-info">
+            <h3>💰 تفاصيل السداد</h3>
+            <p><strong>المبلغ المدفوع:</strong> ${paidAmount.toLocaleString()} ر.س</p>
+            <p><strong>المتبقي:</strong> ${remainingAmount.toLocaleString()} ر.س</p>
+          </div>
+
+          ${purchaseForm.notes ? `<div style="margin-top: 20px; padding: 15px; background: #e9ecef; border-radius: 10px;"><strong>📝 ملاحظات:</strong><br>${purchaseForm.notes}</div>` : ''}
+
+          <div class="footer"><p>شكراً لتعاملكم معنا - نظام إنجاز المحاسبي</p></div>
+
+          <script>window.onload = function() { window.print(); window.onafterprint = function() { window.close(); } }</script>
+        </body>
+      </html>
+    `
+
+    const printWindow = window.open('', '_blank', 'width=800,height=600')
+    if (printWindow) {
+      printWindow.document.write(printContent)
+      printWindow.document.close()
+    } else {
+      alert('يرجى السماح بالنوافذ المنبثقة لطباعة الفاتورة')
+    }
+  }
+
+  const deletePurchase = (purchaseId: string, purchaseNumber: string) => {
+    if (confirm(`هل أنت متأكد من حذف فاتورة المشتريات ${purchaseNumber}؟`)) {
+      setPurchaseInvoices(prev => prev.filter(pur => pur.id !== purchaseId))
+      alert('تم حذف فاتورة المشتريات بنجاح')
+    }
+  }
+
+  const viewPurchaseDetails = (purchase: PurchaseInvoice) => {
+    alert(`تفاصيل فاتورة المشتريات:\n\nرقم الفاتورة: ${purchase.number}\nالمورد: ${purchase.supplierName}\nالتاريخ: ${purchase.date}\nالإجمالي: ${purchase.total.toLocaleString()} ر.س\nالمدفوع: ${purchase.paidAmount.toLocaleString()} ر.س\nالمتبقي: ${purchase.remainingAmount.toLocaleString()} ر.س\nالحالة: ${purchase.status === 'draft' ? 'مسودة' : purchase.status === 'posted' ? 'مرحلة' : purchase.status === 'paid' ? 'مدفوعة' : 'ملغاة'}`)
+  }
+
+  const saveNewSupplier = () => {
+    if (!newSupplier.nameAr) {
+      alert('يرجى إدخال اسم المورد')
+      return
+    }
+    const supplier: Party = {
+      id: `supplier-${Date.now()}`,
+      nameAr: newSupplier.nameAr,
+      type: newSupplier.type,
+      phone: newSupplier.phone,
+      balance: 0,
+      address: ''
+    }
+    setParties(prev => [...prev, supplier])
+    setPurchaseForm(prev => ({ ...prev, supplierId: supplier.id }))
+    setShowAddSupplierDialog(false)
+    setNewSupplier({ nameAr: '', type: 'supplier', phone: '' })
+    alert('تم إضافة المورد بنجاح')
   }
 
   // ============ SIDEBAR MENU ITEMS ============
@@ -1480,69 +1930,106 @@ export default function AccountingApp() {
           {activeModule === 'purchases' && (
             <div className="space-y-6">
               <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-                <Card><CardContent className="pt-6"><div className="flex items-center gap-3"><div className="w-12 h-12 bg-red-100 rounded-full flex items-center justify-center"><TrendingDown className="w-6 h-6 text-red-600" /></div><div><p className="text-sm text-gray-500">مشتريات اليوم</p><p className="text-xl font-bold text-red-600">12,500 ر.س</p></div></div></CardContent></Card>
-                <Card><CardContent className="pt-6"><div className="flex items-center gap-3"><div className="w-12 h-12 bg-blue-100 rounded-full flex items-center justify-center"><ClipboardList className="w-6 h-6 text-blue-600" /></div><div><p className="text-sm text-gray-500">طلبات الشراء</p><p className="text-xl font-bold text-blue-600">{mockPurchaseOrders.length}</p></div></div></CardContent></Card>
-                <Card><CardContent className="pt-6"><div className="flex items-center gap-3"><div className="w-12 h-12 bg-yellow-100 rounded-full flex items-center justify-center"><Clock className="w-6 h-6 text-yellow-600" /></div><div><p className="text-sm text-gray-500">قيد الانتظار</p><p className="text-xl font-bold text-yellow-600">{mockPurchaseOrders.filter(p => p.status === 'pending').length}</p></div></div></CardContent></Card>
-                <Card><CardContent className="pt-6"><div className="flex items-center gap-3"><div className="w-12 h-12 bg-purple-100 rounded-full flex items-center justify-center"><Truck className="w-6 h-6 text-purple-600" /></div><div><p className="text-sm text-gray-500">تم الاستلام</p><p className="text-xl font-bold text-purple-600">{mockPurchaseOrders.filter(p => p.status === 'received').length}</p></div></div></CardContent></Card>
+                <Card><CardContent className="pt-6"><div className="flex items-center gap-3"><div className="w-12 h-12 bg-red-100 rounded-full flex items-center justify-center"><TrendingDown className="w-6 h-6 text-red-600" /></div><div><p className="text-sm text-gray-500">إجمالي المشتريات</p><p className="text-xl font-bold text-red-600">{purchaseInvoices.reduce((sum, p) => sum + p.total, 0).toLocaleString()} ر.س</p></div></div></CardContent></Card>
+                <Card><CardContent className="pt-6"><div className="flex items-center gap-3"><div className="w-12 h-12 bg-blue-100 rounded-full flex items-center justify-center"><ClipboardList className="w-6 h-6 text-blue-600" /></div><div><p className="text-sm text-gray-500">فواتير الشراء</p><p className="text-xl font-bold text-blue-600">{purchaseInvoices.length}</p></div></div></CardContent></Card>
+                <Card><CardContent className="pt-6"><div className="flex items-center gap-3"><div className="w-12 h-12 bg-yellow-100 rounded-full flex items-center justify-center"><Clock className="w-6 h-6 text-yellow-600" /></div><div><p className="text-sm text-gray-500">قيد الانتظار</p><p className="text-xl font-bold text-yellow-600">{purchaseInvoices.filter(p => p.status === 'draft').length}</p></div></div></CardContent></Card>
+                <Card><CardContent className="pt-6"><div className="flex items-center gap-3"><div className="w-12 h-12 bg-purple-100 rounded-full flex items-center justify-center"><Truck className="w-6 h-6 text-purple-600" /></div><div><p className="text-sm text-gray-500">تم الاستلام</p><p className="text-xl font-bold text-purple-600">{purchaseInvoices.filter(p => p.status === 'paid' || p.status === 'posted').length}</p></div></div></CardContent></Card>
               </div>
 
               <Card>
                 <CardContent className="pt-6">
                   <div className="flex flex-wrap items-center justify-between gap-4 mb-4">
                     <div className="flex items-center gap-2">
-                      <Button className="bg-gradient-to-r from-[#005f73] to-[#0a9396]"><Plus className="ml-2 h-4 w-4" />طلب شراء جديد</Button>
-                      <Button variant="outline"><Plus className="ml-2 h-4 w-4" />فاتورة مشتريات</Button>
-                      <Button variant="outline"><RotateCcw className="ml-2 h-4 w-4" />مرتجع مشتريات</Button>
+                      <Button onClick={openNewPurchase} className="bg-gradient-to-r from-[#dc2626] to-[#ef4444] hover:from-[#b91c1c] hover:to-[#dc2626]"><Plus className="ml-2 h-4 w-4" />فاتورة مشتريات</Button>
+                      <Button variant="outline" onClick={() => alert('سيتم تطبيق ميزة طلبات الشراء قريباً')}><ClipboardList className="ml-2 h-4 w-4" />طلب شراء جديد</Button>
+                      <Button variant="outline" onClick={() => alert('سيتم تطبيق ميزة مرتجع المشتريات قريباً')}><RotateCcw className="ml-2 h-4 w-4" />مرتجع مشتريات</Button>
                     </div>
                     <div className="flex items-center gap-2">
-                      <Button variant="outline" size="icon"><Download className="w-4 h-4" /></Button>
-                      <Button variant="outline" size="icon"><Printer className="w-4 h-4" /></Button>
+                      <Button variant="outline" size="icon" onClick={() => {
+                        const csvContent = 'data:text/csv;charset=utf-utf8,' + 
+                          'رقم الفاتورة,المورد,التاريخ,الإجمالي,الحالة,المدفوع,المتبقي\n' +
+                          purchaseInvoices.map(p => `${p.number},${p.supplierName},${p.date},${p.total},${p.status},${p.paidAmount},${p.remainingAmount}`).join('\n')
+                        const link = document.createElement('a')
+                        link.setAttribute('href', encodeURI(csvContent))
+                        link.setAttribute('download', 'purchases.csv')
+                        document.body.appendChild(link)
+                        link.click()
+                        document.body.removeChild(link)
+                      }} title="تصدير Excel"><Download className="w-4 h-4" /></Button>
+                      <Button variant="outline" size="icon" onClick={() => window.print()} title="طباعة"><Printer className="w-4 h-4" /></Button>
                     </div>
                   </div>
 
                   <div className="overflow-x-auto">
                     <table className="w-full text-sm">
                       <thead>
-                        <tr className="border-b bg-gray-50">
+                        <tr className="border-b bg-red-50">
                           <th className="text-right p-3 font-medium">#</th>
-                          <th className="text-right p-3 font-medium">رقم الطلب</th>
-                          <th className="text-right p-3 font-medium">التاريخ</th>
+                          <th className="text-right p-3 font-medium">رقم الفاتورة</th>
                           <th className="text-right p-3 font-medium">المورد</th>
+                          <th className="text-right p-3 font-medium">التاريخ</th>
                           <th className="text-right p-3 font-medium">الإجمالي</th>
+                          <th className="text-right p-3 font-medium">المدفوع</th>
+                          <th className="text-right p-3 font-medium">المتبقي</th>
+                          <th className="text-right p-3 font-medium">طريقة السداد</th>
                           <th className="text-right p-3 font-medium">الحالة</th>
-                          <th className="text-right p-3 font-medium">تاريخ الاستلام المتوقع</th>
                           <th className="text-right p-3 font-medium">الإجراءات</th>
                         </tr>
                       </thead>
                       <tbody>
-                        {mockPurchaseOrders.map((po, idx) => (
-                          <tr key={po.id} className="border-b hover:bg-gray-50">
-                            <td className="p-3">{idx + 1}</td>
-                            <td className="p-3 font-medium">{po.number}</td>
-                            <td className="p-3">{po.date}</td>
-                            <td className="p-3">{po.supplierName}</td>
-                            <td className="p-3 font-bold">{po.total.toLocaleString()} ر.س</td>
-                            <td className="p-3">
-                              <Badge className={
-                                po.status === 'received' ? 'bg-green-100 text-green-800' :
-                                po.status === 'ordered' ? 'bg-blue-100 text-blue-800' :
-                                'bg-yellow-100 text-yellow-800'
-                              }>
-                                {po.status === 'pending' ? 'قيد الانتظار' : po.status === 'ordered' ? 'تم الطلب' : 'تم الاستلام'}
-                              </Badge>
-                            </td>
-                            <td className="p-3">{po.expectedDate}</td>
-                            <td className="p-3">
-                              <div className="flex items-center gap-1">
-                                <Button variant="ghost" size="icon" title="عرض"><Eye className="w-4 h-4 text-blue-600" /></Button>
-                                <Button variant="ghost" size="icon" title="تعديل"><Edit2 className="w-4 h-4 text-purple-600" /></Button>
-                                <Button variant="ghost" size="icon" title="طباعة"><Printer className="w-4 h-4 text-gray-600" /></Button>
-                                <Button variant="ghost" size="icon" title="استلام"><CheckSquare className="w-4 h-4 text-green-600" /></Button>
-                                <Button variant="ghost" size="icon" title="حذف"><Trash2 className="w-4 h-4 text-red-600" /></Button>
-                              </div>
+                        {purchaseInvoices.length === 0 ? (
+                          <tr>
+                            <td colSpan={10} className="p-10 text-center text-gray-500">
+                              <Package className="w-16 h-16 mx-auto mb-4 opacity-30" />
+                              <p className="text-lg">لا توجد فواتير مشتريات بعد</p>
+                              <p className="text-sm mt-2">اضغط على "فاتورة مشتريات" لإضافة فاتورة جديدة</p>
                             </td>
                           </tr>
-                        ))}
+                        ) : (
+                          purchaseInvoices.map((purchase, idx) => (
+                            <tr key={purchase.id} className="border-b hover:bg-red-50 transition-colors">
+                              <td className="p-3">{idx + 1}</td>
+                              <td className="p-3 font-bold font-mono text-red-700">{purchase.number}</td>
+                              <td className="p-3 font-medium">{purchase.supplierName}</td>
+                              <td className="p-3">{purchase.date}</td>
+                              <td className="p-3 font-bold text-red-600">{purchase.total.toLocaleString()} ر.س</td>
+                              <td className="p-3 font-bold text-green-600">{purchase.paidAmount.toLocaleString()} ر.س</td>
+                              <td className="p-3 font-bold text-orange-600">{purchase.remainingAmount.toLocaleString()} ر.س</td>
+                              <td className="p-3">
+                                <Badge className={
+                                  purchase.paymentMethod === 'cash' ? 'bg-green-100 text-green-800' :
+                                  purchase.paymentMethod === 'bank' ? 'bg-blue-100 text-blue-800' :
+                                  purchase.paymentMethod === 'check' ? 'bg-purple-100 text-purple-800' :
+                                  'bg-orange-100 text-orange-800'
+                                }>
+                                  {purchase.paymentMethod === 'cash' ? 'نقدى' : 
+                                   purchase.paymentMethod === 'bank' ? 'بنك' :
+                                   purchase.paymentMethod === 'check' ? 'شيك' : 'جزئي'}
+                                </Badge>
+                              </td>
+                              <td className="p-3">
+                                <Badge className={
+                                  purchase.status === 'paid' ? 'bg-green-100 text-green-800' :
+                                  purchase.status === 'posted' ? 'bg-blue-100 text-blue-800' :
+                                  purchase.status === 'cancelled' ? 'bg-red-100 text-red-800' :
+                                  'bg-yellow-100 text-yellow-800'
+                                }>
+                                  {purchase.status === 'paid' ? '✅ مدفوعة' : 
+                                   purchase.status === 'posted' ? '📋 مرحلة' :
+                                   purchase.status === 'cancelled' ? '❌ ملغاة' : '📝 مسودة'}
+                                </Badge>
+                              </td>
+                              <td className="p-3">
+                                <div className="flex items-center gap-1">
+                                  <Button variant="ghost" size="icon" title="عرض التفاصيل" onClick={() => viewPurchaseDetails(purchase)}><Eye className="w-4 h-4 text-blue-600" /></Button>
+                                  <Button variant="ghost" size="icon" title="تعديل" onClick={() => openEditPurchase(purchase)} disabled={purchase.status === 'posted' || purchase.status === 'paid'}><Edit2 className={`w-4 h-4 ${purchase.status === 'posted' || purchase.status === 'paid' ? 'text-gray-300' : 'text-purple-600'}`} /></Button>
+                                  <Button variant="ghost" size="icon" title="طباعة" onClick={() => { openEditPurchase(purchase); setTimeout(() => printPurchaseInvoice(), 100); }}><Printer className="w-4 h-4 text-gray-600" /></Button>
+                                  <Button variant="ghost" size="icon" title="حذف" onClick={() => deletePurchase(purchase.id, purchase.number)} disabled={purchase.status === 'posted' || purchase.status === 'paid'}><Trash2 className={`w-4 h-4 ${purchase.status === 'posted' || purchase.status === 'paid' ? 'text-gray-300' : 'text-red-600'}`} /></Button>
+                                </div>
+                              </td>
+                            </tr>
+                          ))
+                        )}
                       </tbody>
                     </table>
                   </div>
@@ -2815,22 +3302,490 @@ export default function AccountingApp() {
             </div>
 
             {/* Action Buttons */}
-            <div className="flex items-center justify-start gap-6 pt-8 border-t-[3px] border-gray-300">
+            <div className="flex items-center justify-start gap-6 pt-8 border-t-[3px] border-gray-300 flex-wrap">
               <Button 
                 type="button"
                 variant="outline" 
                 className="px-14 border-3 border-gray-400 text-gray-800 hover:bg-gray-100 text-2xl py-6 rounded-2xl h-auto"
-                onClick={() => setShowInvoiceDialog(false)}
+                onClick={() => {
+                  setShowInvoiceDialog(false)
+                  setInvoiceJustSaved(false)
+                  setCurrentInvoiceForPrint(null)
+                }}
               >
                 ❌ إلغاء
               </Button>
+              
+              {invoiceJustSaved || editingInvoice ? (
+                <Button 
+                  type="button"
+                  className="bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white px-14 text-2xl py-6 shadow-2xl rounded-2xl h-auto flex items-center gap-3"
+                  onClick={printInvoice}
+                >
+                  <Printer className="w-8 h-8" />
+                  🖨️ طباعة الفاتورة
+                </Button>
+              ) : (
+                <Button 
+                  type="button"
+                  className="bg-gradient-to-r from-emerald-500 to-emerald-600 hover:from-emerald-600 hover:to-emerald-700 text-white px-16 text-2xl py-6 shadow-2xl rounded-2xl h-auto"
+                  onClick={saveInvoice}
+                  disabled={!invoiceForm.customerId || invoiceForm.items.length === 0}
+                >
+                  💾 {editingInvoice ? 'تحديث الفاتورة' : 'إنشاء الفاتورة'}
+                </Button>
+              )}
+              
+              {invoiceJustSaved && (
+                <Button 
+                  type="button"
+                  className="bg-gradient-to-r from-green-500 to-green-600 hover:from-green-600 hover:to-green-700 text-white px-14 text-2xl py-6 shadow-2xl rounded-2xl h-auto"
+                  onClick={() => {
+                    setShowInvoiceDialog(false)
+                    setInvoiceJustSaved(false)
+                    setCurrentInvoiceForPrint(null)
+                    setEditingInvoice(null)
+                  }}
+                >
+                  ✅ فاتورة جديدة
+                </Button>
+              )}
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* ============ PURCHASE INVOICE DIALOG ============ */}
+      <Dialog open={showPurchaseDialog} onOpenChange={setShowPurchaseDialog}>
+        <DialogContent className="max-w-[98%] w-[98%] h-[96vh] max-h-[96vh] overflow-y-auto p-8" dir="rtl" style={{ width: '98vw', maxWidth: '98vw' }}>
+          <DialogHeader className="flex flex-row items-center justify-between pb-6 border-b-2">
+            <div>
+              <DialogTitle className="text-4xl font-bold text-red-700">
+                {editingPurchase ? '✏️ تعديل فاتورة مشتريات' : '📋 فاتورة مشتريات جديدة'}
+              </DialogTitle>
+            </div>
+            <Button 
+              type="button"
+              variant="outline" 
+              size="lg"
+              onClick={() => setShowPurchaseDialog(false)}
+              className="h-14 w-14 text-2xl rounded-xl"
+            >
+              ✕
+            </Button>
+          </DialogHeader>
+          
+          <div className="space-y-8 mt-6">
+            {/* Top Row: Date | Supplier | Tax | Payment Method */}
+            <div className="grid grid-cols-4 gap-8">
+              <div>
+                <Label className="text-2xl font-bold text-gray-800">📅 التاريخ</Label>
+                <Input 
+                  type="date" 
+                  className="mt-3 border-3 border-gray-300 focus:border-red-500 focus:ring-4 focus:ring-red-500/20 text-2xl p-5 h-18 rounded-2xl"
+                  value={purchaseForm.date}
+                  onChange={(e) => setPurchaseForm(prev => ({ ...prev, date: e.target.value }))}
+                />
+              </div>
+              <div>
+                <Label className="text-2xl font-bold text-gray-800">🏭 اختر المورد</Label>
+                <div className="flex gap-3 mt-3">
+                  <Select value={purchaseForm.supplierId} onValueChange={(value) => setPurchaseForm(prev => ({ ...prev, supplierId: value }))}>
+                    <SelectTrigger className="flex-1 border-3 border-gray-300 focus:border-red-500 focus:ring-4 focus:ring-red-500/20 h-18 text-2xl rounded-2xl">
+                      <SelectValue placeholder="اختر المورد" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {parties.filter(p => p.type === 'supplier' || p.type === 'both').map(party => (
+                        <SelectItem key={party.id} value={party.id}>{party.nameAr}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                  <Button 
+                    type="button"
+                    variant="outline" 
+                    size="icon"
+                    onClick={() => setShowAddSupplierDialog(true)}
+                    title="إضافة مورد جديد"
+                    className="border-dashed border-3 border-red-400 text-red-700 hover:bg-red-100 h-18 w-18 rounded-2xl"
+                  >
+                    <Plus className="w-7 h-7" />
+                  </Button>
+                </div>
+              </div>
+              <div>
+                <Label className="text-2xl font-bold text-gray-800">🧾 الضريبة (%)</Label>
+                <Select 
+                  value={purchaseForm.taxRate.toString()} 
+                  onValueChange={(value) => setPurchaseForm(prev => ({ ...prev, taxRate: parseInt(value) }))}
+                >
+                  <SelectTrigger className="mt-3 border-3 border-gray-300 focus:border-red-500 focus:ring-4 focus:ring-red-500/20 h-18 text-2xl rounded-2xl">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="0">معفى</SelectItem>
+                    <SelectItem value="5">5%</SelectItem>
+                    <SelectItem value="10">10%</SelectItem>
+                    <SelectItem value="15">15%</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+              <div>
+                <Label className="text-2xl font-bold text-gray-800">💳 طريقة السداد</Label>
+                <Select 
+                  value={purchaseForm.paymentMethod} 
+                  onValueChange={(value: any) => setPurchaseForm(prev => ({ ...prev, paymentMethod: value }))}
+                >
+                  <SelectTrigger className="mt-3 border-3 border-gray-300 focus:border-red-500 focus:ring-4 focus:ring-red-500/20 h-18 text-2xl rounded-2xl">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="cash">💵 نقدى</SelectItem>
+                    <SelectItem value="bank">🏦 بنك</SelectItem>
+                    <SelectItem value="check">📝 شيك</SelectItem>
+                    <SelectItem value="partial">⏳ جزئي</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+            </div>
+
+            {/* Items Section with Summary Side by Side */}
+            <div className="grid grid-cols-3 gap-10">
+              {/* Items Table - Takes 2/3 width */}
+              <div className="col-span-2">
+                <div className="border-[3px] border-red-300 rounded-3xl overflow-hidden shadow-lg">
+                  {/* Table Header */}
+                  <div className="grid grid-cols-[3fr_1.5fr_1.5fr_1.5fr_auto] bg-gradient-to-l from-red-600 to-red-500 p-6">
+                    <div className="text-white font-bold text-2xl">الصنف</div>
+                    <div className="text-white font-bold text-2xl text-center">الكمية</div>
+                    <div className="text-white font-bold text-2xl text-center">السعر</div>
+                    <div className="text-white font-bold text-2xl text-center">الإجمالي</div>
+                    <div className="w-14"></div>
+                  </div>
+                  
+                  {/* Items List or Empty State */}
+                  {purchaseForm.items.length === 0 ? (
+                    <div className="p-10 text-center bg-red-50">
+                      <Package className="w-16 h-16 mx-auto mb-4 text-red-300" />
+                      <p className="text-gray-600 text-2xl font-bold mb-8">لم يتم إضافة أصناف بعد</p>
+                      <div className="space-y-6 max-w-2xl mx-auto">
+                        <div className="grid grid-cols-4 gap-5 px-4 py-6">
+                          <Input placeholder="اسم الصنف" className="border-3 border-gray-300 h-20 text-xl rounded-2xl" disabled />
+                          <Input type="number" placeholder="1" className="border-3 border-gray-300 h-20 text-2xl text-center font-bold rounded-2xl" disabled />
+                          <Input type="number" placeholder="0.00" className="border-3 border-gray-300 h-20 text-2xl text-center font-bold rounded-2xl" disabled />
+                          <Input type="number" placeholder="0.00" className="border-3 border-gray-300 h-20 text-2xl text-center font-bold rounded-2xl" disabled />
+                        </div>
+                      </div>
+                    </div>
+                  ) : (
+                    <div className="divide-y divide-gray-200 max-h-[500px] overflow-y-auto">
+                      {purchaseForm.items.map((item, idx) => {
+                        const lineTotal = item.quantity * item.price
+                        return (
+                          <div key={idx} className="grid grid-cols-[3fr_1.5fr_1.5fr_1.5fr_auto] gap-6 p-6 hover:bg-red-50 items-center transition-colors">
+                            <div className="flex gap-4">
+                              <Select value={item.itemId} onValueChange={(value) => {
+                                updatePurchaseItem(idx, 'itemId', value)
+                                const selected = items.find(i => i.id === value)
+                                if (selected) {
+                                  updatePurchaseItem(idx, 'price', selected.price)
+                                }
+                              }}>
+                                <SelectTrigger className="w-full border-3 border-gray-300 text-xl h-20 rounded-2xl focus:ring-4 focus:ring-red-500/20">
+                                  <SelectValue placeholder="اسم الصنف" />
+                                </SelectTrigger>
+                                <SelectContent>
+                                  {items.map(itemOption => (
+                                    <SelectItem key={itemOption.id} value={itemOption.id}>
+                                      {itemOption.nameAr}
+                                    </SelectItem>
+                                  ))}
+                                </SelectContent>
+                              </Select>
+                              <Button 
+                                type="button"
+                                variant="outline" 
+                                size="icon"
+                                onClick={() => { setItemEditIndex(idx); setShowAddItemDialog(true); }}
+                                title="إضافة صنف جديد"
+                                className="h-20 w-20 border-dashed border-3 border-red-400 text-red-700 hover:bg-red-100 flex-shrink-0 rounded-2xl"
+                              >
+                                <Plus className="w-7 h-7" />
+                              </Button>
+                            </div>
+                            <div>
+                              <Input 
+                                type="number" 
+                                min="1"
+                                className="border-3 border-gray-400 text-2xl h-20 text-center font-bold p-6 rounded-2xl focus:border-red-500 focus:ring-4 focus:ring-red-500/30 bg-white"
+                                value={item.quantity || ''}
+                                onChange={(e) => updatePurchaseItem(idx, 'quantity', parseInt(e.target.value) || 0)}
+                                placeholder="1"
+                              />
+                            </div>
+                            <div>
+                              <Input 
+                                type="number"
+                                min="0"
+                                step="0.01"
+                                className="border-3 border-gray-400 text-2xl h-20 text-center font-bold p-6 rounded-2xl focus:border-red-500 focus:ring-4 focus:ring-red-500/30 bg-white"
+                                value={item.price || ''}
+                                onChange={(e) => updatePurchaseItem(idx, 'price', parseFloat(e.target.value) || 0)}
+                                placeholder="0.00"
+                              />
+                            </div>
+                            <div className="flex items-center justify-between bg-gray-100 rounded-2xl px-5 py-4">
+                              <span className="font-bold text-2xl text-red-700">{lineTotal.toLocaleString()}</span>
+                              <Button 
+                                type="button"
+                                variant="ghost" 
+                                size="icon"
+                                className="h-14 w-14 text-red-500 hover:text-red-700 hover:bg-red-100"
+                                onClick={() => removePurchaseItem(idx)}
+                              >
+                                <Trash2 className="w-7 h-7" />
+                              </Button>
+                            </div>
+                          </div>
+                        )
+                      })}
+                    </div>
+                  )}
+                  
+                  {/* Add Item Button */}
+                  <div className="p-6 border-t-[3px] bg-gradient-to-r from-gray-100 to-red-100">
+                    <Button 
+                      type="button" 
+                      variant="ghost" 
+                      className="text-red-700 hover:text-red-800 hover:bg-red-200 w-full justify-start py-6 text-2xl font-bold"
+                      onClick={addPurchaseItem}
+                    >
+                      <Plus className="ml-3 h-8 w-8" />
+                      ➕ إضافة صنف جديد
+                    </Button>
+                  </div>
+                </div>
+              </div>
+
+              {/* Summary Section - Takes 1/3 width */}
+              <div className="bg-gradient-to-br from-red-50 to-orange-50 rounded-3xl p-8 space-y-6 h-fit border-[3px] border-red-200 shadow-lg">
+                <h3 className="font-bold text-3xl text-gray-800 border-b-[3px] border-red-300 pb-5 mb-5 flex items-center gap-3">
+                  📊 ملخص الفاتورة
+                </h3>
+                
+                <div className="space-y-6 text-xl">
+                  <div className="flex justify-between items-center p-4 bg-white rounded-2xl shadow-md">
+                    <span className="text-gray-800 font-bold text-xl">المجموع الفرعي:</span>
+                    <span className="font-bold text-2xl text-gray-900">{getPurchaseTotal().toLocaleString()} ر.س</span>
+                  </div>
+
+                  <div className="flex justify-between items-center p-4 bg-white rounded-2xl shadow-md">
+                    <span className="text-gray-800 font-bold text-xl">الخصم (%):</span>
+                    <div className="flex items-center gap-4">
+                      <Input 
+                        type="number"
+                        min="0"
+                        max="100"
+                        className="w-28 h-16 text-center border-3 border-gray-400 text-xl font-bold rounded-2xl focus:border-red-400 focus:ring-4 focus:ring-red-200"
+                        value={purchaseForm.discount || 0}
+                        onChange={(e) => setPurchaseForm(prev => ({ ...prev, discount: parseFloat(e.target.value) || 0 }))}
+                        placeholder="0"
+                      />
+                      <span className="font-bold text-red-600 text-xl">
+                        -{((getPurchaseTotal() * purchaseForm.discount) / 100).toLocaleString()} ر.س
+                      </span>
+                    </div>
+                  </div>
+                  
+                  <div className="flex justify-between items-center p-4 bg-white rounded-2xl shadow-md">
+                    <span className="text-gray-800 font-bold text-xl">الضريبة ({purchaseForm.taxRate}%):</span>
+                    <span className="font-bold text-purple-700 text-xl">
+                      +{(((getPurchaseTotal() * (100 - purchaseForm.discount)) / 100) * purchaseForm.taxRate / 100).toLocaleString()} ر.س
+                    </span>
+                  </div>
+                  
+                  <Separator className="my-4" />
+                  
+                  <div className="flex justify-between items-center p-6 bg-gradient-to-r from-red-600 to-red-500 rounded-2xl text-white shadow-xl">
+                    <span className="font-bold text-2xl">الإجمالي الكلي:</span>
+                    <span className="font-bold text-4xl">
+                      {(
+                        ((getPurchaseTotal() * (100 - purchaseForm.discount)) / 100) + 
+                        (((getPurchaseTotal() * (100 - purchaseForm.discount)) / 100) * purchaseForm.taxRate / 100)
+                      ).toLocaleString()} ر.س
+                    </span>
+                  </div>
+
+                  <Separator className="my-4" />
+
+                  {/* Payment Section */}
+                  <div className="bg-yellow-100 rounded-2xl p-6 space-y-5 border-[3px] border-yellow-400 shadow-md">
+                    <h4 className="font-bold text-2xl text-yellow-900 flex items-center gap-3">
+                      💰 تفاصيل السداد
+                    </h4>
+                    
+                    <div className="flex justify-between items-center">
+                      <span className="text-gray-800 font-bold text-xl">المبلغ المدفوع:</span>
+                      <Input 
+                        type="number"
+                        min="0"
+                        step="0.01"
+                        className="w-40 h-16 text-left font-bold text-green-700 border-3 border-green-500 text-xl rounded-2xl focus:border-green-600 focus:ring-4 focus:ring-green-200"
+                        value={purchaseForm.paidAmount || ''}
+                        onChange={(e) => setPurchaseForm(prev => ({ ...prev, paidAmount: parseFloat(e.target.value) || 0 }))}
+                        placeholder="0.00"
+                      />
+                    </div>
+
+                    <div className="flex justify-between items-center p-4 bg-white rounded-2xl shadow-md">
+                      <span className="text-gray-800 font-bold text-xl">المتبقي:</span>
+                      <span className={`font-bold text-2xl ${
+                        Math.max(0, (
+                          ((getPurchaseTotal() * (100 - purchaseForm.discount)) / 100) + 
+                          (((getPurchaseTotal() * (100 - purchaseForm.discount)) / 100) * purchaseForm.taxRate / 100)
+                        ) - (purchaseForm.paidAmount || 0)) > 0 ? 'text-orange-600' : 'text-green-600'
+                      }`}>
+                        {Math.max(0, (
+                          ((getPurchaseTotal() * (100 - purchaseForm.discount)) / 100) + 
+                          (((getPurchaseTotal() * (100 - purchaseForm.discount)) / 100) * purchaseForm.taxRate / 100)
+                        ) - (purchaseForm.paidAmount || 0)).toLocaleString()} ر.س
+                      </span>
+                    </div>
+
+                    {purchaseForm.paidAmount > 0 && (
+                      <div className="flex items-center gap-3 p-4 bg-white rounded-2xl shadow-md">
+                        {(() => {
+                          const total = ((getPurchaseTotal() * (100 - purchaseForm.discount)) / 100) + 
+                                       (((getPurchaseTotal() * (100 - purchaseForm.discount)) / 100) * purchaseForm.taxRate / 100)
+                          const paid = purchaseForm.paidAmount || 0
+                          if (paid >= total) {
+                            return <Badge className="bg-green-200 text-green-900 text-lg py-3 px-4 text-xl">✅ مدفوع بالكامل</Badge>
+                          } else if (paid > 0) {
+                            return <Badge className="bg-orange-200 text-orange-900 text-lg py-3 px-4 text-xl">⏳ دفع جزئي</Badge>
+                          }
+                          return null
+                        })()}
+                      </div>
+                    )}
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* Notes Section */}
+            <div>
+              <Label className="text-2xl font-bold text-gray-800 block mb-4">📝 ملاحظات</Label>
+              <Textarea 
+                className="border-3 border-gray-400 focus:border-red-500 focus:ring-4 focus:ring-red-500/20 min-h-[150px] text-xl p-6 rounded-2xl"
+                placeholder="أدخل ملاحظات إضافية على الفاتورة..."
+                value={purchaseForm.notes}
+                onChange={(e) => setPurchaseForm(prev => ({ ...prev, notes: e.target.value }))}
+              />
+            </div>
+
+            {/* Action Buttons */}
+            <div className="flex items-center justify-start gap-6 pt-8 border-t-[3px] border-red-300 flex-wrap">
               <Button 
                 type="button"
-                className="bg-gradient-to-r from-emerald-500 to-emerald-600 hover:from-emerald-600 hover:to-emerald-700 text-white px-16 text-2xl py-6 shadow-2xl rounded-2xl h-auto"
-                onClick={saveInvoice}
-                disabled={!invoiceForm.customerId || invoiceForm.items.length === 0}
+                variant="outline" 
+                className="px-14 border-3 border-gray-400 text-gray-800 hover:bg-gray-100 text-2xl py-6 rounded-2xl h-auto"
+                onClick={() => {
+                  setShowPurchaseDialog(false)
+                  setPurchaseJustSaved(false)
+                  setCurrentPurchaseForPrint(null)
+                }}
               >
-                💾 {editingInvoice ? 'تحديث الفاتورة' : 'إنشاء الفاتورة'}
+                ❌ إلغاء
+              </Button>
+              
+              {purchaseJustSaved || editingPurchase ? (
+                <Button 
+                  type="button"
+                  className="bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white px-14 text-2xl py-6 shadow-2xl rounded-2xl h-auto flex items-center gap-3"
+                  onClick={printPurchaseInvoice}
+                >
+                  <Printer className="w-8 h-8" />
+                  🖨️ طباعة الفاتورة
+                </Button>
+              ) : (
+                <Button 
+                  type="button"
+                  className="bg-gradient-to-r from-red-500 to-red-600 hover:from-red-600 hover:to-red-700 text-white px-16 text-2xl py-6 shadow-2xl rounded-2xl h-auto"
+                  onClick={savePurchase}
+                  disabled={!purchaseForm.supplierId || purchaseForm.items.length === 0}
+                >
+                  💾 {editingPurchase ? 'تحديث الفاتورة' : 'إنشاء الفاتورة'}
+                </Button>
+              )}
+              
+              {purchaseJustSaved && (
+                <Button 
+                  type="button"
+                  className="bg-gradient-to-r from-green-500 to-green-600 hover:from-green-600 hover:to-green-700 text-white px-14 text-2xl py-6 shadow-2xl rounded-2xl h-auto"
+                  onClick={() => {
+                    setShowPurchaseDialog(false)
+                    setPurchaseJustSaved(false)
+                    setCurrentPurchaseForPrint(null)
+                    setEditingPurchase(null)
+                  }}
+                >
+                  ✅ فاتورة جديدة
+                </Button>
+              )}
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* ============ ADD SUPPLIER DIALOG ============ */}
+      <Dialog open={showAddSupplierDialog} onOpenChange={setShowAddSupplierDialog}>
+        <DialogContent className="max-w-[98%] w-[98%] h-[80vh] max-h-[80vh] overflow-y-auto p-8" dir="rtl" style={{ width: '90vw', maxWidth: '90vw' }}>
+          <DialogHeader className="pb-6 border-b-2 border-red-200">
+            <DialogTitle className="text-4xl font-bold text-red-700 flex items-center gap-3">
+              🏢 إضافة مورد جديد
+            </DialogTitle>
+            <DialogDescription className="text-xl mt-2 text-gray-600">أدخل بيانات المورد الجديد</DialogDescription>
+          </DialogHeader>
+          
+          <div className="space-y-8 mt-8">
+            <div>
+              <Label className="text-xl font-semibold text-gray-700 mb-3 block">اسم المورد <span className="text-red-500">*</span></Label>
+              <Input 
+                className="mt-2 h-18 text-2xl p-6 border-3 border-gray-300 rounded-2xl focus:border-red-400 focus:ring-4 focus:ring-red-200 transition-all"
+                placeholder="مثال: شركة الأمل للتجارة"
+                value={newSupplier.nameAr}
+                onChange={(e) => setNewSupplier(prev => ({ ...prev, nameAr: e.target.value }))}
+              />
+            </div>
+            
+            <div>
+              <Label className="text-xl font-semibold text-gray-700 mb-3 block">نوع الطرف</Label>
+              <Select value={newSupplier.type} onValueChange={(val: any) => setNewSupplier(prev => ({ ...prev, type: val }))}>
+                <SelectTrigger className="mt-2 h-18 text-2xl p-6 border-3 border-gray-300 rounded-2xl focus:border-red-400 focus:ring-4 focus:ring-red-200 transition-all">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="supplier">مورد فقط</SelectItem>
+                  <SelectItem value="both">مورد وعميل</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            
+            <div>
+              <Label className="text-xl font-semibold text-gray-700 mb-3 block">رقم الهاتف</Label>
+              <Input 
+                className="mt-2 h-18 text-2xl p-6 border-3 border-gray-300 rounded-2xl focus:border-red-400 focus:ring-4 focus:ring-red-200 transition-all"
+                placeholder="05xxxxxxxx"
+                value={newSupplier.phone}
+                onChange={(e) => setNewSupplier(prev => ({ ...prev, phone: e.target.value }))}
+              />
+            </div>
+
+            <div className="flex items-center justify-end gap-4 pt-8 border-t-2 border-gray-200">
+              <Button variant="outline" onClick={() => setShowAddSupplierDialog(false)} className="px-10 text-xl py-6 rounded-2xl h-auto border-3 border-gray-300 hover:bg-gray-100">
+                ❌ إلغاء
+              </Button>
+              <Button className="bg-red-600 hover:bg-red-700 px-12 text-xl py-6 rounded-2xl h-auto shadow-lg" onClick={saveNewSupplier}>
+                ✅ حفظ المورد
               </Button>
             </div>
           </div>
@@ -2839,17 +3794,19 @@ export default function AccountingApp() {
 
       {/* ============ ADD CUSTOMER DIALOG ============ */}
       <Dialog open={showAddCustomerDialog} onOpenChange={setShowAddCustomerDialog}>
-        <DialogContent className="max-w-md" dir="rtl">
-          <DialogHeader>
-            <DialogTitle className="text-emerald-600">إضافة عميل جديد</DialogTitle>
-            <DialogDescription>أدخل بيانات العميل الجديد</DialogDescription>
+        <DialogContent className="max-w-[98%] w-[98%] h-[80vh] max-h-[80vh] overflow-y-auto p-8" dir="rtl" style={{ width: '90vw', maxWidth: '90vw' }}>
+          <DialogHeader className="pb-6 border-b-2 border-emerald-200">
+            <DialogTitle className="text-4xl font-bold text-emerald-700 flex items-center gap-3">
+              👤 إضافة عميل جديد
+            </DialogTitle>
+            <DialogDescription className="text-xl mt-2 text-gray-600">أدخل بيانات العميل الجديد</DialogDescription>
           </DialogHeader>
           
-          <div className="space-y-4 mt-4">
+          <div className="space-y-8 mt-8">
             <div>
-              <Label>اسم العميل <span className="text-red-500">*</span></Label>
+              <Label className="text-xl font-semibold text-gray-700 mb-3 block">اسم العميل <span className="text-red-500">*</span></Label>
               <Input 
-                className="mt-1"
+                className="mt-2 h-18 text-2xl p-6 border-3 border-gray-300 rounded-2xl focus:border-emerald-400 focus:ring-4 focus:ring-emerald-200 transition-all"
                 placeholder="مثال: شركة النور"
                 value={newCustomer.nameAr}
                 onChange={(e) => setNewCustomer(prev => ({ ...prev, nameAr: e.target.value }))}
@@ -2857,9 +3814,9 @@ export default function AccountingApp() {
             </div>
             
             <div>
-              <Label>نوع الطرف</Label>
+              <Label className="text-xl font-semibold text-gray-700 mb-3 block">نوع الطرف</Label>
               <Select value={newCustomer.type} onValueChange={(val: any) => setNewCustomer(prev => ({ ...prev, type: val }))}>
-                <SelectTrigger className="mt-1">
+                <SelectTrigger className="mt-2 h-18 text-2xl p-6 border-3 border-gray-300 rounded-2xl focus:border-emerald-400 focus:ring-4 focus:ring-emerald-200 transition-all">
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
@@ -2871,25 +3828,24 @@ export default function AccountingApp() {
             </div>
             
             <div>
-              <Label>رقم الهاتف</Label>
+              <Label className="text-xl font-semibold text-gray-700 mb-3 block">رقم الهاتف</Label>
               <Input 
-                className="mt-1"
+                className="mt-2 h-18 text-2xl p-6 border-3 border-gray-300 rounded-2xl focus:border-emerald-400 focus:ring-4 focus:ring-emerald-200 transition-all"
                 placeholder="05xxxxxxxx"
                 value={newCustomer.phone}
                 onChange={(e) => setNewCustomer(prev => ({ ...prev, phone: e.target.value }))}
               />
             </div>
 
-            <div className="flex items-center justify-end gap-2 pt-4">
-              <Button variant="outline" onClick={() => setShowAddCustomerDialog(false)}>
-                إلغاء
+            <div className="flex items-center justify-end gap-4 pt-8 border-t-2 border-gray-200">
+              <Button variant="outline" onClick={() => setShowAddCustomerDialog(false)} className="px-10 text-xl py-6 rounded-2xl h-auto border-3 border-gray-300 hover:bg-gray-100">
+                ❌ إلغاء
               </Button>
               <Button 
-                className="bg-emerald-500 hover:bg-emerald-600 text-white"
+                className="bg-emerald-500 hover:bg-emerald-600 px-12 text-xl py-6 rounded-2xl h-auto shadow-lg text-white"
                 onClick={addNewCustomer}
               >
-                <Plus className="ml-2 h-4 w-4" />
-                إضافة العميل
+                ➕ إضافة العميل
               </Button>
             </div>
           </div>
@@ -2898,28 +3854,30 @@ export default function AccountingApp() {
 
       {/* ============ ADD ITEM DIALOG ============ */}
       <Dialog open={showAddItemDialog} onOpenChange={setShowAddItemDialog}>
-        <DialogContent className="max-w-md" dir="rtl">
-          <DialogHeader>
-            <DialogTitle className="text-emerald-600">إضافة صنف جديد</DialogTitle>
-            <DialogDescription>أدخل بيانات الصنف الجديد</DialogDescription>
+        <DialogContent className="max-w-[98%] w-[98%] h-[85vh] max-h-[85vh] overflow-y-auto p-8" dir="rtl" style={{ width: '90vw', maxWidth: '90vw' }}>
+          <DialogHeader className="pb-6 border-b-2 border-cyan-200">
+            <DialogTitle className="text-4xl font-bold text-cyan-700 flex items-center gap-3">
+              📦 إضافة صنف جديد
+            </DialogTitle>
+            <DialogDescription className="text-xl mt-2 text-gray-600">أدخل بيانات الصنف الجديد</DialogDescription>
           </DialogHeader>
           
-          <div className="space-y-4 mt-4">
+          <div className="space-y-8 mt-8">
             <div>
-              <Label>اسم الصنف <span className="text-red-500">*</span></Label>
+              <Label className="text-xl font-semibold text-gray-700 mb-3 block">اسم الصنف <span className="text-red-500">*</span></Label>
               <Input 
-                className="mt-1"
+                className="mt-2 h-20 text-2xl p-6 border-3 border-gray-300 rounded-2xl focus:border-cyan-400 focus:ring-4 focus:ring-cyan-200 transition-all"
                 placeholder="مثال: لابتوب Dell"
                 value={newItem.nameAr}
                 onChange={(e) => setNewItem(prev => ({ ...prev, nameAr: e.target.value }))}
               />
             </div>
             
-            <div className="grid grid-cols-2 gap-4">
+            <div className="grid grid-cols-2 gap-6">
               <div>
-                <Label>الكود</Label>
+                <Label className="text-xl font-semibold text-gray-700 mb-3 block">الكود</Label>
                 <Input 
-                  className="mt-1"
+                  className="mt-2 h-18 text-2xl p-6 border-3 border-gray-300 rounded-2xl focus:border-cyan-400 focus:ring-4 focus:ring-cyan-200 transition-all"
                   placeholder="P001"
                   value={newItem.code}
                   onChange={(e) => setNewItem(prev => ({ ...prev, code: e.target.value }))}
@@ -2927,9 +3885,9 @@ export default function AccountingApp() {
               </div>
               
               <div>
-                <Label>الفئة</Label>
+                <Label className="text-xl font-semibold text-gray-700 mb-3 block">الفئة</Label>
                 <Input 
-                  className="mt-1"
+                  className="mt-2 h-18 text-2xl p-6 border-3 border-gray-300 rounded-2xl focus:border-cyan-400 focus:ring-4 focus:ring-cyan-200 transition-all"
                   placeholder="إلكترونيات"
                   value={newItem.category}
                   onChange={(e) => setNewItem(prev => ({ ...prev, category: e.target.value }))}
@@ -2937,14 +3895,14 @@ export default function AccountingApp() {
               </div>
             </div>
             
-            <div className="grid grid-cols-2 gap-4">
+            <div className="grid grid-cols-2 gap-6">
               <div>
-                <Label>السعر</Label>
+                <Label className="text-xl font-semibold text-gray-700 mb-3 block">السعر (ر.س)</Label>
                 <Input 
                   type="number"
                   min="0"
                   step="0.01"
-                  className="mt-1"
+                  className="mt-2 h-20 text-2xl p-6 border-3 border-green-300 rounded-2xl focus:border-green-500 focus:ring-4 focus:ring-green-200 transition-all font-bold"
                   placeholder="0.00"
                   value={newItem.price || ''}
                   onChange={(e) => setNewItem(prev => ({ ...prev, price: parseFloat(e.target.value) || 0 }))}
@@ -2952,11 +3910,11 @@ export default function AccountingApp() {
               </div>
               
               <div>
-                <Label>الكمية في المخزون</Label>
+                <Label className="text-xl font-semibold text-gray-700 mb-3 block">الكمية في المخزون</Label>
                 <Input 
                   type="number"
                   min="0"
-                  className="mt-1"
+                  className="mt-2 h-20 text-2xl p-6 border-3 border-blue-300 rounded-2xl focus:border-blue-500 focus:ring-4 focus:ring-blue-200 transition-all font-bold"
                   placeholder="0"
                   value={newItem.stock || ''}
                   onChange={(e) => setNewItem(prev => ({ ...prev, stock: parseInt(e.target.value) || 0 }))}
@@ -2964,16 +3922,15 @@ export default function AccountingApp() {
               </div>
             </div>
 
-            <div className="flex items-center justify-end gap-2 pt-4">
-              <Button variant="outline" onClick={() => setShowAddItemDialog(false)}>
-                إلغاء
+            <div className="flex items-center justify-end gap-4 pt-8 border-t-2 border-gray-200">
+              <Button variant="outline" onClick={() => setShowAddItemDialog(false)} className="px-10 text-xl py-6 rounded-2xl h-auto border-3 border-gray-300 hover:bg-gray-100">
+                ❌ إلغاء
               </Button>
               <Button 
-                className="bg-emerald-500 hover:bg-emerald-600 text-white"
+                className="bg-cyan-600 hover:bg-cyan-700 px-12 text-xl py-6 rounded-2xl h-auto shadow-lg text-white"
                 onClick={addNewItem}
               >
-                <Plus className="ml-2 h-4 w-4" />
-                إضافة الصنف
+                ➕ إضافة الصنف
               </Button>
             </div>
           </div>
@@ -2982,21 +3939,21 @@ export default function AccountingApp() {
 
       {/* ============ PARTY DIALOG (Add/Edit) ============ */}
       <Dialog open={showPartyDialog} onOpenChange={setShowPartyDialog}>
-        <DialogContent className="max-w-md" dir="rtl">
-          <DialogHeader>
-            <DialogTitle className="text-[#005f73]">
-              {editingParty ? 'تعديل بيانات الطرف' : 'إضافة طرف جديد'}
+        <DialogContent className="max-w-[98%] w-[98%] h-[85vh] max-h-[85vh] overflow-y-auto p-8" dir="rtl" style={{ width: '90vw', maxWidth: '90vw' }}>
+          <DialogHeader className="pb-6 border-b-2 border-blue-200">
+            <DialogTitle className="text-4xl font-bold text-[#005f73] flex items-center gap-3">
+              👥 {editingParty ? '✏️ تعديل بيانات الطرف' : '➕ إضافة طرف جديد'}
             </DialogTitle>
-            <DialogDescription>
+            <DialogDescription className="text-xl mt-2 text-gray-600">
               {editingParty ? 'قم بتعديل بيانات الطرف' : 'أدخل بيانات الطرف الجديد'}
             </DialogDescription>
           </DialogHeader>
           
-          <div className="space-y-4 mt-4">
+          <div className="space-y-8 mt-8">
             <div>
-              <Label>الاسم <span className="text-red-500">*</span></Label>
+              <Label className="text-xl font-semibold text-gray-700 mb-3 block">الاسم <span className="text-red-500">*</span></Label>
               <Input 
-                className="mt-1"
+                className="mt-2 h-18 text-2xl p-6 border-3 border-gray-300 rounded-2xl focus:border-[#0a9396] focus:ring-4 focus:ring-[#0a9396]/30 transition-all"
                 placeholder="مثال: شركة الأمل للتجارة"
                 value={partyForm.nameAr}
                 onChange={(e) => setPartyForm(prev => ({ ...prev, nameAr: e.target.value }))}
@@ -3004,9 +3961,9 @@ export default function AccountingApp() {
             </div>
 
             <div>
-              <Label>نوع الطرف</Label>
+              <Label className="text-xl font-semibold text-gray-700 mb-3 block">نوع الطرف</Label>
               <Select value={partyForm.type} onValueChange={(value: any) => setPartyForm(prev => ({ ...prev, type: value }))}>
-                <SelectTrigger className="mt-1"><SelectValue /></SelectTrigger>
+                <SelectTrigger className="mt-2 h-18 text-2xl p-6 border-3 border-gray-300 rounded-2xl focus:border-[#0a9396] focus:ring-4 focus:ring-[#0a9396]/30 transition-all"><SelectValue /></SelectTrigger>
                 <SelectContent>
                   <SelectItem value="customer">عميل</SelectItem>
                   <SelectItem value="supplier">مورد</SelectItem>
@@ -3016,9 +3973,9 @@ export default function AccountingApp() {
             </div>
             
             <div>
-              <Label>رقم الهاتف</Label>
+              <Label className="text-xl font-semibold text-gray-700 mb-3 block">رقم الهاتف</Label>
               <Input 
-                className="mt-1"
+                className="mt-2 h-18 text-2xl p-6 border-3 border-gray-300 rounded-2xl focus:border-[#0a9396] focus:ring-4 focus:ring-[#0a9396]/30 transition-all"
                 placeholder="05xxxxxxxx"
                 value={partyForm.phone}
                 onChange={(e) => setPartyForm(prev => ({ ...prev, phone: e.target.value }))}
@@ -3026,35 +3983,33 @@ export default function AccountingApp() {
             </div>
 
             <div>
-              <Label>الرصيد الافتتاحي (ر.س)</Label>
+              <Label className="text-xl font-semibold text-gray-700 mb-3 block">الرصيد الافتتاحي (ر.س)</Label>
               <Input 
                 type="number"
                 min="0"
                 step="0.01"
-                className="mt-1"
+                className="mt-2 h-20 text-2xl p-6 border-3 border-purple-300 rounded-2xl focus:border-purple-500 focus:ring-4 focus:ring-purple-200 transition-all font-bold"
                 placeholder="0.00"
                 value={partyForm.balance || ''}
                 onChange={(e) => setPartyForm(prev => ({ ...prev, balance: parseFloat(e.target.value) || 0 }))}
               />
             </div>
 
-            <div className="flex items-center justify-end gap-2 pt-4">
-              <Button variant="outline" onClick={() => setShowPartyDialog(false)}>
-                إلغاء
+            <div className="flex items-center justify-end gap-4 pt-8 border-t-2 border-gray-200">
+              <Button variant="outline" onClick={() => setShowPartyDialog(false)} className="px-10 text-xl py-6 rounded-2xl h-auto border-3 border-gray-300 hover:bg-gray-100">
+                ❌ إلغاء
               </Button>
               <Button 
-                className="bg-gradient-to-r from-[#005f73] to-[#0a9396] text-white"
+                className="bg-gradient-to-r from-[#005f73] to-[#0a9396] px-12 text-xl py-6 rounded-2xl h-auto shadow-lg text-white"
                 onClick={saveParty}
               >
                 {editingParty ? (
                   <>
-                    <Save className="ml-2 h-4 w-4" />
-                    حفظ التعديلات
+                    💾 حفظ التعديلات
                   </>
                 ) : (
                   <>
-                    <Plus className="ml-2 h-4 w-4" />
-                    إضافة الطرف
+                    ➕ إضافة الطرف
                   </>
                 )}
               </Button>
@@ -3065,48 +4020,48 @@ export default function AccountingApp() {
 
       {/* ============ TRANSACTION DIALOG (Add/Edit) ============ */}
       <Dialog open={showTransactionDialog} onOpenChange={setShowTransactionDialog}>
-        <DialogContent className="max-w-md" dir="rtl">
-          <DialogHeader>
-            <DialogTitle className={transactionForm.type === 'income' ? 'text-green-600' : 'text-red-600'}>
-              {editingTransaction 
+        <DialogContent className="max-w-[98%] w-[98%] h-[85vh] max-h-[85vh] overflow-y-auto p-8" dir="rtl" style={{ width: '90vw', maxWidth: '90vw' }}>
+          <DialogHeader className={`pb-6 border-b-2 ${transactionForm.type === 'income' ? 'border-green-200' : 'border-orange-200'}`}>
+            <DialogTitle className={`text-4xl font-bold flex items-center gap-3 ${transactionForm.type === 'income' ? 'text-green-700' : 'text-orange-700'}`}>
+              {transactionForm.type === 'income' ? '💰' : '💸'} {editingTransaction 
                 ? (transactionForm.type === 'income' ? 'تعديل الإيراد' : 'تعديل المصروف')
                 : (transactionForm.type === 'income' ? 'إيراد جديد' : 'مصروف جديد')
               }
             </DialogTitle>
-            <DialogDescription>
+            <DialogDescription className="text-xl mt-2 text-gray-600">
               {editingTransaction ? 'قم بتعديل بيانات العملية' : 'أدخل بيانات العملية الجديدة'}
             </DialogDescription>
           </DialogHeader>
           
-          <div className="space-y-4 mt-4">
+          <div className="space-y-8 mt-8">
             <div>
-              <Label>التاريخ</Label>
+              <Label className="text-xl font-semibold text-gray-700 mb-3 block">التاريخ</Label>
               <Input 
                 type="date"
-                className="mt-1"
+                className="mt-2 h-18 text-2xl p-6 border-3 border-gray-300 rounded-2xl focus:border-[#0a9396] focus:ring-4 focus:ring-[#0a9396]/30 transition-all"
                 value={transactionForm.date}
                 onChange={(e) => setTransactionForm(prev => ({ ...prev, date: e.target.value }))}
               />
             </div>
 
             <div>
-              <Label>الوصف <span className="text-red-500">*</span></Label>
+              <Label className="text-xl font-semibold text-gray-700 mb-3 block">الوصف <span className="text-red-500">*</span></Label>
               <Input 
-                className="mt-1"
+                className="mt-2 h-18 text-2xl p-6 border-3 border-gray-300 rounded-2xl focus:border-[#0a9396] focus:ring-4 focus:ring-[#0a9396]/30 transition-all"
                 placeholder={transactionForm.type === 'income' ? 'مثال: مبيعات نقدية' : 'مثال: إيجار المحل'}
                 value={transactionForm.description}
                 onChange={(e) => setTransactionForm(prev => ({ ...prev, description: e.target.value }))}
               />
             </div>
             
-            <div className="grid grid-cols-2 gap-4">
+            <div className="grid grid-cols-2 gap-6">
               <div>
-                <Label>المبلغ (ر.س)</Label>
+                <Label className="text-xl font-semibold text-gray-700 mb-3 block">المبلغ (ر.س)</Label>
                 <Input 
                   type="number"
                   min="0"
                   step="0.01"
-                  className="mt-1"
+                  className={`mt-2 h-20 text-2xl p-6 border-3 rounded-2xl focus:ring-4 transition-all font-bold ${transactionForm.type === 'income' ? 'border-green-300 focus:border-green-500 focus:ring-green-200' : 'border-orange-300 focus:border-orange-500 focus:ring-orange-200'}`}
                   placeholder="0.00"
                   value={transactionForm.amount || ''}
                   onChange={(e) => setTransactionForm(prev => ({ ...prev, amount: parseFloat(e.target.value) || 0 }))}
@@ -3114,9 +4069,9 @@ export default function AccountingApp() {
               </div>
               
               <div>
-                <Label>الفئة</Label>
+                <Label className="text-xl font-semibold text-gray-700 mb-3 block">الفئة</Label>
                 <Select value={transactionForm.category} onValueChange={(value) => setTransactionForm(prev => ({ ...prev, category: value }))}>
-                  <SelectTrigger className="mt-1"><SelectValue /></SelectTrigger>
+                  <SelectTrigger className={`mt-2 h-18 text-2xl p-6 border-3 border-gray-300 rounded-2xl focus:ring-4 transition-all ${transactionForm.type === 'income' ? 'focus:border-green-500 focus:ring-green-200' : 'focus:border-orange-500 focus:ring-orange-200'}`}><SelectValue /></SelectTrigger>
                   <SelectContent>
                     {transactionForm.type === 'income' ? (
                       <>
@@ -3137,23 +4092,21 @@ export default function AccountingApp() {
               </div>
             </div>
 
-            <div className="flex items-center justify-end gap-2 pt-4">
-              <Button variant="outline" onClick={() => setShowTransactionDialog(false)}>
-                إلغاء
+            <div className="flex items-center justify-end gap-4 pt-8 border-t-2 border-gray-200">
+              <Button variant="outline" onClick={() => setShowTransactionDialog(false)} className="px-10 text-xl py-6 rounded-2xl h-auto border-3 border-gray-300 hover:bg-gray-100">
+                ❌ إلغاء
               </Button>
               <Button 
-                className={transactionForm.type === 'income' ? 'bg-green-500 hover:bg-green-600 text-white' : 'bg-red-500 hover:bg-red-600 text-white'}
+                className={`${transactionForm.type === 'income' ? 'bg-green-500 hover:bg-green-600' : 'bg-orange-500 hover:bg-orange-600'} px-12 text-xl py-6 rounded-2xl h-auto shadow-lg text-white`}
                 onClick={saveTransaction}
               >
                 {editingTransaction ? (
                   <>
-                    <Save className="ml-2 h-4 w-4" />
-                    حفظ التعديلات
+                    💾 حفظ التعديلات
                   </>
                 ) : (
                   <>
-                    <Plus className="ml-2 h-4 w-4" />
-                    {transactionForm.type === 'income' ? 'إضافة الإيراد' : 'إضافة المصروف'}
+                    ➕ {transactionForm.type === 'income' ? 'إضافة الإيراد' : 'إضافة المصروف'}
                   </>
                 )}
               </Button>
@@ -3164,47 +4117,47 @@ export default function AccountingApp() {
 
       {/* = TRANSACTION VIEW DIALOG ============ */}
       <Dialog open={!!viewingTransaction} onOpenChange={() => setViewingTransaction(null)}>
-        <DialogContent dir="rtl">
-          <DialogHeader>
-            <DialogTitle className={viewingTransaction?.type === 'income' ? 'text-green-600' : 'text-red-600'}>
+        <DialogContent className="max-w-[98%] w-[98%] h-[80vh] max-h-[80vh] overflow-y-auto p-8" dir="rtl" style={{ width: '85vw', maxWidth: '85vw' }}>
+          <DialogHeader className={`pb-6 border-b-2 ${viewingTransaction?.type === 'income' ? 'border-green-200' : 'border-orange-200'}`}>
+            <DialogTitle className={`text-4xl font-bold flex items-center gap-3 ${viewingTransaction?.type === 'income' ? 'text-green-700' : 'text-orange-700'}`}>
               {viewingTransaction?.type === 'income' ? '💰 تفاصيل الإيراد' : '💸 تفاصيل المصروف'}
             </DialogTitle>
           </DialogHeader>
           
           {viewingTransaction && (
-            <div className="space-y-4 mt-4">
-              <div className="grid grid-cols-2 gap-4">
-                <div className="p-3 bg-gray-50 rounded-lg">
-                  <p className="text-sm text-gray-500">رقم العملية</p>
-                  <p className="font-bold font-mono">#{viewingTransaction.id.slice(-6)}</p>
+            <div className="space-y-8 mt-8">
+              <div className="grid grid-cols-2 gap-6">
+                <div className="p-6 bg-gradient-to-br from-gray-50 to-gray-100 rounded-2xl border-2 border-gray-200 shadow-sm">
+                  <p className="text-lg text-gray-500 mb-2">رقم العملية</p>
+                  <p className="font-bold text-3xl font-mono text-[#005f73]">#{viewingTransaction.id.slice(-6)}</p>
                 </div>
-                <div className="p-3 bg-gray-50 rounded-lg">
-                  <p className="text-sm text-gray-500">التاريخ</p>
-                  <p className="font-bold">{viewingTransaction.date}</p>
+                <div className="p-6 bg-gradient-to-br from-gray-50 to-gray-100 rounded-2xl border-2 border-gray-200 shadow-sm">
+                  <p className="text-lg text-gray-500 mb-2">التاريخ</p>
+                  <p className="font-bold text-2xl">{viewingTransaction.date}</p>
                 </div>
               </div>
               
-              <div className="p-3 bg-gray-50 rounded-lg">
-                <p className="text-sm text-gray-500">الوصف</p>
-                <p className="font-medium">{viewingTransaction.description}</p>
+              <div className="p-6 bg-gradient-to-br from-blue-50 to-cyan-50 rounded-2xl border-2 border-blue-200 shadow-sm">
+                <p className="text-lg text-gray-500 mb-2">الوصف</p>
+                <p className="font-medium text-2xl">{viewingTransaction.description}</p>
               </div>
               
-              <div className="grid grid-cols-2 gap-4">
-                <div className="p-3 bg-gray-50 rounded-lg">
-                  <p className="text-sm text-gray-500">الفئة</p>
-                  <p className="font-medium">{viewingTransaction.category}</p>
+              <div className="grid grid-cols-2 gap-6">
+                <div className="p-6 bg-gradient-to-br from-gray-50 to-gray-100 rounded-2xl border-2 border-gray-200 shadow-sm">
+                  <p className="text-lg text-gray-500 mb-2">الفئة</p>
+                  <p className="font-bold text-2xl">{viewingTransaction.category}</p>
                 </div>
-                <div className={`p-3 rounded-lg ${viewingTransaction.type === 'income' ? 'bg-green-50' : 'bg-red-50'}`}>
-                  <p className="text-sm text-gray-500">المبلغ</p>
-                  <p className={`font-bold text-xl ${viewingTransaction.type === 'income' ? 'text-green-600' : 'text-red-600'}`}>
+                <div className={`p-6 rounded-2xl border-3 shadow-lg ${viewingTransaction.type === 'income' ? 'bg-gradient-to-br from-green-50 to-emerald-100 border-green-300' : 'bg-gradient-to-br from-orange-50 to-red-100 border-orange-300'}`}>
+                  <p className="text-lg text-gray-500 mb-2">المبلغ</p>
+                  <p className={`font-bold text-4xl ${viewingTransaction.type === 'income' ? 'text-green-700' : 'text-orange-700'}`}>
                     {viewingTransaction.type === 'income' ? '+' : '-'}{viewingTransaction.amount.toLocaleString()} ر.س
                   </p>
                 </div>
               </div>
 
-              <div className="flex items-center justify-end gap-2 pt-4">
-                <Button variant="outline" onClick={() => setViewingTransaction(null)}>
-                  إغلاق
+              <div className="flex items-center justify-end gap-4 pt-8 border-t-2 border-gray-200">
+                <Button variant="outline" onClick={() => setViewingTransaction(null)} className="px-10 text-xl py-6 rounded-2xl h-auto border-3 border-gray-300 hover:bg-gray-100">
+                  ❌ إغلاق
                 </Button>
                 <Button 
                   variant="outline"
@@ -3212,9 +4165,9 @@ export default function AccountingApp() {
                     printTransaction(viewingTransaction)
                     setViewingTransaction(null)
                   }}
+                  className="px-10 text-xl py-6 rounded-2xl h-auto border-3 border-blue-400 text-blue-600 hover:bg-blue-50"
                 >
-                  <Printer className="ml-2 h-4 w-4" />
-                  طباعة
+                  🖨️ طباعة
                 </Button>
               </div>
             </div>
@@ -3224,32 +4177,32 @@ export default function AccountingApp() {
 
       {/* ============ INVENTORY ITEM DIALOG (Add/Edit) ============ */}
       <Dialog open={showInventoryItemDialog} onOpenChange={setShowInventoryItemDialog}>
-        <DialogContent className="max-w-md" dir="rtl">
-          <DialogHeader>
-            <DialogTitle className="text-[#005f73]">
-              {editingInventoryItem ? 'تعديل الصنف' : 'إضافة صنف جديد'}
+        <DialogContent className="max-w-[98%] w-[98%] h-[85vh] max-h-[85vh] overflow-y-auto p-8" dir="rtl" style={{ width: '90vw', maxWidth: '90vw' }}>
+          <DialogHeader className="pb-6 border-b-2 border-indigo-200">
+            <DialogTitle className="text-4xl font-bold text-[#005f73] flex items-center gap-3">
+              📦 {editingInventoryItem ? '✏️ تعديل الصنف' : '➕ إضافة صنف جديد'}
             </DialogTitle>
-            <DialogDescription>
+            <DialogDescription className="text-xl mt-2 text-gray-600">
               {editingInventoryItem ? 'قم بتعديل بيانات الصنف' : 'أدخل بيانات الصنف الجديد'}
             </DialogDescription>
           </DialogHeader>
           
-          <div className="space-y-4 mt-4">
+          <div className="space-y-8 mt-8">
             <div>
-              <Label>اسم الصنف <span className="text-red-500">*</span></Label>
+              <Label className="text-xl font-semibold text-gray-700 mb-3 block">اسم الصنف <span className="text-red-500">*</span></Label>
               <Input 
-                className="mt-1"
+                className="mt-2 h-20 text-2xl p-6 border-3 border-gray-300 rounded-2xl focus:border-indigo-400 focus:ring-4 focus:ring-indigo-200 transition-all"
                 placeholder="مثال: مطبخ مودرن"
                 value={inventoryItemForm.nameAr}
                 onChange={(e) => setInventoryItemForm(prev => ({ ...prev, nameAr: e.target.value }))}
               />
             </div>
             
-            <div className="grid grid-cols-2 gap-4">
+            <div className="grid grid-cols-2 gap-6">
               <div>
-                <Label>الكود</Label>
+                <Label className="text-xl font-semibold text-gray-700 mb-3 block">الكود</Label>
                 <Input 
-                  className="mt-1"
+                  className="mt-2 h-18 text-2xl p-6 border-3 border-gray-300 rounded-2xl focus:border-indigo-400 focus:ring-4 focus:ring-indigo-200 transition-all"
                   placeholder="MK-001"
                   value={inventoryItemForm.code}
                   onChange={(e) => setInventoryItemForm(prev => ({ ...prev, code: e.target.value }))}
@@ -3257,9 +4210,9 @@ export default function AccountingApp() {
               </div>
               
               <div>
-                <Label>الفئة</Label>
+                <Label className="text-xl font-semibold text-gray-700 mb-3 block">الفئة</Label>
                 <Input 
-                  className="mt-1"
+                  className="mt-2 h-18 text-2xl p-6 border-3 border-gray-300 rounded-2xl focus:border-indigo-400 focus:ring-4 focus:ring-indigo-200 transition-all"
                   placeholder="أثاث مطابخ"
                   value={inventoryItemForm.category}
                   onChange={(e) => setInventoryItemForm(prev => ({ ...prev, category: e.target.value }))}
@@ -3267,14 +4220,14 @@ export default function AccountingApp() {
               </div>
             </div>
             
-            <div className="grid grid-cols-2 gap-4">
+            <div className="grid grid-cols-2 gap-6">
               <div>
-                <Label>السعر (ر.س)</Label>
+                <Label className="text-xl font-semibold text-gray-700 mb-3 block">السعر (ر.س)</Label>
                 <Input 
                   type="number"
                   min="0"
                   step="0.01"
-                  className="mt-1"
+                  className="mt-2 h-20 text-2xl p-6 border-3 border-green-300 rounded-2xl focus:border-green-500 focus:ring-4 focus:ring-green-200 transition-all font-bold"
                   placeholder="0.00"
                   value={inventoryItemForm.price || ''}
                   onChange={(e) => setInventoryItemForm(prev => ({ ...prev, price: parseFloat(e.target.value) || 0 }))}
@@ -3282,11 +4235,11 @@ export default function AccountingApp() {
               </div>
               
               <div>
-                <Label>الكمية في المخزون</Label>
+                <Label className="text-xl font-semibold text-gray-700 mb-3 block">الكمية في المخزون</Label>
                 <Input 
                   type="number"
                   min="0"
-                  className="mt-1"
+                  className="mt-2 h-20 text-2xl p-6 border-3 border-blue-300 rounded-2xl focus:border-blue-500 focus:ring-4 focus:ring-blue-200 transition-all font-bold"
                   placeholder="0"
                   value={inventoryItemForm.stock || ''}
                   onChange={(e) => setInventoryItemForm(prev => ({ ...prev, stock: parseInt(e.target.value) || 0 }))}
@@ -3294,24 +4247,18 @@ export default function AccountingApp() {
               </div>
             </div>
 
-            <div className="flex items-center justify-end gap-2 pt-4">
-              <Button variant="outline" onClick={() => setShowInventoryItemDialog(false)}>
-                إلغاء
+            <div className="flex items-center justify-end gap-4 pt-8 border-t-2 border-gray-200">
+              <Button variant="outline" onClick={() => setShowInventoryItemDialog(false)} className="px-10 text-xl py-6 rounded-2xl h-auto border-3 border-gray-300 hover:bg-gray-100">
+                ❌ إلغاء
               </Button>
               <Button 
-                className="bg-gradient-to-r from-[#005f73] to-[#0a9396] text-white"
+                className="bg-gradient-to-r from-[#005f73] to-[#0a9396] px-12 text-xl py-6 rounded-2xl h-auto shadow-lg text-white"
                 onClick={saveInventoryItem}
               >
                 {editingInventoryItem ? (
-                  <>
-                    <Save className="ml-2 h-4 w-4" />
-                    حفظ التعديلات
-                  </>
+                  <>💾 حفظ التعديلات</>
                 ) : (
-                  <>
-                    <Plus className="ml-2 h-4 w-4" />
-                    إضافة الصنف
-                  </>
+                  <>➕ إضافة الصنف</>
                 )}
               </Button>
             </div>
