@@ -29,7 +29,7 @@ import { Separator } from '@/components/ui/separator'
 import { ScrollArea } from '@/components/ui/scroll-area'
 
 // ============ TYPES ============
-type ModuleType = 'dashboard' | 'sales' | 'purchases' | 'inventory' | 'parties' | 'treasury' | 'reports' | 'settings' | 'accounts' | 'banks' | 'hr' | 'expenses' | 'chart-of-accounts'
+type ModuleType = 'dashboard' | 'sales' | 'purchases' | 'inventory' | 'parties' | 'treasury' | 'reports' | 'settings' | 'accounts' | 'banks' | 'hr' | 'expenses' | 'chart-of-accounts' | 'journal-entries'
 
 interface Invoice {
   id: string
@@ -99,6 +99,24 @@ interface Account {
   level: number
   parentId: string | null
   balance: number
+}
+
+interface JournalEntryLine {
+  accountCode: string
+  accountName: string
+  debit: number
+  credit: number
+}
+
+interface JournalEntry {
+  id: string
+  entryNumber: number
+  date: string
+  description: string
+  lines: JournalEntryLine[]
+  totalDebit: number
+  totalCredit: number
+  status: 'draft' | 'posted' | 'reversed'
 }
 
 // ============ EMPTY DATA ARRAYS FOR MANUAL ENTRY ============
@@ -226,6 +244,268 @@ const mockBankAccounts: any[] = []
 const mockChecks: any[] = []
 const mockEmployees: any[] = []
 const mockExpenses: any[] = []
+const mockJournalEntries: JournalEntry[] = [
+  {
+    "id": "je-1",
+    "entryNumber": 1,
+    "date": "2026-06-06",
+    "description": "نقل العفش والمكن والعدة",
+    "lines": [
+      { "accountCode": "5015", "accountName": "صيانة وتصليحات", "debit": 600, "credit": 0 },
+      { "accountCode": "1111", "accountName": "الصندوق", "debit": 0, "credit": 600 }
+    ],
+    "totalDebit": 600,
+    "totalCredit": 600,
+    "status": "posted"
+  },
+  {
+    "id": "je-2",
+    "entryNumber": 2,
+    "date": "2026-06-06",
+    "description": "اثبات مساهمة حسام المحول الى ليلى 200 الف ومنبقى لديها 82600",
+    "lines": [
+      { "accountCode": "1111", "accountName": "الصندوق", "debit": 117400, "credit": 0 },
+      { "accountCode": "3001", "accountName": "رأس المال", "debit": 0, "credit": 117400 }
+    ],
+    "totalDebit": 117400,
+    "totalCredit": 117400,
+    "status": "posted"
+  },
+  {
+    "id": "je-3",
+    "entryNumber": 3,
+    "date": "2026-06-06",
+    "description": "اثبات مساهمة محمود تصفيىة الصندوق",
+    "lines": [
+      { "accountCode": "1111", "accountName": "الصندوق", "debit": 96314, "credit": 0 },
+      { "accountCode": "3001", "accountName": "رأس المال", "debit": 0, "credit": 96314 }
+    ],
+    "totalDebit": 96314,
+    "totalCredit": 96314,
+    "status": "posted"
+  },
+  {
+    "id": "je-4",
+    "entryNumber": 4,
+    "date": "2026-06-06",
+    "description": "محمد ايمن تطليع ونقل العدةوالمكن والعفش",
+    "lines": [
+      { "accountCode": "5015", "accountName": "صيانة وتصليحات", "debit": 1000, "credit": 0 },
+      { "accountCode": "1111", "accountName": "الصندوق", "debit": 0, "credit": 1000 }
+    ],
+    "totalDebit": 1000,
+    "totalCredit": 1000,
+    "status": "posted"
+  },
+  {
+    "id": "je-5",
+    "entryNumber": 5,
+    "date": "2026-06-15",
+    "description": "مشتريات من مورد عبد الحميد الشافعى",
+    "lines": [
+      { "accountCode": "5101", "accountName": "المشتريات", "debit": 25000, "credit": 0 },
+      { "accountCode": "2211", "accountName": "مورد 1 عبد الحميد الشافعى", "debit": 0, "credit": 25000 }
+    ],
+    "totalDebit": 25000,
+    "totalCredit": 25000,
+    "status": "posted"
+  },
+  {
+    "id": "je-6",
+    "entryNumber": 6,
+    "date": "2026-06-20",
+    "description": "مبيعات نقدية لمعرض الرحيمى",
+    "lines": [
+      { "accountCode": "1111", "accountName": "الصندوق", "debit": 35000, "credit": 0 },
+      { "accountCode": "4001", "accountName": "إيرادات المبيعات", "debit": 0, "credit": 35000 }
+    ],
+    "totalDebit": 35000,
+    "totalCredit": 35000,
+    "status": "posted"
+  },
+  {
+    "id": "je-7",
+    "entryNumber": 7,
+    "date": "2026-06-25",
+    "description": "صرف مرتبات الموظفين",
+    "lines": [
+      { "accountCode": "5002", "accountName": "مرتبات وأجور", "debit": 18000, "credit": 0 },
+      { "accountCode": "1111", "accountName": "الصندوق", "debit": 0, "credit": 18000 }
+    ],
+    "totalDebit": 18000,
+    "totalCredit": 18000,
+    "status": "posted"
+  },
+  {
+    "id": "je-8",
+    "entryNumber": 8,
+    "date": "2026-07-01",
+    "description": "إيجار المصنع شهر يوليو",
+    "lines": [
+      { "accountCode": "5003", "accountName": "إيجار المصنع", "debit": 8000, "credit": 0 },
+      { "accountCode": "1111", "accountName": "الصندوق", "debit": 0, "credit": 8000 }
+    ],
+    "totalDebit": 8000,
+    "totalCredit": 8000,
+    "status": "posted"
+  },
+  {
+    "id": "je-9",
+    "entryNumber": 9,
+    "date": "2026-07-05",
+    "description": "مبيعات آجل لمطبخ سارة",
+    "lines": [
+      { "accountCode": "1212", "accountName": "عميل 2 مطبخ سارة", "debit": 28000, "credit": 0 },
+      { "accountCode": "4001", "accountName": "إيرادات المبيعات", "debit": 0, "credit": 28000 }
+    ],
+    "totalDebit": 28000,
+    "totalCredit": 28000,
+    "status": "posted"
+  },
+  {
+    "id": "je-10",
+    "entryNumber": 10,
+    "date": "2026-07-10",
+    "description": "سداد لمورد احمد يحيى",
+    "lines": [
+      { "accountCode": "2212", "accountName": "مورد 2 احمد يحيى", "debit": 15000, "credit": 0 },
+      { "accountCode": "1111", "accountName": "الصندوق", "debit": 0, "credit": 15000 }
+    ],
+    "totalDebit": 15000,
+    "totalCredit": 15000,
+    "status": "posted"
+  },
+  {
+    "id": "je-11",
+    "entryNumber": 11,
+    "date": "2026-07-15",
+    "description": "مصروفات شحن وتوصيل",
+    "lines": [
+      { "accountCode": "5022", "accountName": "شحن وتوصيل", "debit": 2500, "credit": 0 },
+      { "accountCode": "1111", "accountName": "الصندوق", "debit": 0, "credit": 2500 }
+    ],
+    "totalDebit": 2500,
+    "totalCredit": 2500,
+    "status": "posted"
+  },
+  {
+    "id": "je-12",
+    "entryNumber": 12,
+    "date": "2026-07-20",
+    "description": "تحصيل من عميل محمد فتحى المرور",
+    "lines": [
+      { "accountCode": "1111", "accountName": "الصندوق", "debit": 22000, "credit": 0 },
+      { "accountCode": "1213", "accountName": "عميل 3 محمد فتحى المرور", "debit": 0, "credit": 22000 }
+    ],
+    "totalDebit": 22000,
+    "totalCredit": 22000,
+    "status": "posted"
+  },
+  {
+    "id": "je-13",
+    "entryNumber": 13,
+    "date": "2026-07-25",
+    "description": "مشتريات من شركة اشبيجيال",
+    "lines": [
+      { "accountCode": "5101", "accountName": "المشتريات", "debit": 42000, "credit": 0 },
+      { "accountCode": "2213", "accountName": "مورد 3 شركة اشبيجيال", "debit": 0, "credit": 42000 }
+    ],
+    "totalDebit": 42000,
+    "totalCredit": 42000,
+    "status": "posted"
+  },
+  {
+    "id": "je-14",
+    "entryNumber": 14,
+    "date": "2026-08-01",
+    "description": "صرف مصروفات صيانة",
+    "lines": [
+      { "accountCode": "5015", "accountName": "صيانة وتصليحات", "debit": 3500, "credit": 0 },
+      { "accountCode": "1111", "accountName": "الصندوق", "debit": 0, "credit": 3500 }
+    ],
+    "totalDebit": 3500,
+    "totalCredit": 3500,
+    "status": "posted"
+  },
+  {
+    "id": "je-15",
+    "entryNumber": 15,
+    "date": "2026-08-05",
+    "description": "مبيعات نقدية متنوعة",
+    "lines": [
+      { "accountCode": "1111", "accountName": "الصندوق", "debit": 48500, "credit": 0 },
+      { "accountCode": "4001", "accountName": "إيرادات المبيعات", "debit": 0, "credit": 48500 }
+    ],
+    "totalDebit": 48500,
+    "totalCredit": 48500,
+    "status": "posted"
+  },
+  {
+    "id": "je-16",
+    "entryNumber": 16,
+    "date": "2026-08-10",
+    "description": "مصروفات تقطيع ولزق شريط",
+    "lines": [
+      { "accountCode": "5301", "accountName": "مصروفات تقطيع ولزق شريط", "debit": 1200, "credit": 0 },
+      { "accountCode": "1111", "accountName": "الصندوق", "debit": 0, "credit": 1200 }
+    ],
+    "totalDebit": 1200,
+    "totalCredit": 1200,
+    "status": "posted"
+  },
+  {
+    "id": "je-17",
+    "entryNumber": 17,
+    "date": "2026-08-15",
+    "description": "سداد عجز صندوق",
+    "lines": [
+      { "accountCode": "5015", "accountName": "صيانة وتصليحات", "debit": 850, "credit": 0 },
+      { "accountCode": "1111", "accountName": "الصندوق", "debit": 0, "credit": 850 }
+    ],
+    "totalDebit": 850,
+    "totalCredit": 850,
+    "status": "posted"
+  },
+  {
+    "id": "je-18",
+    "entryNumber": 18,
+    "date": "2026-08-20",
+    "description": "مبيعات آجل لمعرض الرحيمى",
+    "lines": [
+      { "accountCode": "1211", "accountName": "عميل 1 معرض الرحيمى", "debit": 55000, "credit": 0 },
+      { "accountCode": "4001", "accountName": "إيرادات المبيعات", "debit": 0, "credit": 55000 }
+    ],
+    "totalDebit": 55000,
+    "totalCredit": 55000,
+    "status": "posted"
+  },
+  {
+    "id": "je-19",
+    "entryNumber": 19,
+    "date": "2026-08-25",
+    "description": "صرف إيجار المصنع شهر أغسطس",
+    "lines": [
+      { "accountCode": "5003", "accountName": "إيجار المصنع", "debit": 8000, "credit": 0 },
+      { "accountCode": "1111", "accountName": "الصندوق", "debit": 0, "credit": 8000 }
+    ],
+    "totalDebit": 8000,
+    "totalCredit": 8000,
+    "status": "posted"
+  },
+  {
+    "id": "je-20",
+    "entryNumber": 20,
+    "date": "2026-09-01",
+    "description": "صرف مرتبات سبتمبر",
+    "lines": [
+      { "accountCode": "5002", "accountName": "مرتبات وأجور", "debit": 18500, "credit": 0 },
+      { "accountCode": "1111", "accountName": "الصندوق", "debit": 0, "credit": 18500 }
+    ],
+    "totalDebit": 18500,
+    "totalCredit": 18500,
+    "status": "posted"
+  }
+]
 
 // ============ MAIN COMPONENT ============
 export default function AccountingApp() {
@@ -237,6 +517,11 @@ export default function AccountingApp() {
   const [items, setItems] = useState<Item[]>(mockItems)
   const [parties, setParties] = useState<Party[]>([])
   const [transactions, setTransactions] = useState<Transaction[]>([])
+  const [journalEntries, setJournalEntries] = useState<JournalEntry[]>(mockJournalEntries)
+  const [showJournalDialog, setShowJournalDialog] = useState(false)
+  const [viewingJournalEntry, setViewingJournalEntry] = useState<JournalEntry | null>(null)
+  const [journalSearchTerm, setJournalSearchTerm] = useState('')
+  const [journalDateFilter, setJournalDateFilter] = useState('')
   const [expandedAccounts, setExpandedAccounts] = useState<Set<string>>(new Set(['acc-1000', 'acc-2000', 'acc-3000', 'acc-4000', 'acc-5000']))
   const [searchTerm, setSearchTerm] = useState('')
 
@@ -1286,7 +1571,8 @@ export default function AccountingApp() {
     { id: 'inventory' as ModuleType, icon: Package, label: 'المخزون' },
     { id: 'parties' as ModuleType, icon: Users, label: 'الأطراف' },
     { id: 'treasury' as ModuleType, icon: Wallet, label: 'الخزينة' },
-    { id: 'accounts' as ModuleType, icon: BookOpen, label: 'دليل الحسابات' },
+    { id: 'journal-entries' as ModuleType, icon: BookOpen, label: 'القيود المحاسبية' },
+    { id: 'accounts' as ModuleType, icon: Landmark, label: 'دليل الحسابات' },
     { id: 'banks' as ModuleType, icon: Landmark, label: 'البنوك' },
     { id: 'hr' as ModuleType, icon: Users, label: 'الموارد البشرية' },
     { id: 'expenses' as ModuleType, icon: Receipt, label: 'المصروفات' },
@@ -2823,6 +3109,331 @@ export default function AccountingApp() {
               </Card>
             </div>
           )}
+
+          {/* ============ JOURNAL ENTRIES MODULE ============ */}
+          {activeModule === 'journal-entries' && (
+            <div className="space-y-6">
+              {/* Summary Cards */}
+              <div className="grid grid-cols-1 md:grid-cols-5 gap-4">
+                <Card className="border-r-4 border-r-indigo-500">
+                  <CardContent className="pt-6">
+                    <div className="flex items-center gap-3">
+                      <div className="w-12 h-12 bg-indigo-100 rounded-full flex items-center justify-center">
+                        <BookOpen className="w-6 h-6 text-indigo-600" />
+                      </div>
+                      <div>
+                        <p className="text-sm text-gray-500">إجمالى القيود</p>
+                        <p className="text-xl font-bold text-indigo-600">{journalEntries.length}</p>
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
+                <Card className="border-r-4 border-r-green-500">
+                  <CardContent className="pt-6">
+                    <div className="flex items-center gap-3">
+                      <div className="w-12 h-12 bg-green-100 rounded-full flex items-center justify-center">
+                        <TrendingUp className="w-6 h-6 text-green-600" />
+                      </div>
+                      <div>
+                        <p className="text-sm text-gray-500">إجمالى المدين</p>
+                        <p className="text-xl font-bold text-green-600">{journalEntries.reduce((sum, e) => sum + e.totalDebit, 0).toLocaleString()} ج.م</p>
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
+                <Card className="border-r-4 border-r-red-500">
+                  <CardContent className="pt-6">
+                    <div className="flex items-center gap-3">
+                      <div className="w-12 h-12 bg-red-100 rounded-full flex items-center justify-center">
+                        <TrendingDown className="w-6 h-6 text-red-600" />
+                      </div>
+                      <div>
+                        <p className="text-sm text-gray-500">إجمالى الدائن</p>
+                        <p className="text-xl font-bold text-red-600">{journalEntries.reduce((sum, e) => sum + e.totalCredit, 0).toLocaleString()} ج.م</p>
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
+                <Card className="border-r-4 border-r-blue-500">
+                  <CardContent className="pt-6">
+                    <div className="flex items-center gap-3">
+                      <div className="w-12 h-12 bg-blue-100 rounded-full flex items-center justify-center">
+                        <CheckCircle className="w-6 h-6 text-blue-600" />
+                      </div>
+                      <div>
+                        <p className="text-sm text-gray-500">قيود مرحلة</p>
+                        <p className="text-xl font-bold text-blue-600">{journalEntries.filter(e => e.status === 'posted').length}</p>
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
+                <Card className="border-r-4 border-r-yellow-500">
+                  <CardContent className="pt-6">
+                    <div className="flex items-center gap-3">
+                      <div className="w-12 h-12 bg-yellow-100 rounded-full flex items-center justify-center">
+                        <FileText className="w-6 h-6 text-yellow-600" />
+                      </div>
+                      <div>
+                        <p className="text-sm text-gray-500">قيود مسودة</p>
+                        <p className="text-xl font-bold text-yellow-600">{journalEntries.filter(e => e.status === 'draft').length}</p>
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
+              </div>
+
+              {/* Journal Entries Table */}
+              <Card>
+                <CardHeader className="flex flex-row items-center justify-between">
+                  <CardTitle className="flex items-center gap-2">
+                    <BookOpen className="w-6 h-6 text-indigo-600" />
+                    القيود المحاسبية
+                  </CardTitle>
+                  <div className="flex items-center gap-2">
+                    <div className="relative">
+                      <Search className="absolute right-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400" />
+                      <Input
+                        placeholder="بحث بالبيان أو الحساب..."
+                        value={journalSearchTerm}
+                        onChange={(e) => setJournalSearchTerm(e.target.value)}
+                        className="pr-10 w-64"
+                      />
+                    </div>
+                    <Input
+                      type="date"
+                      value={journalDateFilter}
+                      onChange={(e) => setJournalDateFilter(e.target.value)}
+                      className="w-40"
+                    />
+                    <Button 
+                      onClick={() => setShowJournalDialog(true)}
+                      className="bg-indigo-500 hover:bg-indigo-600"
+                    >
+                      <Plus className="ml-2 h-4 w-4" />قيد جديد
+                    </Button>
+                  </div>
+                </CardHeader>
+                <CardContent>
+                  <div className="overflow-x-auto">
+                    <table className="w-full text-sm">
+                      <thead>
+                        <tr className="border-b-2 bg-gradient-to-l from-indigo-50 to-purple-50">
+                          <th className="text-right p-3 font-bold text-indigo-700">#</th>
+                          <th className="text-right p-3 font-bold text-indigo-700">التاريخ</th>
+                          <th className="text-right p-3 font-bold text-indigo-700">البيان</th>
+                          <th className="text-right p-3 font-bold text-indigo-700">الحسابات</th>
+                          <th className="text-right p-3 font-bold text-indigo-700">المدين</th>
+                          <th className="text-right p-3 font-bold text-indigo-700">الدائن</th>
+                          <th className="text-right p-3 font-bold text-indigo-700">الحالة</th>
+                          <th className="text-right p-3 font-bold text-indigo-700">الإجراءات</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {journalEntries
+                          .filter(entry => {
+                            if (journalSearchTerm && !entry.description?.includes(journalSearchTerm) && 
+                                !entry.lines.some(l => l.accountName.includes(journalSearchTerm))) {
+                              return false
+                            }
+                            if (journalDateFilter && entry.date !== journalDateFilter) {
+                              return false
+                            }
+                            return true
+                          })
+                          .sort((a, b) => b.entryNumber - a.entryNumber)
+                          .map((entry) => (
+                          <tr key={entry.id} className="border-b hover:bg-indigo-50/30 transition-colors">
+                            <td className="p-3 font-bold text-indigo-600">#{entry.entryNumber}</td>
+                            <td className="p-3">{entry.date}</td>
+                            <td className="p-3 max-w-xs truncate" title={entry.description}>
+                              {entry.description || '-'}
+                            </td>
+                            <td className="p-3">
+                              <div className="flex flex-col gap-1">
+                                {entry.lines.slice(0, 2).map((line, idx) => (
+                                  <span key={idx} className={`text-xs px-2 py-1 rounded ${line.debit > 0 ? 'bg-red-50 text-red-700' : 'bg-green-50 text-green-700'}`}>
+                                    {line.accountName}
+                                  </span>
+                                ))}
+                                {entry.lines.length > 2 && (
+                                  <span className="text-xs text-gray-500">+{entry.lines.length - 2} حساب آخر</span>
+                                )}
+                              </div>
+                            </td>
+                            <td className="p-3 font-bold text-red-600">{entry.totalDebit.toLocaleString()}</td>
+                            <td className="p-3 font-bold text-green-600">{entry.totalCredit.toLocaleString()}</td>
+                            <td className="p-3">
+                              <Badge className={
+                                entry.status === 'posted' ? 'bg-blue-100 text-blue-800' :
+                                entry.status === 'draft' ? 'bg-yellow-100 text-yellow-800' :
+                                'bg-gray-100 text-gray-800'
+                              }>
+                                {entry.status === 'posted' ? 'مرحل' : entry.status === 'draft' ? 'مسودة' : 'ملغى'}
+                              </Badge>
+                            </td>
+                            <td className="p-3">
+                              <div className="flex items-center gap-1">
+                                <Button 
+                                  variant="ghost" 
+                                  size="icon" 
+                                  title="عرض القيد"
+                                  onClick={() => setViewingJournalEntry(entry)}
+                                >
+                                  <Eye className="w-4 h-4 text-blue-600" />
+                                </Button>
+                                <Button variant="ghost" size="icon" title="طباعة">
+                                  <Printer className="w-4 h-4 text-purple-600" />
+                                </Button>
+                              </div>
+                            </td>
+                          </tr>
+                        ))}
+                        {journalEntries.filter(entry => {
+                          if (journalSearchTerm && !entry.description?.includes(journalSearchTerm) && 
+                              !entry.lines.some(l => l.accountName.includes(journalSearchTerm))) {
+                            return false
+                          }
+                          if (journalDateFilter && entry.date !== journalDateFilter) {
+                            return false
+                          }
+                          return true
+                        }).length === 0 && (
+                          <tr>
+                            <td colSpan={8} className="p-8 text-center text-gray-500">
+                              <BookOpen className="w-12 h-12 mx-auto mb-3 text-gray-300" />
+                              <p>لا توجد قيود محاسبية</p>
+                            </td>
+                          </tr>
+                        )}
+                      </tbody>
+                    </table>
+                  </div>
+                </CardContent>
+              </Card>
+            </div>
+          )}
+
+          {/* Journal Entry View Dialog */}
+          <Dialog open={!!viewingJournalEntry} onOpenChange={() => setViewingJournalEntry(null)}>
+            <DialogContent className="max-w-[90vw] w-[90vw] h-[85vh] max-h-[85vh] overflow-y-auto p-8" dir="rtl">
+              <DialogHeader className="pb-6 border-b-2 border-indigo-200">
+                <DialogTitle className="text-3xl font-bold text-indigo-700 flex items-center gap-3">
+                  <BookOpen className="w-8 h-8" />
+                  تفاصيل القيد المحاسبي #{viewingJournalEntry?.entryNumber}
+                </DialogTitle>
+                <DialogDescription className="text-lg mt-2 text-gray-600">
+                  التاريخ: {viewingJournalEntry?.date} | الحالة: 
+                  <Badge className="mr-2 bg-blue-100 text-blue-800">
+                    {viewingJournalEntry?.status === 'posted' ? 'مرحل' : viewingJournalEntry?.status === 'draft' ? 'مسودة' : 'ملغى'}
+                  </Badge>
+                </DialogDescription>
+              </DialogHeader>
+              
+              {viewingJournalEntry && (
+                <div className="mt-6 space-y-6">
+                  {/* Description Card */}
+                  <Card className="bg-gradient-to-l from-indigo-50 to-purple-50 border-2 border-indigo-200">
+                    <CardContent className="pt-6">
+                      <div className="flex items-start gap-3">
+                        <FileText className="w-6 h-6 text-indigo-600 mt-1" />
+                        <div>
+                          <p className="font-semibold text-gray-700 mb-1">البيان:</p>
+                          <p className="text-xl text-gray-900">{viewingJournalEntry.description}</p>
+                        </div>
+                      </div>
+                    </CardContent>
+                  </Card>
+
+                  {/* Entry Lines Table */}
+                  <Card>
+                    <CardHeader className="bg-gradient-to-l from-gray-50 to-gray-100">
+                      <CardTitle className="text-xl flex items-center gap-2">
+                        <ClipboardList className="w-5 h-5" />
+                        تفاصيل القيد
+                      </CardTitle>
+                    </CardHeader>
+                    <CardContent className="p-0">
+                      <table className="w-full">
+                        <thead>
+                          <tr className="border-b-2 bg-gray-100">
+                            <th className="text-right p-4 font-bold">كود الحساب</th>
+                            <th className="text-right p-4 font-bold">اسم الحساب</th>
+                            <th className="text-right p-4 font-bold text-red-600">مدين</th>
+                            <th className="text-right p-4 font-bold text-green-600">دائن</th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          {viewingJournalEntry.lines.map((line, idx) => (
+                            <tr key={idx} className={`border-b ${idx % 2 === 0 ? 'bg-white' : 'bg-gray-50'}`}>
+                              <td className="p-4 font-mono font-bold text-indigo-600">{line.accountCode}</td>
+                              <td className="p-4 font-semibold">{line.accountName}</td>
+                              <td className="p-4">
+                                {line.debit > 0 ? (
+                                  <span className="font-bold text-red-600 text-lg">{line.debit.toLocaleString()} ج.م</span>
+                                ) : <span className="text-gray-300">-</span>}
+                              </td>
+                              <td className="p-4">
+                                {line.credit > 0 ? (
+                                  <span className="font-bold text-green-600 text-lg">{line.credit.toLocaleString()} ج.م</span>
+                                ) : <span className="text-gray-300">-</span>}
+                              </td>
+                            </tr>
+                          ))}
+                        </tbody>
+                        <tfoot>
+                          <tr className="border-t-2 bg-gradient-to-l from-gray-100 to-gray-200">
+                            <td colSpan={2} className="p-4 font-bold text-lg text-left">الإجمالي:</td>
+                            <td className="p-4 font-bold text-xl text-red-600">
+                              {viewingJournalEntry.totalDebit.toLocaleString()} ج.م
+                            </td>
+                            <td className="p-4 font-bold text-xl text-green-600">
+                              {viewingJournalEntry.totalCredit.toLocaleString()} ج.م
+                            </td>
+                          </tr>
+                        </tfoot>
+                      </table>
+                    </CardContent>
+                  </Card>
+
+                  {/* Balance Verification */}
+                  <div className={`p-4 rounded-xl border-2 ${
+                    viewingJournalEntry.totalDebit === viewingJournalEntry.totalCredit 
+                      ? 'bg-green-50 border-green-300' 
+                      : 'bg-red-50 border-red-300'
+                  }`}>
+                    <div className="flex items-center justify-center gap-3">
+                      {viewingJournalEntry.totalDebit === viewingJournalEntry.totalCredit ? (
+                        <>
+                          <CheckCircle className="w-6 h-6 text-green-600" />
+                          <span className="font-bold text-green-700 text-lg">القيد متوازن ✓</span>
+                        </>
+                      ) : (
+                        <>
+                          <AlertCircle className="w-6 h-6 text-red-600" />
+                          <span className="font-bold text-red-700 text-lg">القيد غير متوازن - الفرق: {Math.abs(viewingJournalEntry.totalDebit - viewingJournalEntry.totalCredit).toLocaleString()} ج.م</span>
+                        </>
+                      )}
+                    </div>
+                  </div>
+
+                  {/* Action Buttons */}
+                  <div className="flex justify-end gap-3 pt-4">
+                    <Button 
+                      variant="outline" 
+                      onClick={() => setViewingJournalEntry(null)}
+                      className="px-8 py-3 text-lg"
+                    >
+                      إغلاق
+                    </Button>
+                    <Button className="bg-indigo-500 hover:bg-indigo-600 px-8 py-3 text-lg">
+                      <Printer className="ml-2 h-5 w-5" />
+                      طباعة القيد
+                    </Button>
+                  </div>
+                </div>
+              )}
+            </DialogContent>
+          </Dialog>
 
           {/* ============ REPORTS MODULE ============ */}
           {activeModule === 'reports' && (
