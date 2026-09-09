@@ -117,78 +117,110 @@ const mockParties: Party[] = []
 const mockTransactions: Transaction[] = []
 const mockPurchaseOrders: any[] = []
 const mockAccounts: Account[] = [
-  // ============ الأصول ============
+  // ============ الأصول (1000) ============
   { id: 'acc-1000', code: '1000', name: 'الأصول', type: 'asset', level: 1, parentId: null, balance: 0 },
   
-  // الأصول المتداولة
+  // الأصول المتداولة (1100)
   { id: 'acc-1100', code: '1100', name: 'الأصول المتداولة', type: 'asset', level: 2, parentId: 'acc-1000', balance: 0 },
-  { id: 'acc-1110', code: '1110', name: 'النقدية بالصندوق', type: 'asset', level: 3, parentId: 'acc-1100', balance: 0 },
-  { id: 'acc-11101', code: '11101', name: 'المصاريف', type: 'asset', level: 4, parentId: 'acc-1110', balance: 0 },
-  { id: 'acc-11102', code: '11102', name: 'البنك - الرصيد الجاري', type: 'asset', level: 4, parentId: 'acc-1110', balance: 0 },
-  { id: 'acc-1200', code: '1200', name: 'المدينون', type: 'asset', level: 3, parentId: 'acc-1100', balance: 0 },
-  { id: 'acc-1210', code: '1210', name: 'العملاء', type: 'asset', level: 4, parentId: 'acc-1200', balance: 0 },
-  { id: 'acc-1220', code: '1220', name: 'أوراق قبض', type: 'asset', level: 4, parentId: 'acc-1200', balance: 0 },
-  { id: 'acc-1230', code: '1230', name: 'مقدمات مدفوعة', type: 'asset', level: 4, parentId: 'acc-1200', balance: 0 },
-  { id: 'acc-1300', code: '1300', name: 'المخزون', type: 'asset', level: 3, parentId: 'acc-1100', balance: 0 },
-  { id: 'acc-1310', code: '1310', name: 'مشتريات بضاعة', type: 'asset', level: 4, parentId: 'acc-1300', balance: 0 },
-  { id: 'acc-1320', code: '1320', name: 'المخزون التجاري', type: 'asset', level: 4, parentId: 'acc-1300', balance: 0 },
-  { id: 'acc-1400', code: '1400', name: 'الإيرادات المقدمة', type: 'asset', level: 3, parentId: 'acc-1100', balance: 0 },
-  { id: 'acc-1401', code: '1401', name: 'الأرباح والخسائر', type: 'asset', level: 4, parentId: 'acc-1400', balance: 0 },
-  { id: 'acc-1402', code: '1402', name: 'المصروفات', type: 'asset', level: 4, parentId: 'acc-1400', balance: 0 },
-  { id: 'acc-1403', code: '1403', name: 'المصروفات', type: 'asset', level: 4, parentId: 'acc-1400', balance: 0 },
-  { id: 'acc-1404', code: '1404', name: 'المصروف', type: 'asset', level: 4, parentId: 'acc-1400', balance: 0 },
-  { id: 'acc-1405', code: '1405', name: 'الأرباح', type: 'asset', level: 4, parentId: 'acc-1400', balance: 0 },
-  { id: 'acc-1410', code: '1410', name: 'مصروف الإيجار', type: 'asset', level: 4, parentId: 'acc-1400', balance: 0 },
+  
+  // النقدية والبنوك (1110)
+  { id: 'acc-1110', code: '1110', name: 'النقدية والبنوك', type: 'asset', level: 3, parentId: 'acc-1100', balance: 0 },
+  { id: 'acc-1111', code: '1111', name: 'الصندوق', type: 'asset', level: 4, parentId: 'acc-1110', balance: 0 },
+  { id: 'acc-1112', code: '1112', name: 'البنك - الرصيد الحالي', type: 'asset', level: 4, parentId: 'acc-1110', balance: 0 },
+  
+  // المدينون (1200)
+  { id: 'acc-1200', code: '1200', name: 'المدينون', type: 'asset', level: 2, parentId: 'acc-1000', balance: 0 },
+  { id: 'acc-1210', code: '1210', name: 'العملاء', type: 'asset', level: 3, parentId: 'acc-1200', balance: 0 },
+  { id: 'acc-1211', code: '1211', name: 'عميل 1', type: 'asset', level: 4, parentId: 'acc-1210', balance: 0 },
+  { id: 'acc-1212', code: '1212', name: 'عميل 2', type: 'asset', level: 4, parentId: 'acc-1210', balance: 0 },
+  { id: 'acc-1213', code: '1213', name: 'عميل 3', type: 'asset', level: 4, parentId: 'acc-1210', balance: 0 },
+  { id: 'acc-1214', code: '1214', name: 'عميل 4', type: 'asset', level: 4, parentId: 'acc-1210', balance: 0 },
+  { id: 'acc-1220', code: '1220', name: 'أوراق قبض', type: 'asset', level: 3, parentId: 'acc-1200', balance: 0 },
+  { id: 'acc-1230', code: '1230', name: 'مصاريف مقدمه', type: 'asset', level: 3, parentId: 'acc-1200', balance: 0 },
+  
+  // المخزون (1300)
+  { id: 'acc-1300', code: '1300', name: 'المخزون', type: 'asset', level: 2, parentId: 'acc-1000', balance: 0 },
+  { id: 'acc-1301', code: '1301', name: 'مخزون البضاعة', type: 'asset', level: 3, parentId: 'acc-1300', balance: 0 },
+  { id: 'acc-1302', code: '1302', name: 'مخزون المواد الخام', type: 'asset', level: 3, parentId: 'acc-1300', balance: 0 },
+  { id: 'acc-1303', code: '1303', name: 'الضريبة القابلة للخصم', type: 'asset', level: 3, parentId: 'acc-1300', balance: 0 },
+  
+  // الأصول الثابتة (1400)
+  { id: 'acc-1400', code: '1400', name: 'الأصول الثابتة', type: 'asset', level: 2, parentId: 'acc-1000', balance: 0 },
+  { id: 'acc-1401', code: '1401', name: 'الأثاث والتجهيزات', type: 'asset', level: 3, parentId: 'acc-1400', balance: 0 },
+  { id: 'acc-1402', code: '1402', name: 'الحاسبات والأجهزة', type: 'asset', level: 3, parentId: 'acc-1400', balance: 0 },
+  { id: 'acc-1403', code: '1403', name: 'السيارات', type: 'asset', level: 3, parentId: 'acc-1400', balance: 0 },
+  { id: 'acc-1404', code: '1404', name: 'المباني', type: 'asset', level: 3, parentId: 'acc-1400', balance: 0 },
+  { id: 'acc-1405', code: '1405', name: 'الأرضي', type: 'asset', level: 3, parentId: 'acc-1400', balance: 0 },
+  { id: 'acc-1406', code: '1406', name: 'مجمع الإهلاك', type: 'asset', level: 3, parentId: 'acc-1400', balance: 0 },
 
-  // الأصول الثابتة
-  { id: 'acc-2000', code: '2000', name: 'الأصول الثابتة', type: 'asset', level: 2, parentId: 'acc-1000', balance: 0 },
-  { id: 'acc-2100', code: '2100', name: 'الأجهزة والمعدات', type: 'asset', level: 3, parentId: 'acc-2000', balance: 0 },
-  { id: 'acc-2101', code: '2101', name: 'الأثاث والتجهيزات', type: 'asset', level: 4, parentId: 'acc-2100', balance: 0 },
-  { id: 'acc-2110', code: '2110', name: 'السيارات ومركبات النقل', type: 'asset', level: 4, parentId: 'acc-2000', balance: 0 },
-  { id: 'acc-2120', code: '2120', name: 'أرض وبناء', type: 'asset', level: 4, parentId: 'acc-2000', balance: 0 },
-  { id: 'acc-2130', code: '2130', name: 'تراكم الإهلاك', type: 'asset', level: 4, parentId: 'acc-2000', balance: 0 },
-  { id: 'acc-2140', code: '2140', name: 'التجهيزات المكتبية', type: 'asset', level: 4, parentId: 'acc-2000', balance: 0 },
-  { id: 'acc-2150', code: '2150', name: 'برمجيات مستخدمة', type: 'asset', level: 4, parentId: 'acc-2000', balance: 0 },
-  { id: 'acc-2160', code: '2160', name: 'إيرادات مستحقة', type: 'asset', level: 4, parentId: 'acc-2000', balance: 0 },
-  { id: 'acc-2170', code: '2170', name: 'رأس مال الشركة', type: 'asset', level: 4, parentId: 'acc-2000', balance: 0 },
-  { id: 'acc-2180', code: '2180', name: 'الأسهم النقدية', type: 'asset', level: 4, parentId: 'acc-2000', balance: 0 },
+  // ============ الالتزامات (2000) ============
+  { id: 'acc-2000', code: '2000', name: 'الالتزامات', type: 'liability', level: 1, parentId: null, balance: 0 },
+  
+  // الالتزامات المتداولة (2100)
+  { id: 'acc-2100', code: '2100', name: 'الالتزامات المتداولة', type: 'liability', level: 2, parentId: 'acc-2000', balance: 0 },
+  { id: 'acc-2210', code: '2210', name: 'الموردون', type: 'liability', level: 3, parentId: 'acc-2100', balance: 0 },
+  { id: 'acc-2211', code: '2211', name: 'مورد 1', type: 'liability', level: 4, parentId: 'acc-2210', balance: 0 },
+  { id: 'acc-2212', code: '2212', name: 'مورد 2', type: 'liability', level: 4, parentId: 'acc-2210', balance: 0 },
+  { id: 'acc-2213', code: '2213', name: 'مورد 3', type: 'liability', level: 4, parentId: 'acc-2210', balance: 0 },
+  { id: 'acc-2214', code: '2214', name: 'مورد 4', type: 'liability', level: 4, parentId: 'acc-2210', balance: 0 },
+  { id: 'acc-2215', code: '2215', name: 'مورد 5', type: 'liability', level: 4, parentId: 'acc-2210', balance: 0 },
+  { id: 'acc-2216', code: '2216', name: 'مورد 6', type: 'liability', level: 4, parentId: 'acc-2210', balance: 0 },
+  { id: 'acc-2217', code: '2217', name: 'مورد 7', type: 'liability', level: 4, parentId: 'acc-2210', balance: 0 },
+  { id: 'acc-2218', code: '2218', name: 'مورد 8', type: 'liability', level: 4, parentId: 'acc-2210', balance: 0 },
+  { id: 'acc-2220', code: '2220', name: 'أوراق دفع', type: 'liability', level: 3, parentId: 'acc-2100', balance: 0 },
+  { id: 'acc-2230', code: '2230', name: 'الضريبة المستحقة', type: 'liability', level: 3, parentId: 'acc-2100', balance: 0 },
+  { id: 'acc-2240', code: '2240', name: 'مرتبات مستحقة', type: 'liability', level: 3, parentId: 'acc-2100', balance: 0 },
+  { id: 'acc-2250', code: '2250', name: 'إيرادات مستحقة', type: 'liability', level: 3, parentId: 'acc-2100', balance: 0 },
+  
+  // الالتزامات طويلة الأجل (2200)
+  { id: 'acc-2200', code: '2200', name: 'الالتزامات طويلة الأجل', type: 'liability', level: 2, parentId: 'acc-2000', balance: 0 },
+  { id: 'acc-2260', code: '2260', name: 'القروض طويلة الأجل', type: 'liability', level: 3, parentId: 'acc-2200', balance: 0 },
+  { id: 'acc-2270', code: '2270', name: 'السندات المستحقة', type: 'liability', level: 3, parentId: 'acc-2200', balance: 0 },
 
-  // ============ الخصوم ============
-  { id: 'acc-3000', code: '3000', name: 'قروض النشاط', type: 'liability', level: 1, parentId: null, balance: 0 },
-  { id: 'acc-3100', code: '3100', name: 'قرض بنكي', type: 'liability', level: 2, parentId: 'acc-3000', balance: 0 },
-  { id: 'acc-3200', code: '3200', name: 'مستحقات دائنة', type: 'liability', level: 2, parentId: 'acc-3000', balance: 0 },
-  { id: 'acc-3300', code: '3300', name: 'الموردون', type: 'liability', level: 3, parentId: 'acc-3200', balance: 0 },
-  { id: 'acc-3400', code: '3400', name: 'الأجور', type: 'liability', level: 3, parentId: 'acc-3200', balance: 0 },
+  // ============ حقوق الملكية (3000) ============
+  { id: 'acc-3000', code: '3000', name: 'حقوق الملكية', type: 'equity', level: 1, parentId: null, balance: 0 },
+  { id: 'acc-3001', code: '3001', name: 'رأس المال', type: 'equity', level: 2, parentId: 'acc-3000', balance: 0 },
+  { id: 'acc-3002', code: '3002', name: 'احتياطي عام', type: 'equity', level: 2, parentId: 'acc-3000', balance: 0 },
+  { id: 'acc-3003', code: '3003', name: 'الأرباح المحتجزة', type: 'equity', level: 2, parentId: 'acc-3000', balance: 0 },
+  { id: 'acc-3004', code: '3004', name: 'الأسهم', type: 'equity', level: 2, parentId: 'acc-3000', balance: 0 },
 
-  // ============ الإيرادات ============
+  // ============ الإيرادات (4000) ============
   { id: 'acc-4000', code: '4000', name: 'الإيرادات', type: 'revenue', level: 1, parentId: null, balance: 0 },
-  { id: 'acc-4100', code: '4100', name: 'إيرادات المبيعات', type: 'revenue', level: 2, parentId: 'acc-4000', balance: 0 },
-  { id: 'acc-4200', code: '4200', name: 'إيرادات الخدمات', type: 'revenue', level: 2, parentId: 'acc-4000', balance: 0 },
-  { id: 'acc-4300', code: '4300', name: 'الإيرادات الأخرى', type: 'revenue', level: 2, parentId: 'acc-4000', balance: 0 },
-  { id: 'acc-4400', code: '4400', name: 'مصروفات المشتريات', type: 'revenue', level: 2, parentId: 'acc-4000', balance: 0 },
-  { id: 'acc-4500', code: '4500', name: 'جملة مباع مسموح بها', type: 'revenue', level: 3, parentId: 'acc-4400', balance: 0 },
+  { id: 'acc-4001', code: '4001', name: 'إيرادات المبيعات', type: 'revenue', level: 2, parentId: 'acc-4000', balance: 0 },
+  { id: 'acc-4002', code: '4002', name: 'إيرادات الخدمات', type: 'revenue', level: 2, parentId: 'acc-4000', balance: 0 },
+  { id: 'acc-4003', code: '4003', name: 'إيرادات أخرى', type: 'revenue', level: 2, parentId: 'acc-4000', balance: 0 },
+  { id: 'acc-4010', code: '4010', name: 'مردودات المبيعات', type: 'revenue', level: 2, parentId: 'acc-4000', balance: 0 },
+  { id: 'acc-4020', code: '4020', name: 'خصومات مسموح بها', type: 'revenue', level: 2, parentId: 'acc-4000', balance: 0 },
 
-  // ============ المصروفات ============
+  // ============ المصروفات (5000) ============
   { id: 'acc-5000', code: '5000', name: 'المصروفات', type: 'expense', level: 1, parentId: null, balance: 0 },
-  { id: 'acc-5100', code: '5100', name: 'كلفة المبيعات', type: 'expense', level: 2, parentId: 'acc-5000', balance: 0 },
-  { id: 'acc-5200', code: '5200', name: 'رواتب', type: 'expense', level: 2, parentId: 'acc-5000', balance: 0 },
-  { id: 'acc-5300', code: '5300', name: 'الإيجار والمصروفات', type: 'expense', level: 2, parentId: 'acc-5000', balance: 0 },
-  { id: 'acc-5400', code: '5400', name: 'مصروفات الراتب ومصاريف', type: 'expense', level: 2, parentId: 'acc-5000', balance: 0 },
-  { id: 'acc-5401', code: '5401', name: 'الضرائب', type: 'expense', level: 3, parentId: 'acc-5400', balance: 0 },
-  { id: 'acc-5402', code: '5402', name: 'مر (كهرباء/مياه)', type: 'expense', level: 3, parentId: 'acc-5400', balance: 0 },
-  { id: 'acc-5403', code: '5403', name: 'الصيانة والترميم', type: 'expense', level: 3, parentId: 'acc-5400', balance: 0 },
-  { id: 'acc-5404', code: '5404', name: 'قائمة هاتف وإنترنت', type: 'expense', level: 3, parentId: 'acc-5400', balance: 0 },
-  { id: 'acc-5405', code: '5405', name: 'مصروفات نقل', type: 'expense', level: 3, parentId: 'acc-5400', balance: 0 },
-  { id: 'acc-5406', code: '5406', name: 'إعلانات', type: 'expense', level: 3, parentId: 'acc-5400', balance: 0 },
-  { id: 'acc-5407', code: '5407', name: 'سفر وإقامة', type: 'expense', level: 3, parentId: 'acc-5400', balance: 0 },
-  { id: 'acc-5408', code: '5408', name: 'إعانة رسمية', type: 'expense', level: 3, parentId: 'acc-5400', balance: 0 },
-  { id: 'acc-5500', code: '5500', name: 'مصروفات بيعية', type: 'expense', level: 2, parentId: 'acc-5000', balance: 0 },
-  { id: 'acc-5501', code: '5501', name: 'عمولات المبيعات', type: 'expense', level: 3, parentId: 'acc-5500', balance: 0 },
-  { id: 'acc-5502', code: '5502', name: 'مصروفات تسويق', type: 'expense', level: 3, parentId: 'acc-5500', balance: 0 },
-  { id: 'acc-5600', code: '5600', name: 'مصروفات إدارية', type: 'expense', level: 2, parentId: 'acc-5000', balance: 0 },
-  { id: 'acc-5601', code: '5601', name: 'مصروفات الهاتف', type: 'expense', level: 3, parentId: 'acc-5600', balance: 0 },
-  { id: 'acc-5602', code: '5602', name: 'مصاريف', type: 'expense', level: 3, parentId: 'acc-5600', balance: 0 },
-  { id: 'acc-5700', code: '5700', name: 'الإهلاك', type: 'expense', level: 2, parentId: 'acc-5000', balance: 0 }
+  { id: 'acc-5001', code: '5001', name: 'تكلفة المبيعات', type: 'expense', level: 2, parentId: 'acc-5000', balance: 0 },
+  { id: 'acc-5002', code: '5002', name: 'مرتبات وأجور', type: 'expense', level: 2, parentId: 'acc-5000', balance: 0 },
+  { id: 'acc-5003', code: '5003', name: 'إيجار المصنع', type: 'expense', level: 2, parentId: 'acc-5000', balance: 0 },
+  
+  // مصروفات إدارية وعامة (5010)
+  { id: 'acc-5010', code: '5010', name: 'مصروفات إدارية وعامة', type: 'expense', level: 2, parentId: 'acc-5000', balance: 0 },
+  { id: 'acc-5011', code: '5011', name: 'إيجار المكتب', type: 'expense', level: 3, parentId: 'acc-5010', balance: 0 },
+  { id: 'acc-5012', code: '5012', name: 'مرافق (كهرباء/مياه)', type: 'expense', level: 3, parentId: 'acc-5010', balance: 0 },
+  { id: 'acc-5013', code: '5013', name: 'اتصالات وانترنت', type: 'expense', level: 3, parentId: 'acc-5010', balance: 0 },
+  { id: 'acc-5014', code: '5014', name: 'قرطاسية ومستلزمات', type: 'expense', level: 3, parentId: 'acc-5010', balance: 0 },
+  { id: 'acc-5015', code: '5015', name: 'صيانة وتصليحات', type: 'expense', level: 3, parentId: 'acc-5010', balance: 0 },
+  { id: 'acc-5016', code: '5016', name: 'تأمينات', type: 'expense', level: 3, parentId: 'acc-5010', balance: 0 },
+  { id: 'acc-5017', code: '5017', name: 'سفر وإنتقالات', type: 'expense', level: 3, parentId: 'acc-5010', balance: 0 },
+  { id: 'acc-5018', code: '5018', name: 'إعلان ودعاية', type: 'expense', level: 3, parentId: 'acc-5010', balance: 0 },
+  
+  // مصروفات بيعية (5020)
+  { id: 'acc-5020', code: '5020', name: 'مصروفات بيعية', type: 'expense', level: 2, parentId: 'acc-5000', balance: 0 },
+  { id: 'acc-5021', code: '5021', name: 'عمولات المبيعات', type: 'expense', level: 3, parentId: 'acc-5020', balance: 0 },
+  { id: 'acc-5022', code: '5022', name: 'شحن وتوصيل', type: 'expense', level: 3, parentId: 'acc-5020', balance: 0 },
+  
+  // مصروفات مالية (5030)
+  { id: 'acc-5030', code: '5030', name: 'مصروفات مالية', type: 'expense', level: 2, parentId: 'acc-5000', balance: 0 },
+  { id: 'acc-5031', code: '5031', name: 'مصروفات فائدة', type: 'expense', level: 3, parentId: 'acc-5030', balance: 0 },
+  { id: 'acc-5032', code: '5032', name: 'خسائر عملة', type: 'expense', level: 3, parentId: 'acc-5030', balance: 0 },
+  
+  // الإهلاك (5040)
+  { id: 'acc-5040', code: '5040', name: 'الإهلاك', type: 'expense', level: 2, parentId: 'acc-5000', balance: 0 }
 ]
 const mockBankAccounts: any[] = []
 const mockChecks: any[] = []
@@ -205,7 +237,7 @@ export default function AccountingApp() {
   const [items, setItems] = useState<Item[]>(mockItems)
   const [parties, setParties] = useState<Party[]>([])
   const [transactions, setTransactions] = useState<Transaction[]>([])
-  const [expandedAccounts, setExpandedAccounts] = useState<Set<string>>(new Set(['acc-1000', 'acc-3000', 'acc-4000', 'acc-5000']))
+  const [expandedAccounts, setExpandedAccounts] = useState<Set<string>>(new Set(['acc-1000', 'acc-2000', 'acc-3000', 'acc-4000', 'acc-5000']))
   const [searchTerm, setSearchTerm] = useState('')
 
   // Toggle account expansion
