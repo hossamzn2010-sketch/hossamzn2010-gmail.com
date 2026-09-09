@@ -263,6 +263,13 @@ export default function AccountingApp() {
   const [journalSearchTerm, setJournalSearchTerm] = useState('')
   const [journalDateFilter, setJournalDateFilter] = useState('')
   
+  // حالات التقارير
+  const [selectedReport, setSelectedReport] = useState<string | null>(null)
+  const [showReportDialog, setShowReportDialog] = useState(false)
+  const [reportFromDate, setReportFromDate] = useState('')
+  const [reportToDate, setReportToDate] = useState('')
+  const [reportType, setReportType] = useState<'detailed' | 'summary'>('detailed')
+  
   // حالات جديدة لإدارة القيود بشكل كامل
   const [editingJournalEntry, setEditingJournalEntry] = useState<JournalEntry | null>(null)
   const [showJournalFormDialog, setShowJournalFormDialog] = useState(false)
@@ -876,6 +883,309 @@ export default function AccountingApp() {
       printWindow.document.close()
       printWindow.print()
     }
+  }
+
+  // ============ REPORTS FUNCTIONS ============
+  const openReport = (reportType: string) => {
+    setSelectedReport(reportType)
+    setShowReportDialog(true)
+  }
+
+  // حساب أرصدة الحسابات من القيود
+  const calculateAccountBalances = () => {
+    const balances: { [key: string]: { debit: number; credit: number; name: string } } = {}
+    
+    journalEntries.forEach(entry => {
+      entry.lines.forEach(line => {
+        if (!balances[line.accountCode]) {
+          balances[line.accountCode] = { debit: 0, credit: 0, name: line.accountName }
+        }
+        balances[line.accountCode].debit += line.debit
+        balances[line.accountCode].credit += line.credit
+      })
+    })
+    
+    return balances
+  }
+
+  // قائمة الدخل
+  const getIncomeStatement = () => {
+    const balances = calculateAccountBalances()
+    let totalRevenue = 0
+    let totalExpenses = 0
+    const revenueItems: { name: string; amount: number }[] = []
+    const expenseItems: { name: string; amount: number }[] = []
+
+    Object.entries(balances).forEach(([code, data]) => {
+      // الإيرادات (تبدأ بـ 4)
+      if (code.startsWith('4') || code.startsWith('400')) {
+        const net = data.credit - data.debit
+        if (net !== 0) {
+          revenueItems.push({ name: data.name, amount: net })
+          totalRevenue += net
+        }
+      }
+      // المصروفات (تبدأ بـ 5)
+      if (code.startsWith('5') || code.startsWith('500')) {
+        const net = data.debit - data.credit
+        if (net !== 0) {
+          expenseItems.push({ name: data.name, amount: net })
+          totalExpenses += net
+        }
+      }
+    })
+
+    return { revenueItems, expenseItems, totalRevenue, totalExpenses, netIncome: totalRevenue - totalExpenses }
+  }
+
+  // الميزانية العمومية
+  const getBalanceSheet = () => {
+    const balances = calculateAccountBalances()
+    const assets: { name: string; amount: number }[] = []
+    const liabilities: { name: string; amount: number }[] = []
+    const equity: { name: string; amount: number }[] = []
+    let totalAssets = 0
+    let totalLiabilities = 0
+    let totalEquity = 0
+
+    Object.entries(balances).forEach(([code, data]) => {
+      const net = data.debit - data.credit
+      
+      // الأصول (تبدأ بـ 1)
+      if (code.startsWith('1') || code.startsWith('100') || code.startsWith('11') || code.startsWith('12') || code.startsWith('13') || code.startsWith('14')) {
+        if (net !== 0) {
+          assets.push({ name: data.name, amount: Math.abs(net) })
+          totalAssets += Math.abs(net)
+        }
+      }
+      // الالتزامات (تبدأ بـ 2)
+      if (code.startsWith('2') || code.startswith('200') || code.startsWith('22')) {
+        if (net !== 0) {
+          liabilities.push({ name: data.name, amount: Math.abs(net) })
+          totalLiabilities += Math.abs(net)
+        }
+      }
+      // حقوق الملكية (تبدأ بـ 3)
+      if (code.startsWith('3') || code.startsWith('300')) {
+        if (net !== 0) {
+          equity.push({ name: data.name, amount: Math.abs(net) })
+          totalEquity += Math.abs(net)
+        }
+      }
+    })
+
+    // إضافة صافي الربح/خسارة لحقوق الملكية
+    const incomeStmt = getIncomeStatement()
+    if (incomeStmt.netIncome > 0) {
+      equity.push({ name: 'صافي الربح', amount: incomeStmt.netIncome })
+      totalEquity += incomeStmt.netIncome
+    } else if (incomeStmt.netIncome < 0) {
+      equity.push({ name: 'صافي الخسارة', amount: Math.abs(incomeStmt.netIncome) })
+    }
+
+    return { assets, liabilities, equity, totalAssets, totalLiabilities, totalEquity }
+  }
+
+  // ميزان المراجعة
+  const getTrialBalance = () => {
+    const balances = calculateAccountBalances()
+    const accounts: { code: string; name: string; debit: number; credit: number; type: string }[] = []
+    let totalDebit = 0
+    let totalCredit = 0
+
+    Object.entries(balances).forEach(([code, data]) => {
+      const net = data.debit - data.credit
+      if (net !== 0) {
+        let type = 'أخرى'
+        if (code.startsWith('1') || code.startsWith('100') || code.startsWith('11') || code.startsWith('12') || code.startsWith('13') || code.startsWith('14')) type = 'أصل'
+        else if (code.startsWith('2') || code.startsWith('200') || code.startsWith('22')) type = 'التزام'
+        else if (code.startsWith('3') || code.startsWith('300')) type = 'حقوق ملكية'
+        else if (code.startsWith('4') || code.startsWith('400')) type = 'إيراد'
+        else if (code.startsWith('5') || code.startsWith('500')) type = 'مصروف'
+
+        accounts.push({
+          code,
+          name: data.name,
+          debit: net > 0 ? net : 0,
+          credit: net < 0 ? Math.abs(net) : 0,
+          type
+        })
+        
+        if (net > 0) totalDebit += net
+        else totalCredit += Math.abs(net)
+      }
+    })
+
+    return { accounts, totalDebit, totalCredit }
+  }
+
+  // تصدير التقرير كـ CSV
+  const exportReportToCSV = (reportType: string) => {
+    let csvContent = '\uFEFF' // BOM for Arabic
+    const dateStr = new Date().toLocaleDateString('ar-SA')
+    
+    if (reportType === 'income') {
+      const stmt = getIncomeStatement()
+      csvContent += 'قائمة الدخل\n'
+      csvContent += `التاريخ:,${dateStr}\n\n`
+      csvContent += 'الإيرادات\n'
+      csvContent += 'البند,المبلغ (ج.م)\n'
+      stmt.revenueItems.forEach(item => {
+        csvContent += `"${item.name}",${item.amount}\n`
+      })
+      csvContent += `إجمالي الإيرادات,${stmt.totalRevenue}\n\n`
+      csvContent += 'المصروفات\n'
+      csvContent += 'البند,المبلغ (ج.م)\n'
+      stmt.expenseItems.forEach(item => {
+        csvContent += `"${item.name}",${item.amount}\n`
+      })
+      csvContent += `إجمالي المصروفات,${stmt.totalExpenses}\n\n`
+      csvContent += `صافي الربح,${stmt.netIncome}\n`
+    } 
+    else if (reportType === 'balance-sheet') {
+      const bs = getBalanceSheet()
+      csvContent += 'الميزانية العمومية\n'
+      csvContent += `التاريخ:,${dateStr}\n\n`
+      csvContent += 'الأصول\n'
+      csvContent += 'البند,المبلغ (ج.م)\n'
+      bs.assets.forEach(item => {
+        csvContent += `"${item.name}",${item.amount}\n`
+      })
+      csvContent += `إجمالي الأصول,${bs.totalAssets}\n\n`
+      csvContent += 'الالتزامات\n'
+      bs.liabilities.forEach(item => {
+        csvContent += `"${item.name}",${item.amount}\n`
+      })
+      csvContent += `إجمالي الالتزامات,${bs.totalLiabilities}\n\n`
+      csvContent += 'حقوق الملكية\n'
+      bs.equity.forEach(item => {
+        csvContent += `"${item.name}",${item.amount}\n`
+      })
+      csvContent += `إجمالي حقوق الملكية,${bs.totalEquity}\n`
+    }
+    else if (reportType === 'trial-balance') {
+      const tb = getTrialBalance()
+      csvContent += 'ميزان المراجعة\n'
+      csvContent += `التاريخ:,${dateStr}\n\n`
+      csvContent += 'كود الحساب,اسم الحساب,النوع,مدين (ج.م),دائن (ج.م)\n'
+      tb.accounts.forEach(acc => {
+        csvContent += `${acc.code},"${acc.name}","${acc.type}",${acc.debit},${acc.credit}\n`
+      })
+      csvContent += `الإجمالي,,${tb.totalDebit},${tb.totalCredit}\n`
+    }
+
+    // تحميل الملف
+    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' })
+    const link = document.createElement('a')
+    link.href = URL.createObjectURL(blob)
+    link.download = `${reportType}_${dateStr.replace(/\//g, '-')}.csv`
+    link.click()
+  }
+
+  // طباعة التقرير
+  const printReport = (reportType: string) => {
+    const printWindow = window.open('', '_blank')
+    if (!printWindow) return
+
+    let content = ''
+    const dateStr = new Date().toLocaleDateString('ar-SA')
+
+    if (reportType === 'income') {
+      const stmt = getIncomeStatement()
+      content = `
+        <h1>📊 قائمة الدخل</h1>
+        <p>التاريخ: ${dateStr}</p>
+        <table>
+          <thead><tr><th>البند</th><th>المبلغ (ج.م)</th></tr></thead>
+          <tbody>
+            <tr class="section-header"><td colspan="2"><strong>الإيرادات</strong></td></tr>
+            ${stmt.revenueItems.map(item => `<tr><td>${item.name}</td><td>${item.amount.toLocaleString()}</td></tr>`).join('')}
+            <tr class="total"><td><strong>إجمالي الإيرادات</strong></td><td><strong>${stmt.totalRevenue.toLocaleString()}</strong></td></tr>
+            <tr class="section-header"><td colspan="2"><strong>المصروفات</strong></td></tr>
+            ${stmt.expenseItems.map(item => `<tr><td>${item.name}</td><td>${item.amount.toLocaleString()}</td></tr>`).join('')}
+            <tr class="total"><td><strong>إجمالي المصروفات</strong></td><td><strong>${stmt.totalExpenses.toLocaleString()}</strong></td></tr>
+          </tbody>
+          <tfoot>
+            <tr class="grand-total ${stmt.netIncome >= 0 ? 'positive' : 'negative'}">
+              <td><strong>صافي ${stmt.netIncome >= 0 ? 'الربح' : 'الخسارة'}</strong></td>
+              <td><strong>${Math.abs(stmt.netIncome).toLocaleString()}</strong></td>
+            </tr>
+          </tfoot>
+        </table>
+      `
+    } else if (reportType === 'balance-sheet') {
+      const bs = getBalanceSheet()
+      content = `
+        <h1>📋 الميزانية العمومية</h1>
+        <p>التاريخ: ${dateStr}</p>
+        <div style="display: flex; gap: 40px;">
+          <div style="flex: 1;">
+            <h2>الأصول</h2>
+            <table>
+              ${bs.assets.map(item => `<tr><td>${item.name}</td><td>${item.amount.toLocaleString()}</td></tr>`).join('')}
+              <tr class="total"><td><strong>إجمالي الأصول</strong></td><td><strong>${bs.totalAssets.toLocaleString()}</strong></td></tr>
+            </table>
+          </div>
+          <div style="flex: 1;">
+            <h2>الالتزامات وحقوق الملكية</h2>
+            <h3>الالتزامات</h3>
+            <table>
+              ${bs.liabilities.map(item => `<tr><td>${item.name}</td><td>${item.amount.toLocaleString()}</td></tr>`).join('')}
+              <tr class="total"><td><strong>إجمالي الالتزامات</strong></td><td><strong>${bs.totalLiabilities.toLocaleString()}</strong></td></tr>
+            </table>
+            <h3>حقوق الملكية</h3>
+            <table>
+              ${bs.equity.map(item => `<tr><td>${item.name}</td><td>${item.amount.toLocaleString()}</td></tr>`).join('')}
+              <tr class="total"><td><strong>إجمالي حقوق الملكية</strong></td><td><strong>${bs.totalEquity.toLocaleString()}</strong></td></tr>
+            </table>
+          </div>
+        </div>
+      `
+    } else if (reportType === 'trial-balance') {
+      const tb = getTrialBalance()
+      content = `
+        <h1>⚖️ ميزان المراجعة</h1>
+        <p>التاريخ: ${dateStr}</p>
+        <table>
+          <thead><tr><th>كود الحساب</th><th>اسم الحساب</th><th>النوع</th><th>مدين (ج.م)</th><th>دائن (ج.م)</th></tr></thead>
+          <tbody>
+            ${tb.accounts.map(acc => `<tr><td>${acc.code}</td><td>${acc.name}</td><td>${acc.type}</td><td>${acc.debit.toLocaleString()}</td><td>${acc.credit.toLocaleString()}</td></tr>`).join('')}
+          </tbody>
+          <tfoot>
+            <tr class="total"><td colspan="3"><strong>الإجمالي</strong></td><td><strong>${tb.totalDebit.toLocaleString()}</strong></td><td><strong>${tb.totalCredit.toLocaleString()}</strong></td></tr>
+          </tfoot>
+        </table>
+      `
+    }
+
+    printWindow.document.write(`
+      <html dir="rtl">
+      <head><title>تقرير</title>
+      <style>
+        body { font-family: Arial, sans-serif; padding: 40px; direction: rtl; }
+        h1 { color: #005f73; text-align: center; border-bottom: 2px solid #005f73; padding-bottom: 15px; }
+        h2 { color: #0a9396; margin-top: 20px; }
+        h3 { color: #94d2bd; font-size: 14px; }
+        table { width: 100%; border-collapse: collapse; margin-top: 15px; }
+        th { background: #005f73; color: white; padding: 10px; text-align: right; }
+        td { padding: 10px; border-bottom: 1px solid #ddd; }
+        .section-header td { background: #e8f4f8; font-size: 16px; }
+        .total { background: #f0f9ff !important; font-weight: bold; }
+        .grand-total { background: #005f73 !important; color: white; font-size: 18px; }
+        .grand-total.positive { background: #16a34a !important; }
+        .grand-total.negative { background: #dc2626 !important; }
+        tfoot { font-weight: bold; background: #f3f4f6; }
+        .footer { text-align: center; margin-top: 30px; color: #666; }
+      </style>
+      </head>
+      <body>
+        ${content}
+        <div class="footer">تاريخ الطباعة: ${dateStr} | نظام المحاسبة</div>
+      </body>
+      </html>
+    `)
+    printWindow.document.close()
+    printWindow.print()
   }
 
   // Add new item on the fly (from invoice form)
@@ -3810,26 +4120,43 @@ export default function AccountingApp() {
             <div className="space-y-6">
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                 {[
-                  { icon: BarChart3, title: 'قائمة الدخل', desc: 'الإيرادات والمصروفات وصافي الربح', color: 'green' },
-                  { icon: PieChart, title: 'الميزانية العمومية', desc: 'الأصول والخصوم وحقوق الملكية', color: 'blue' },
-                  { icon: LineChart, title: 'التدفقات النقدية', desc: 'مصادر واستخدامات النقدية', color: 'purple' },
-                  { icon: FileBarChart, title: 'ميزان المراجعة', desc: 'أرصدة جميع الحسابات', color: 'orange' },
-                  { icon: BookOpen, title: 'الأستاذ العام', desc: 'تفصيل حركات كل حساب', color: 'pink' },
-                  { icon: ClipboardList, title: 'تقرير العمر', desc: 'أرصدة العملاء والموردين', color: 'cyan' }
+                  { id: 'income', icon: BarChart3, title: 'قائمة الدخل', desc: 'الإيرادات والمصروفات وصافي الربح', color: 'green' },
+                  { id: 'balance-sheet', icon: PieChart, title: 'الميزانية العمومية', desc: 'الأصول والخصوم وحقوق الملكية', color: 'blue' },
+                  { id: 'trial-balance', icon: FileBarChart, title: 'ميزان المراجعة', desc: 'أرصدة جميع الحسابات', color: 'orange' },
                 ].map((report, idx) => (
-                  <Card key={idx} className="hover:shadow-lg transition-shadow cursor-pointer group">
+                  <Card key={idx} className="hover:shadow-lg transition-shadow cursor-pointer group border-2 hover:border-indigo-300">
                     <CardContent className="pt-6">
                       <div className="flex items-start gap-4">
-                        <div className={`w-14 h-14 bg-${report.color}-100 rounded-xl flex items-center justify-center group-hover:scale-110 transition-transform`}>
-                          <report.icon className={`w-7 h-7 text-${report.color}-600`} />
+                        <div className={`w-16 h-16 bg-${report.color}-100 rounded-xl flex items-center justify-center group-hover:scale-110 transition-transform shadow-lg`}>
+                          <report.icon className={`w-8 h-8 text-${report.color}-600`} />
                         </div>
                         <div className="flex-1">
-                          <h3 className="font-bold text-lg">{report.title}</h3>
-                          <p className="text-sm text-gray-500 mt-1">{report.desc}</p>
-                          <div className="flex items-center gap-2 mt-4">
-                            <Button size="sm" variant="outline" className="text-xs"><Eye className="ml-1 h-3 w-3" />عرض</Button>
-                            <Button size="sm" variant="outline" className="text-xs"><Printer className="ml-1 h-3 w-3" />طباعة</Button>
-                            <Button size="sm" variant="outline" className="text-xs"><Download className="ml-1 h-3 w-3" />تصدير</Button>
+                          <h3 className="font-bold text-xl text-gray-800">{report.title}</h3>
+                          <p className="text-sm text-gray-500 mt-2">{report.desc}</p>
+                          <div className="flex items-center gap-2 mt-4 flex-wrap">
+                            <Button 
+                              size="sm" 
+                              className="text-xs bg-blue-500 hover:bg-blue-600 text-white"
+                              onClick={() => openReport(report.id)}
+                            >
+                              <Eye className="ml-1 h-3 w-3" />عرض
+                            </Button>
+                            <Button 
+                              size="sm" 
+                              variant="outline" 
+                              className="text-xs border-purple-300 text-purple-600 hover:bg-purple-50"
+                              onClick={() => printReport(report.id)}
+                            >
+                              <Printer className="ml-1 h-3 w-3" />طباعة
+                            </Button>
+                            <Button 
+                              size="sm" 
+                              variant="outline" 
+                              className="text-xs border-green-300 text-green-600 hover:bg-green-50"
+                              onClick={() => exportReportToCSV(report.id)}
+                            >
+                              <Download className="ml-1 h-3 w-3" />تصدير CSV
+                            </Button>
                           </div>
                         </div>
                       </div>
@@ -3838,17 +4165,284 @@ export default function AccountingApp() {
                 ))}
               </div>
 
-              <Card>
-                <CardHeader><CardTitle>إعدادات التقرير</CardHeader></CardHeader>
-                <CardContent>
-                  <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-                    <div><Label>من تاريخ</Label><Input type="date" className="mt-1" /></div>
-                    <div><Label>إلى تاريخ</Label><Input type="date" className="mt-1" /></div>
-                    <div><Label>نوع التقرير</Label><Select><SelectTrigger className="mt-1"><SelectValue placeholder="اختر النوع" /></SelectTrigger><SelectContent><SelectItem value="detailed">تفصيلي</SelectItem><SelectItem value="summary">ملخص</SelectItem></SelectContent></Select></div>
-                    <div className="flex items-end"><Button className="w-full bg-gradient-to-r from-[#005f73] to-[#0a9396]"><BarChart3 className="ml-2 h-4 w-4" />عرض التقرير</Button></div>
+              {/* إحصائيات سريعة */}
+              <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+                <Card className="bg-gradient-to-br from-green-50 to-emerald-100 border-r-4 border-r-green-500">
+                  <CardContent className="pt-6">
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <p className="text-sm text-green-700">إجمالي الإيرادات</p>
+                        <p className="text-2xl font-bold text-green-800">{getIncomeStatement().totalRevenue.toLocaleString()} ج.م</p>
+                      </div>
+                      <TrendingUp className="w-10 h-10 text-green-500" />
+                    </div>
+                  </CardContent>
+                </Card>
+                <Card className="bg-gradient-to-br from-red-50 to-rose-100 border-r-4 border-r-red-500">
+                  <CardContent className="pt-6">
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <p className="text-sm text-red-700">إجمالي المصروفات</p>
+                        <p className="text-2xl font-bold text-red-800">{getIncomeStatement().totalExpenses.toLocaleString()} ج.م</p>
+                      </div>
+                      <TrendingDown className="w-10 h-10 text-red-500" />
+                    </div>
+                  </CardContent>
+                </Card>
+                <Card className={`bg-gradient-to-br ${getIncomeStatement().netIncome >= 0 ? 'from-blue-50 to-indigo-100 border-r-blue-500' : 'from-orange-50 to-amber-100 border-r-orange-500'} border-r-4`}>
+                  <CardContent className="pt-6">
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <p className="text-sm text-gray-700">صافي الربح/الخسارة</p>
+                        <p className={`text-2xl font-bold ${getIncomeStatement().netIncome >= 0 ? 'text-blue-800' : 'text-orange-800'}`}>
+                          {Math.abs(getIncomeStatement().netIncome).toLocaleString()} ج.م
+                        </p>
+                      </div>
+                      {getIncomeStatement().netIncome >= 0 ? 
+                        <DollarSign className="w-10 h-10 text-blue-500" /> : 
+                        <AlertCircle className="w-10 h-10 text-orange-500" />
+                      }
+                    </div>
+                  </CardContent>
+                </Card>
+                <Card className="bg-gradient-to-br from-purple-50 to-violet-100 border-r-4 border-r-purple-500">
+                  <CardContent className="pt-6">
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <p className="text-sm text-purple-700">إجمالي الأصول</p>
+                        <p className="text-2xl font-bold text-purple-800">{getBalanceSheet().totalAssets.toLocaleString()} ج.م</p>
+                      </div>
+                      <Landmark className="w-10 h-10 text-purple-500" />
+                    </div>
+                  </CardContent>
+                </Card>
+              </div>
+
+              {/* Report Dialog */}
+              <Dialog open={showReportDialog} onOpenChange={setShowReportDialog}>
+                <DialogContent className="max-w-[95vw] w-[95vw] h-[90vh] max-h-[90vh] overflow-y-auto p-8" dir="rtl">
+                  <DialogHeader className="pb-6 border-b-2 border-indigo-200">
+                    <DialogTitle className="text-3xl font-bold text-indigo-700 flex items-center gap-3">
+                      {selectedReport === 'income' && <><BarChart3 className="w-8 h-8" /> قائمة الدخل</>}
+                      {selectedReport === 'balance-sheet' && <><PieChart className="w-8 h-8" /> الميزانية العمومية</>}
+                      {selectedReport === 'trial-balance' && <><FileBarChart className="w-8 h-8" /> ميزان المراجعة</>}
+                    </DialogTitle>
+                    <DialogDescription className="text-lg mt-2 text-gray-600">
+                      التاريخ: {new Date().toLocaleDateString('ar-SA')} | العملة: جنيه مصري (ج.م)
+                    </DialogDescription>
+                  </DialogHeader>
+
+                  <div className="mt-6 space-y-6">
+                    {/* قائمة الدخل */}
+                    {selectedReport === 'income' && (() => {
+                      const stmt = getIncomeStatement()
+                      return (
+                        <div>
+                          <Card className="bg-gradient-to-l from-green-50 to-emerald-100 border-2 border-green-300 mb-6">
+                            <CardContent className="py-6">
+                              <div className="flex items-center justify-around text-center">
+                                <div>
+                                  <p className="text-sm text-green-700">إجمالي الإيرادات</p>
+                                  <p className="text-3xl font-bold text-green-800">{stmt.totalRevenue.toLocaleString()} ج.م</p>
+                                </div>
+                                <div className="text-4xl">-</div>
+                                <div>
+                                  <p className="text-sm text-red-700">إجمالي المصروفات</p>
+                                  <p className="text-3xl font-bold text-red-800">{stmt.totalExpenses.toLocaleString()} ج.م</p>
+                                </div>
+                                <div className="text-4xl">=</div>
+                                <div>
+                                  <p className={`text-sm ${stmt.netIncome >= 0 ? 'text-blue-700' : 'text-orange-700'}`}>صافي {stmt.netIncome >= 0 ? 'الربح' : 'الخسارة'}</p>
+                                  <p className={`text-3xl font-bold ${stmt.netIncome >= 0 ? 'text-blue-800' : 'text-orange-800'}`}>
+                                    {Math.abs(stmt.netIncome).toLocaleString()} ج.م
+                                  </p>
+                                </div>
+                              </div>
+                            </CardContent>
+                          </Card>
+
+                          <div className="grid grid-cols-2 gap-6">
+                            <Card>
+                              <CardHeader className="bg-green-100"><CardTitle className="text-green-800">💰 الإيرادات</CardTitle></CardHeader>
+                              <CardContent>
+                                <table className="w-full">
+                                  <thead><tr><th className="text-right p-2">البند</th><th className="text-left p-2">المبلغ</th></tr></thead>
+                                  <tbody>
+                                    {stmt.revenueItems.length > 0 ? stmt.revenueItems.map((item, idx) => (
+                                      <tr key={idx} className="border-b"><td className="p-2">{item.name}</td><td className="p-2 text-left font-bold text-green-600">{item.amount.toLocaleString()}</td></tr>
+                                    )) : <tr><td colSpan={2} className="p-4 text-center text-gray-500">لا توجد إيرادات</td></tr>}
+                                  </tbody>
+                                  <tfoot><tr className="bg-green-50 font-bold"><td>الإجمالي</td><td className="text-left text-green-700">{stmt.totalRevenue.toLocaleString()}</td></tr></tfoot>
+                                </table>
+                              </CardContent>
+                            </Card>
+
+                            <Card>
+                              <CardHeader className="bg-red-100"><CardTitle className="text-red-800">💸 المصروفات</CardTitle></CardHeader>
+                              <CardContent>
+                                <table className="w-full">
+                                  <thead><tr><th className="text-right p-2">البند</th><th className="text-left p-2">المبلغ</th></tr></thead>
+                                  <tbody>
+                                    {stmt.expenseItems.length > 0 ? stmt.expenseItems.map((item, idx) => (
+                                      <tr key={idx} className="border-b"><td className="p-2">{item.name}</td><td className="p-2 text-left font-bold text-red-600">{item.amount.toLocaleString()}</td></tr>
+                                    )) : <tr><td colSpan={2} className="p-4 text-center text-gray-500">لا توجد مصروفات</td></tr>}
+                                  </tbody>
+                                  <tfoot><tr className="bg-red-50 font-bold"><td>الإجمالي</td><td className="text-left text-red-700">{stmt.totalExpenses.toLocaleString()}</td></tr></tfoot>
+                                </table>
+                              </CardContent>
+                            </Card>
+                          </div>
+                        </div>
+                      )
+                    })()}
+
+                    {/* الميزانية العمومية */}
+                    {selectedReport === 'balance-sheet' && (() => {
+                      const bs = getBalanceSheet()
+                      return (
+                        <div>
+                          <Card className="bg-gradient-to-l from-blue-50 to-indigo-100 border-2 border-blue-300 mb-6">
+                            <CardContent className="py-6">
+                              <h3 className="text-xl font-bold text-center text-blue-800 mb-4">معادلة الميزانية</h3>
+                              <div className="flex items-center justify-center gap-4 text-2xl font-bold">
+                                <span className="text-blue-700">الأصول: {bs.totalAssets.toLocaleString()} ج.م</span>
+                                <span>=</span>
+                                <span className="text-purple-700">الالتزامات: {bs.totalLiabilities.toLocaleString()} ج.م</span>
+                                <span>+</span>
+                                <span className="text-green-700">حقوق الملكية: {bs.totalEquity.toLocaleString()} ج.م</span>
+                              </div>
+                            </CardContent>
+                          </Card>
+
+                          <div className="grid grid-cols-3 gap-6">
+                            <Card className="col-span-1">
+                              <CardHeader className="bg-blue-100"><CardTitle className="text-blue-800">🏢 الأصول</CardTitle></CardHeader>
+                              <CardContent>
+                                <table className="w-full text-sm">
+                                  <tbody>
+                                    {bs.assets.length > 0 ? bs.assets.map((item, idx) => (
+                                      <tr key={idx} className="border-b"><td className="p-2">{item.name}</td><td className="p-2 text-left font-bold">{item.amount.toLocaleString()}</td></tr>
+                                    )) : <tr><td colSpan={2} className="p-4 text-center text-gray-500">لا توجد أصول</td></tr>}
+                                  </tbody>
+                                  <tfoot><tr className="bg-blue-50 font-bold"><td>الإجمالي</td><td className="text-left text-blue-700">{bs.totalAssets.toLocaleString()}</td></tr></tfoot>
+                                </table>
+                              </CardContent>
+                            </Card>
+
+                            <div className="col-span-1 space-y-6">
+                              <Card>
+                                <CardHeader className="bg-purple-100"><CardTitle className="text-purple-800">📋 الالتزامات</CardTitle></CardHeader>
+                                <CardContent>
+                                  <table className="w-full text-sm">
+                                    <tbody>
+                                      {bs.liabilities.length > 0 ? bs.liabilities.map((item, idx) => (
+                                        <tr key={idx} className="border-b"><td className="p-2">{item.name}</td><td className="p-2 text-left font-bold">{item.amount.toLocaleString()}</td></tr>
+                                      )) : <tr><td colSpan={2} className="p-4 text-center text-gray-500">لا التزامات</td></tr>}
+                                    </tbody>
+                                    <tfoot><tr className="bg-purple-50 font-bold"><td>الإجمالي</td><td className="text-left text-purple-700">{bs.totalLiabilities.toLocaleString()}</td></tr></tfoot>
+                                  </table>
+                                </CardContent>
+                              </Card>
+
+                              <Card>
+                                <CardHeader className="bg-green-100"><CardTitle className="text-green-800">👥 حقوق الملكية</CardTitle></CardHeader>
+                                <CardContent>
+                                  <table className="w-full text-sm">
+                                    <tbody>
+                                      {bs.equity.length > 0 ? bs.equity.map((item, idx) => (
+                                        <tr key={idx} className="border-b"><td className="p-2">{item.name}</td><td className="p-2 text-left font-bold">{item.amount.toLocaleString()}</td></tr>
+                                      )) : <tr><td colSpan={2} className="p-4 text-center text-gray-500">لا توجد</td></tr>}
+                                    </tbody>
+                                    <tfoot><tr className="bg-green-50 font-bold"><td>الإجمالي</td><td className="text-left text-green-700">{bs.totalEquity.toLocaleString()}</td></tr></tfoot>
+                                  </table>
+                                </CardContent>
+                              </Card>
+                            </div>
+                          </div>
+                        </div>
+                      )
+                    })()}
+
+                    {/* ميزان المراجعة */}
+                    {selectedReport === 'trial-balance' && (() => {
+                      const tb = getTrialBalance()
+                      return (
+                        <div>
+                          <Card className="bg-gradient-to-l from-orange-50 to-amber-100 border-2 border-orange-300 mb-6">
+                            <CardContent className="py-6">
+                              <div className="flex items-center justify-around text-center">
+                                <div>
+                                  <p className="text-sm text-orange-700">إجمالي المدين</p>
+                                  <p className="text-3xl font-bold text-orange-800">{tb.totalDebit.toLocaleString()} ج.م</p>
+                                </div>
+                                <div className={`text-4xl font-bold ${tb.totalDebit === tb.totalCredit ? 'text-green-600' : 'text-red-600'}`}>
+                                  {tb.totalDebit === tb.totalCredit ? '=' : '≠'}
+                                </div>
+                                <div>
+                                  <p className="text-sm text-orange-700">إجمالي الدائن</p>
+                                  <p className="text-3xl font-bold text-orange-800">{tb.totalCredit.toLocaleString()} ج.م</p>
+                                </div>
+                              </div>
+                              <div className={`mt-4 p-3 rounded-lg text-center font-bold ${tb.totalDebit === tb.totalCredit ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'}`}>
+                                {tb.totalDebit === tb.totalCredit ? '✅ ميزان المراجعة متوازن' : `❌ غير متوازن - الفرق: ${Math.abs(tb.totalDebit - tb.totalCredit).toLocaleString()} ج.م`}
+                              </div>
+                            </CardContent>
+                          </Card>
+
+                          <Card>
+                            <CardHeader className="bg-orange-100"><CardTitle className="text-orange-800">⚖️ تفاصيل الحسابات</CardTitle></CardHeader>
+                            <CardContent>
+                              <div className="overflow-x-auto max-h-[400px] overflow-y-auto">
+                                <table className="w-full text-sm">
+                                  <thead className="sticky top-0 bg-orange-200">
+                                    <tr><th className="text-right p-3">كود الحساب</th><th className="text-right p-3">اسم الحساب</th><th className="text-right p-3">النوع</th><th className="text-left p-3">مدين</th><th className="text-left p-3">دائن</th></tr>
+                                  </thead>
+                                  <tbody>
+                                    {tb.accounts.map((acc, idx) => (
+                                      <tr key={idx} className={`border-b ${idx % 2 === 0 ? 'bg-white' : 'bg-orange-50'}`}>
+                                        <td className="p-3 font-mono font-bold text-orange-700">{acc.code}</td>
+                                        <td className="p-3">{acc.name}</td>
+                                        <td className="p-3"><Badge className="bg-orange-100 text-orange-800">{acc.type}</Badge></td>
+                                        <td className="p-3 text-left font-bold text-red-600">{acc.debit > 0 ? acc.debit.toLocaleString() : '-'}</td>
+                                        <td className="p-3 text-left font-bold text-green-600">{acc.credit > 0 ? acc.credit.toLocaleString() : '-'}</td>
+                                      </tr>
+                                    ))}
+                                  </tbody>
+                                  <tfoot className="bg-orange-100 font-bold">
+                                    <tr><td colSpan={3} className="p-3 text-left">الإجمالي:</td><td className="p-3 text-left text-red-700">{tb.totalDebit.toLocaleString()}</td><td className="p-3 text-left text-green-700">{tb.totalCredit.toLocaleString()}</td></tr>
+                                  </tfoot>
+                                </table>
+                              </div>
+                            </CardContent>
+                          </Card>
+                        </div>
+                      )
+                    })()}
+
+                    {/* أزرار الإجراءات */}
+                    <div className="flex justify-end gap-3 pt-4 border-t">
+                      <Button variant="outline" onClick={() => setShowReportDialog(false)} className="px-6 py-3">
+                        إغلاق
+                      </Button>
+                      <Button 
+                        variant="outline" 
+                        className="px-6 py-3 border-purple-300 text-purple-600 hover:bg-purple-50"
+                        onClick={() => selectedReport && printReport(selectedReport)}
+                      >
+                        <Printer className="ml-2 h-5 w-5" />
+                        طباعة التقرير
+                      </Button>
+                      <Button 
+                        className="px-6 py-3 bg-green-500 hover:bg-green-600"
+                        onClick={() => selectedReport && exportReportToCSV(selectedReport)}
+                      >
+                        <Download className="ml-2 h-5 w-5" />
+                        تصدير CSV
+                      </Button>
+                    </div>
                   </div>
-                </CardContent>
-              </Card>
+                </DialogContent>
+              </Dialog>
             </div>
           )}
 
