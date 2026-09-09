@@ -244,8 +244,9 @@ const mockBankAccounts: any[] = []
 const mockChecks: any[] = []
 const mockEmployees: any[] = []
 const mockExpenses: any[] = []
-// استيراد البيانات الكاملة للقيود المحاسبية (159 قيد)
-const mockJournalEntries: JournalEntry[] = require('@/data/journalEntriesData.json')
+// استيراد البيانات الكاملة للقيود المحاسبية (150 قيد)
+// سيتم تحميل البيانات ديناميكياً لتجنب أخطاء require في العميل
+const mockJournalEntriesDefault: JournalEntry[] = []
 
 // ============ MAIN COMPONENT ============
 export default function AccountingApp() {
@@ -257,7 +258,8 @@ export default function AccountingApp() {
   const [items, setItems] = useState<Item[]>(mockItems)
   const [parties, setParties] = useState<Party[]>([])
   const [transactions, setTransactions] = useState<Transaction[]>([])
-  const [journalEntries, setJournalEntries] = useState<JournalEntry[]>(mockJournalEntries)
+  const [journalEntries, setJournalEntries] = useState<JournalEntry[]>(mockJournalEntriesDefault)
+  const [journalDataLoaded, setJournalDataLoaded] = useState(false)
   const [showJournalDialog, setShowJournalDialog] = useState(false)
   const [viewingJournalEntry, setViewingJournalEntry] = useState<JournalEntry | null>(null)
   const [journalSearchTerm, setJournalSearchTerm] = useState('')
@@ -280,6 +282,22 @@ export default function AccountingApp() {
   })
   const [expandedAccounts, setExpandedAccounts] = useState<Set<string>>(new Set(['acc-1000', 'acc-2000', 'acc-3000', 'acc-4000', 'acc-5000']))
   const [searchTerm, setSearchTerm] = useState('')
+
+  // تحميل بيانات القيود المحاسبية من ملف JSON
+  useEffect(() => {
+    if (!journalDataLoaded) {
+      fetch('/data/journalEntriesData.json')
+        .then(res => res.json())
+        .then((data: JournalEntry[]) => {
+          setJournalEntries(data)
+          setJournalDataLoaded(true)
+        })
+        .catch(err => {
+          console.error('خطأ في تحميل بيانات القيود:', err)
+          setJournalDataLoaded(true)
+        })
+    }
+  }, [journalDataLoaded])
 
   // Toggle account expansion
   const toggleAccountExpansion = (accountId: string) => {

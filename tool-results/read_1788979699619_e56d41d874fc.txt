@@ -1,0 +1,502 @@
+     1→  4119→          {activeModule === 'reports' && (
+     2→  4120→            <div className="space-y-6">
+     3→  4121→              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+     4→  4122→                {[
+     5→  4123→                  { id: 'income', icon: BarChart3, title: 'قائمة الدخل', desc: 'الإيرادات والمصروفات وصافي الربح', color: 'green' },
+     6→  4124→                  { id: 'balance-sheet', icon: PieChart, title: 'الميزانية العمومية', desc: 'الأصول والخصوم وحقوق الملكية', color: 'blue' },
+     7→  4125→                  { id: 'trial-balance', icon: FileBarChart, title: 'ميزان المراجعة', desc: 'أرصدة جميع الحسابات', color: 'orange' },
+     8→  4126→                ].map((report, idx) => (
+     9→  4127→                  <Card key={idx} className="hover:shadow-lg transition-shadow cursor-pointer group border-2 hover:border-indigo-300">
+    10→  4128→                    <CardContent className="pt-6">
+    11→  4129→                      <div className="flex items-start gap-4">
+    12→  4130→                        <div className={`w-16 h-16 bg-${report.color}-100 rounded-xl flex items-center justify-center group-hover:scale-110 transition-transform shadow-lg`}>
+    13→  4131→                          <report.icon className={`w-8 h-8 text-${report.color}-600`} />
+    14→  4132→                        </div>
+    15→  4133→                        <div className="flex-1">
+    16→  4134→                          <h3 className="font-bold text-xl text-gray-800">{report.title}</h3>
+    17→  4135→                          <p className="text-sm text-gray-500 mt-2">{report.desc}</p>
+    18→  4136→                          <div className="flex items-center gap-2 mt-4 flex-wrap">
+    19→  4137→                            <Button 
+    20→  4138→                              size="sm" 
+    21→  4139→                              className="text-xs bg-blue-500 hover:bg-blue-600 text-white"
+    22→  4140→                              onClick={() => openReport(report.id)}
+    23→  4141→                            >
+    24→  4142→                              <Eye className="ml-1 h-3 w-3" />عرض
+    25→  4143→                            </Button>
+    26→  4144→                            <Button 
+    27→  4145→                              size="sm" 
+    28→  4146→                              variant="outline" 
+    29→  4147→                              className="text-xs border-purple-300 text-purple-600 hover:bg-purple-50"
+    30→  4148→                              onClick={() => printReport(report.id)}
+    31→  4149→                            >
+    32→  4150→                              <Printer className="ml-1 h-3 w-3" />طباعة
+    33→  4151→                            </Button>
+    34→  4152→                            <Button 
+    35→  4153→                              size="sm" 
+    36→  4154→                              variant="outline" 
+    37→  4155→                              className="text-xs border-green-300 text-green-600 hover:bg-green-50"
+    38→  4156→                              onClick={() => exportReportToCSV(report.id)}
+    39→  4157→                            >
+    40→  4158→                              <Download className="ml-1 h-3 w-3" />تصدير CSV
+    41→  4159→                            </Button>
+    42→  4160→                          </div>
+    43→  4161→                        </div>
+    44→  4162→                      </div>
+    45→  4163→                    </CardContent>
+    46→  4164→                  </Card>
+    47→  4165→                ))}
+    48→  4166→              </div>
+    49→  4167→
+    50→  4168→              {/* إحصائيات سريعة */}
+    51→  4169→              <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+    52→  4170→                <Card className="bg-gradient-to-br from-green-50 to-emerald-100 border-r-4 border-r-green-500">
+    53→  4171→                  <CardContent className="pt-6">
+    54→  4172→                    <div className="flex items-center justify-between">
+    55→  4173→                      <div>
+    56→  4174→                        <p className="text-sm text-green-700">إجمالي الإيرادات</p>
+    57→  4175→                        <p className="text-2xl font-bold text-green-800">{getIncomeStatement().totalRevenue.toLocaleString()} ج.م</p>
+    58→  4176→                      </div>
+    59→  4177→                      <TrendingUp className="w-10 h-10 text-green-500" />
+    60→  4178→                    </div>
+    61→  4179→                  </CardContent>
+    62→  4180→                </Card>
+    63→  4181→                <Card className="bg-gradient-to-br from-red-50 to-rose-100 border-r-4 border-r-red-500">
+    64→  4182→                  <CardContent className="pt-6">
+    65→  4183→                    <div className="flex items-center justify-between">
+    66→  4184→                      <div>
+    67→  4185→                        <p className="text-sm text-red-700">إجمالي المصروفات</p>
+    68→  4186→                        <p className="text-2xl font-bold text-red-800">{getIncomeStatement().totalExpenses.toLocaleString()} ج.م</p>
+    69→  4187→                      </div>
+    70→  4188→                      <TrendingDown className="w-10 h-10 text-red-500" />
+    71→  4189→                    </div>
+    72→  4190→                  </CardContent>
+    73→  4191→                </Card>
+    74→  4192→                <Card className={`bg-gradient-to-br ${getIncomeStatement().netIncome >= 0 ? 'from-blue-50 to-indigo-100 border-r-blue-500' : 'from-orange-50 to-amber-100 border-r-orange-500'} border-r-4`}>
+    75→  4193→                  <CardContent className="pt-6">
+    76→  4194→                    <div className="flex items-center justify-between">
+    77→  4195→                      <div>
+    78→  4196→                        <p className="text-sm text-gray-700">صافي الربح/الخسارة</p>
+    79→  4197→                        <p className={`text-2xl font-bold ${getIncomeStatement().netIncome >= 0 ? 'text-blue-800' : 'text-orange-800'}`}>
+    80→  4198→                          {Math.abs(getIncomeStatement().netIncome).toLocaleString()} ج.م
+    81→  4199→                        </p>
+    82→  4200→                      </div>
+    83→  4201→                      {getIncomeStatement().netIncome >= 0 ? 
+    84→  4202→                        <DollarSign className="w-10 h-10 text-blue-500" /> : 
+    85→  4203→                        <AlertCircle className="w-10 h-10 text-orange-500" />
+    86→  4204→                      }
+    87→  4205→                    </div>
+    88→  4206→                  </CardContent>
+    89→  4207→                </Card>
+    90→  4208→                <Card className="bg-gradient-to-br from-purple-50 to-violet-100 border-r-4 border-r-purple-500">
+    91→  4209→                  <CardContent className="pt-6">
+    92→  4210→                    <div className="flex items-center justify-between">
+    93→  4211→                      <div>
+    94→  4212→                        <p className="text-sm text-purple-700">إجمالي الأصول</p>
+    95→  4213→                        <p className="text-2xl font-bold text-purple-800">{getBalanceSheet().totalAssets.toLocaleString()} ج.م</p>
+    96→  4214→                      </div>
+    97→  4215→                      <Landmark className="w-10 h-10 text-purple-500" />
+    98→  4216→                    </div>
+    99→  4217→                  </CardContent>
+   100→  4218→                </Card>
+   101→  4219→              </div>
+   102→  4220→
+   103→  4221→              {/* Report Dialog */}
+   104→  4222→              <Dialog open={showReportDialog} onOpenChange={setShowReportDialog}>
+   105→  4223→                <DialogContent className="max-w-[95vw] w-[95vw] h-[90vh] max-h-[90vh] overflow-y-auto p-8" dir="rtl">
+   106→  4224→                  <DialogHeader className="pb-6 border-b-2 border-indigo-200">
+   107→  4225→                    <DialogTitle className="text-3xl font-bold text-indigo-700 flex items-center gap-3">
+   108→  4226→                      {selectedReport === 'income' && <><BarChart3 className="w-8 h-8" /> قائمة الدخل</>}
+   109→  4227→                      {selectedReport === 'balance-sheet' && <><PieChart className="w-8 h-8" /> الميزانية العمومية</>}
+   110→  4228→                      {selectedReport === 'trial-balance' && <><FileBarChart className="w-8 h-8" /> ميزان المراجعة</>}
+   111→  4229→                    </DialogTitle>
+   112→  4230→                    <DialogDescription className="text-lg mt-2 text-gray-600">
+   113→  4231→                      التاريخ: {new Date().toLocaleDateString('ar-SA')} | العملة: جنيه مصري (ج.م)
+   114→  4232→                    </DialogDescription>
+   115→  4233→                  </DialogHeader>
+   116→  4234→
+   117→  4235→                  <div className="mt-6 space-y-6">
+   118→  4236→                    {/* قائمة الدخل */}
+   119→  4237→                    {selectedReport === 'income' && (() => {
+   120→  4238→                      const stmt = getIncomeStatement()
+   121→  4239→                      return (
+   122→  4240→                        <div>
+   123→  4241→                          <Card className="bg-gradient-to-l from-green-50 to-emerald-100 border-2 border-green-300 mb-6">
+   124→  4242→                            <CardContent className="py-6">
+   125→  4243→                              <div className="flex items-center justify-around text-center">
+   126→  4244→                                <div>
+   127→  4245→                                  <p className="text-sm text-green-700">إجمالي الإيرادات</p>
+   128→  4246→                                  <p className="text-3xl font-bold text-green-800">{stmt.totalRevenue.toLocaleString()} ج.م</p>
+   129→  4247→                                </div>
+   130→  4248→                                <div className="text-4xl">-</div>
+   131→  4249→                                <div>
+   132→  4250→                                  <p className="text-sm text-red-700">إجمالي المصروفات</p>
+   133→  4251→                                  <p className="text-3xl font-bold text-red-800">{stmt.totalExpenses.toLocaleString()} ج.م</p>
+   134→  4252→                                </div>
+   135→  4253→                                <div className="text-4xl">=</div>
+   136→  4254→                                <div>
+   137→  4255→                                  <p className={`text-sm ${stmt.netIncome >= 0 ? 'text-blue-700' : 'text-orange-700'}`}>صافي {stmt.netIncome >= 0 ? 'الربح' : 'الخسارة'}</p>
+   138→  4256→                                  <p className={`text-3xl font-bold ${stmt.netIncome >= 0 ? 'text-blue-800' : 'text-orange-800'}`}>
+   139→  4257→                                    {Math.abs(stmt.netIncome).toLocaleString()} ج.م
+   140→  4258→                                  </p>
+   141→  4259→                                </div>
+   142→  4260→                              </div>
+   143→  4261→                            </CardContent>
+   144→  4262→                          </Card>
+   145→  4263→
+   146→  4264→                          <div className="grid grid-cols-2 gap-6">
+   147→  4265→                            <Card>
+   148→  4266→                              <CardHeader className="bg-green-100"><CardTitle className="text-green-800">💰 الإيرادات</CardTitle></CardHeader>
+   149→  4267→                              <CardContent>
+   150→  4268→                                <table className="w-full">
+   151→  4269→                                  <thead><tr><th className="text-right p-2">البند</th><th className="text-left p-2">المبلغ</th></tr></thead>
+   152→  4270→                                  <tbody>
+   153→  4271→                                    {stmt.revenueItems.length > 0 ? stmt.revenueItems.map((item, idx) => (
+   154→  4272→                                      <tr key={idx} className="border-b"><td className="p-2">{item.name}</td><td className="p-2 text-left font-bold text-green-600">{item.amount.toLocaleString()}</td></tr>
+   155→  4273→                                    )) : <tr><td colSpan={2} className="p-4 text-center text-gray-500">لا توجد إيرادات</td></tr>}
+   156→  4274→                                  </tbody>
+   157→  4275→                                  <tfoot><tr className="bg-green-50 font-bold"><td>الإجمالي</td><td className="text-left text-green-700">{stmt.totalRevenue.toLocaleString()}</td></tr></tfoot>
+   158→  4276→                                </table>
+   159→  4277→                              </CardContent>
+   160→  4278→                            </Card>
+   161→  4279→
+   162→  4280→                            <Card>
+   163→  4281→                              <CardHeader className="bg-red-100"><CardTitle className="text-red-800">💸 المصروفات</CardTitle></CardHeader>
+   164→  4282→                              <CardContent>
+   165→  4283→                                <table className="w-full">
+   166→  4284→                                  <thead><tr><th className="text-right p-2">البند</th><th className="text-left p-2">المبلغ</th></tr></thead>
+   167→  4285→                                  <tbody>
+   168→  4286→                                    {stmt.expenseItems.length > 0 ? stmt.expenseItems.map((item, idx) => (
+   169→  4287→                                      <tr key={idx} className="border-b"><td className="p-2">{item.name}</td><td className="p-2 text-left font-bold text-red-600">{item.amount.toLocaleString()}</td></tr>
+   170→  4288→                                    )) : <tr><td colSpan={2} className="p-4 text-center text-gray-500">لا توجد مصروفات</td></tr>}
+   171→  4289→                                  </tbody>
+   172→  4290→                                  <tfoot><tr className="bg-red-50 font-bold"><td>الإجمالي</td><td className="text-left text-red-700">{stmt.totalExpenses.toLocaleString()}</td></tr></tfoot>
+   173→  4291→                                </table>
+   174→  4292→                              </CardContent>
+   175→  4293→                            </Card>
+   176→  4294→                          </div>
+   177→  4295→                        </div>
+   178→  4296→                      )
+   179→  4297→                    })()}
+   180→  4298→
+   181→  4299→                    {/* الميزانية العمومية */}
+   182→  4300→                    {selectedReport === 'balance-sheet' && (() => {
+   183→  4301→                      const bs = getBalanceSheet()
+   184→  4302→                      return (
+   185→  4303→                        <div>
+   186→  4304→                          <Card className="bg-gradient-to-l from-blue-50 to-indigo-100 border-2 border-blue-300 mb-6">
+   187→  4305→                            <CardContent className="py-6">
+   188→  4306→                              <h3 className="text-xl font-bold text-center text-blue-800 mb-4">معادلة الميزانية</h3>
+   189→  4307→                              <div className="flex items-center justify-center gap-4 text-2xl font-bold">
+   190→  4308→                                <span className="text-blue-700">الأصول: {bs.totalAssets.toLocaleString()} ج.م</span>
+   191→  4309→                                <span>=</span>
+   192→  4310→                                <span className="text-purple-700">الالتزامات: {bs.totalLiabilities.toLocaleString()} ج.م</span>
+   193→  4311→                                <span>+</span>
+   194→  4312→                                <span className="text-green-700">حقوق الملكية: {bs.totalEquity.toLocaleString()} ج.م</span>
+   195→  4313→                              </div>
+   196→  4314→                            </CardContent>
+   197→  4315→                          </Card>
+   198→  4316→
+   199→  4317→                          <div className="grid grid-cols-3 gap-6">
+   200→  4318→                            <Card className="col-span-1">
+   201→  4319→                              <CardHeader className="bg-blue-100"><CardTitle className="text-blue-800">🏢 الأصول</CardTitle></CardHeader>
+   202→  4320→                              <CardContent>
+   203→  4321→                                <table className="w-full text-sm">
+   204→  4322→                                  <tbody>
+   205→  4323→                                    {bs.assets.length > 0 ? bs.assets.map((item, idx) => (
+   206→  4324→                                      <tr key={idx} className="border-b"><td className="p-2">{item.name}</td><td className="p-2 text-left font-bold">{item.amount.toLocaleString()}</td></tr>
+   207→  4325→                                    )) : <tr><td colSpan={2} className="p-4 text-center text-gray-500">لا توجد أصول</td></tr>}
+   208→  4326→                                  </tbody>
+   209→  4327→                                  <tfoot><tr className="bg-blue-50 font-bold"><td>الإجمالي</td><td className="text-left text-blue-700">{bs.totalAssets.toLocaleString()}</td></tr></tfoot>
+   210→  4328→                                </table>
+   211→  4329→                              </CardContent>
+   212→  4330→                            </Card>
+   213→  4331→
+   214→  4332→                            <div className="col-span-1 space-y-6">
+   215→  4333→                              <Card>
+   216→  4334→                                <CardHeader className="bg-purple-100"><CardTitle className="text-purple-800">📋 الالتزامات</CardTitle></CardHeader>
+   217→  4335→                                <CardContent>
+   218→  4336→                                  <table className="w-full text-sm">
+   219→  4337→                                    <tbody>
+   220→  4338→                                      {bs.liabilities.length > 0 ? bs.liabilities.map((item, idx) => (
+   221→  4339→                                        <tr key={idx} className="border-b"><td className="p-2">{item.name}</td><td className="p-2 text-left font-bold">{item.amount.toLocaleString()}</td></tr>
+   222→  4340→                                      )) : <tr><td colSpan={2} className="p-4 text-center text-gray-500">لا التزامات</td></tr>}
+   223→  4341→                                    </tbody>
+   224→  4342→                                    <tfoot><tr className="bg-purple-50 font-bold"><td>الإجمالي</td><td className="text-left text-purple-700">{bs.totalLiabilities.toLocaleString()}</td></tr></tfoot>
+   225→  4343→                                  </table>
+   226→  4344→                                </CardContent>
+   227→  4345→                              </Card>
+   228→  4346→
+   229→  4347→                              <Card>
+   230→  4348→                                <CardHeader className="bg-green-100"><CardTitle className="text-green-800">👥 حقوق الملكية</CardTitle></CardHeader>
+   231→  4349→                                <CardContent>
+   232→  4350→                                  <table className="w-full text-sm">
+   233→  4351→                                    <tbody>
+   234→  4352→                                      {bs.equity.length > 0 ? bs.equity.map((item, idx) => (
+   235→  4353→                                        <tr key={idx} className="border-b"><td className="p-2">{item.name}</td><td className="p-2 text-left font-bold">{item.amount.toLocaleString()}</td></tr>
+   236→  4354→                                      )) : <tr><td colSpan={2} className="p-4 text-center text-gray-500">لا توجد</td></tr>}
+   237→  4355→                                    </tbody>
+   238→  4356→                                    <tfoot><tr className="bg-green-50 font-bold"><td>الإجمالي</td><td className="text-left text-green-700">{bs.totalEquity.toLocaleString()}</td></tr></tfoot>
+   239→  4357→                                  </table>
+   240→  4358→                                </CardContent>
+   241→  4359→                              </Card>
+   242→  4360→                            </div>
+   243→  4361→                          </div>
+   244→  4362→                        </div>
+   245→  4363→                      )
+   246→  4364→                    })()}
+   247→  4365→
+   248→  4366→                    {/* ميزان المراجعة */}
+   249→  4367→                    {selectedReport === 'trial-balance' && (() => {
+   250→  4368→                      const tb = getTrialBalance()
+   251→  4369→                      return (
+   252→  4370→                        <div>
+   253→  4371→                          <Card className="bg-gradient-to-l from-orange-50 to-amber-100 border-2 border-orange-300 mb-6">
+   254→  4372→                            <CardContent className="py-6">
+   255→  4373→                              <div className="flex items-center justify-around text-center">
+   256→  4374→                                <div>
+   257→  4375→                                  <p className="text-sm text-orange-700">إجمالي المدين</p>
+   258→  4376→                                  <p className="text-3xl font-bold text-orange-800">{tb.totalDebit.toLocaleString()} ج.م</p>
+   259→  4377→                                </div>
+   260→  4378→                                <div className={`text-4xl font-bold ${tb.totalDebit === tb.totalCredit ? 'text-green-600' : 'text-red-600'}`}>
+   261→  4379→                                  {tb.totalDebit === tb.totalCredit ? '=' : '≠'}
+   262→  4380→                                </div>
+   263→  4381→                                <div>
+   264→  4382→                                  <p className="text-sm text-orange-700">إجمالي الدائن</p>
+   265→  4383→                                  <p className="text-3xl font-bold text-orange-800">{tb.totalCredit.toLocaleString()} ج.م</p>
+   266→  4384→                                </div>
+   267→  4385→                              </div>
+   268→  4386→                              <div className={`mt-4 p-3 rounded-lg text-center font-bold ${tb.totalDebit === tb.totalCredit ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'}`}>
+   269→  4387→                                {tb.totalDebit === tb.totalCredit ? '✅ ميزان المراجعة متوازن' : `❌ غير متوازن - الفرق: ${Math.abs(tb.totalDebit - tb.totalCredit).toLocaleString()} ج.م`}
+   270→  4388→                              </div>
+   271→  4389→                            </CardContent>
+   272→  4390→                          </Card>
+   273→  4391→
+   274→  4392→                          <Card>
+   275→  4393→                            <CardHeader className="bg-orange-100"><CardTitle className="text-orange-800">⚖️ تفاصيل الحسابات</CardTitle></CardHeader>
+   276→  4394→                            <CardContent>
+   277→  4395→                              <div className="overflow-x-auto max-h-[400px] overflow-y-auto">
+   278→  4396→                                <table className="w-full text-sm">
+   279→  4397→                                  <thead className="sticky top-0 bg-orange-200">
+   280→  4398→                                    <tr><th className="text-right p-3">كود الحساب</th><th className="text-right p-3">اسم الحساب</th><th className="text-right p-3">النوع</th><th className="text-left p-3">مدين</th><th className="text-left p-3">دائن</th></tr>
+   281→  4399→                                  </thead>
+   282→  4400→                                  <tbody>
+   283→  4401→                                    {tb.accounts.map((acc, idx) => (
+   284→  4402→                                      <tr key={idx} className={`border-b ${idx % 2 === 0 ? 'bg-white' : 'bg-orange-50'}`}>
+   285→  4403→                                        <td className="p-3 font-mono font-bold text-orange-700">{acc.code}</td>
+   286→  4404→                                        <td className="p-3">{acc.name}</td>
+   287→  4405→                                        <td className="p-3"><Badge className="bg-orange-100 text-orange-800">{acc.type}</Badge></td>
+   288→  4406→                                        <td className="p-3 text-left font-bold text-red-600">{acc.debit > 0 ? acc.debit.toLocaleString() : '-'}</td>
+   289→  4407→                                        <td className="p-3 text-left font-bold text-green-600">{acc.credit > 0 ? acc.credit.toLocaleString() : '-'}</td>
+   290→  4408→                                      </tr>
+   291→  4409→                                    ))}
+   292→  4410→                                  </tbody>
+   293→  4411→                                  <tfoot className="bg-orange-100 font-bold">
+   294→  4412→                                    <tr><td colSpan={3} className="p-3 text-left">الإجمالي:</td><td className="p-3 text-left text-red-700">{tb.totalDebit.toLocaleString()}</td><td className="p-3 text-left text-green-700">{tb.totalCredit.toLocaleString()}</td></tr>
+   295→  4413→                                  </tfoot>
+   296→  4414→                                </table>
+   297→  4415→                              </div>
+   298→  4416→                            </CardContent>
+   299→  4417→                          </Card>
+   300→  4418→                        </div>
+   301→  4419→                      )
+   302→  4420→                    })()}
+   303→  4421→
+   304→  4422→                    {/* أزرار الإجراءات */}
+   305→  4423→                    <div className="flex justify-end gap-3 pt-4 border-t">
+   306→  4424→                      <Button variant="outline" onClick={() => setShowReportDialog(false)} className="px-6 py-3">
+   307→  4425→                        إغلاق
+   308→  4426→                      </Button>
+   309→  4427→                      <Button 
+   310→  4428→                        variant="outline" 
+   311→  4429→                        className="px-6 py-3 border-purple-300 text-purple-600 hover:bg-purple-50"
+   312→  4430→                        onClick={() => selectedReport && printReport(selectedReport)}
+   313→  4431→                      >
+   314→  4432→                        <Printer className="ml-2 h-5 w-5" />
+   315→  4433→                        طباعة التقرير
+   316→  4434→                      </Button>
+   317→  4435→                      <Button 
+   318→  4436→                        className="px-6 py-3 bg-green-500 hover:bg-green-600"
+   319→  4437→                        onClick={() => selectedReport && exportReportToCSV(selectedReport)}
+   320→  4438→                      >
+   321→  4439→                        <Download className="ml-2 h-5 w-5" />
+   322→  4440→                        تصدير CSV
+   323→  4441→                      </Button>
+   324→  4442→                    </div>
+   325→  4443→                  </div>
+   326→  4444→                </DialogContent>
+   327→  4445→              </Dialog>
+   328→  4446→            </div>
+   329→  4447→          )}
+   330→  4448→
+   331→  4449→          {/* ============ SETTINGS MODULE ============ */}
+   332→  4450→          {activeModule === 'settings' && (
+   333→  4451→            <div className="space-y-6">
+   334→  4452→              <Tabs defaultValue="general">
+   335→  4453→                <TabsList className="grid w-full grid-cols-5">
+   336→  4454→                  <TabsTrigger value="general">عام</TabsTrigger>
+   337→  4455→                  <TabsTrigger value="company">الشركة</TabsTrigger>
+   338→  4456→                  <TabsTrigger value="invoice">الفواتير</TabsTrigger>
+   339→  4457→                  <TabsTrigger value="users">المستخدمون</TabsTrigger>
+   340→  4458→                  <TabsTrigger value="backup">النسخ الاحتياطي</TabsTrigger>
+   341→  4459→                </TabsList>
+   342→  4460→
+   343→  4461→                <TabsContent value="general">
+   344→  4462→                  <Card>
+   345→  4463→                    <CardHeader><CardTitle>الإعدادات العامة</CardTitle></CardHeader>
+   346→  4464→                    <CardContent className="space-y-4">
+   347→  4465→                      <div className="grid grid-cols-2 gap-4">
+   348→  4466→                        <div><Label>اللغة</Label><Select><SelectTrigger className="mt-1"><SelectValue /></SelectTrigger><SelectContent><SelectItem value="ar">العربية</SelectItem><SelectItem value="en">English</SelectItem></SelectContent></Select></div>
+   349→  4467→                        <div><Label>العملة</Label><Select defaultValue="egp"><SelectTrigger className="mt-1"><SelectValue /></SelectTrigger><SelectContent><SelectItem value="egp">جنيه مصري (ج.م)</SelectItem><SelectItem value="sar">ريال سعودي</SelectItem><SelectItem value="aed">درهم إماراتي</SelectItem><SelectItem value="usd">دولار أمريكي</SelectItem></SelectContent></Select></div>
+   350→  4468→                        <div><Label>السنة المالية</Label><Input type="number" className="mt-1" defaultValue="2024" /></div>
+   351→  4469→                        <div><Label>بداية السنة</Label><Input type="month" className="mt-1" defaultValue="2024-01" /></div>
+   352→  4470→                      </div>
+   353→  4471→                      <Button className="bg-gradient-to-r from-[#005f73] to-[#0a9396]"><Save className="ml-2 h-4 w-4" />حفظ الإعدادات</Button>
+   354→  4472→                    </CardContent>
+   355→  4473→                  </Card>
+   356→  4474→                </TabsContent>
+   357→  4475→
+   358→  4476→                <TabsContent value="company">
+   359→  4477→                  <Card>
+   360→  4478→                    <CardHeader><CardTitle>بيانات الشركة</CardTitle></CardHeader>
+   361→  4479→                    <CardContent className="space-y-4">
+   362→  4480→                      <div className="grid grid-cols-2 gap-4">
+   363→  4481→                        <div><Label>اسم الشركة</Label><Input className="mt-1" defaultValue="شركة إنجاز للحلول المحاسبية" /></div>
+   364→  4482→                        <div><Label>الاسم بالإنجليزية</Label><Input className="mt-1" defaultValue="Injaz Accounting Solutions" dir="ltr" /></div>
+   365→  4483→                        <div><Label>السجل التجاري</Label><Input className="mt-1" defaultValue="1010123456" /></div>
+   366→  4484→                        <div><Label>الضريبة</Label><Input className="mt-1" defaultValue="300123456789003" /></div>
+   367→  4485→                        <div className="col-span-2"><Label>العنوان</Label><Textarea className="mt-1" defaultValue="الرياض، المملكة العربية السعودية" /></div>
+   368→  4486→                        <div><Label>الهاتف</Label><Input className="mt-1" defaultValue="+966501234567" /></div>
+   369→  4487→                        <div><Label>البريد الإلكتروني</Label><Input className="mt-1" defaultValue="info@injaz-sa.com" /></div>
+   370→  4488→                      </div>
+   371→  4489→                      <Button className="bg-gradient-to-r from-[#005f73] to-[#0a9396]"><Save className="ml-2 h-4 w-4" />حفظ البيانات</Button>
+   372→  4490→                    </CardContent>
+   373→  4491→                  </Card>
+   374→  4492→                </TabsContent>
+   375→  4493→
+   376→  4494→                <TabsContent value="invoice">
+   377→  4495→                  <Card>
+   378→  4496→                    <CardHeader><CardTitle>إعدادات الفواتير</CardTitle></CardHeader>
+   379→  4497→                    <CardContent className="space-y-4">
+   380→  4498→                      <div className="grid grid-cols-2 gap-4">
+   381→  4499→                        <div><Label>بداية ترقيم الفواتير</Label><Input className="mt-1" defaultValue="1" /></div>
+   382→  4500→                        <div><Label>بادئة الفواتير</Label><Input className="mt-1" defaultValue="INV-" /></div>
+   383→  4501→                        <div><Label>شروط الدفع (بالأيام)</Label><Input type="number" className="mt-1" defaultValue="30" /></div>
+   384→  4502→                        <div><Label>الضريبة المضافة %</Label><Input type="number" className="mt-1" defaultValue="15" /></div>
+   385→  4503→                      </div>
+   386→  4504→                      <div><Label>ملاحظات الفاتورة الافتراضية</Label><Textarea className="mt-1" defaultValue="شكراً لتعاملكم معنا" /></div>
+   387→  4505→                      <Button className="bg-gradient-to-r from-[#005f73] to-[#0a9396]"><Save className="ml-2 h-4 w-4" />حفظ الإعدادات</Button>
+   388→  4506→                    </CardContent>
+   389→  4507→                  </Card>
+   390→  4508→                </TabsContent>
+   391→  4509→
+   392→  4510→                <TabsContent value="users">
+   393→  4511→                  <Card>
+   394→  4512→                    <CardHeader className="flex flex-row items-center justify-between">
+   395→  4513→                      <CardTitle>المستخدمون والصلاحيات</CardTitle>
+   396→  4514→                      <Button className="bg-gradient-to-r from-[#005f73] to-[#0a9396]"><Plus className="ml-2 h-4 w-4" />مستخدم جديد</Button>
+   397→  4515→                    </CardHeader>
+   398→  4516→                    <CardContent>
+   399→  4517→                      <div className="overflow-x-auto">
+   400→  4518→                        <table className="w-full text-sm">
+   401→  4519→                          <thead>
+   402→  4520→                            <tr className="border-b bg-gray-50">
+   403→  4521→                              <th className="text-right p-3 font-medium">المستخدم</th>
+   404→  4522→                              <th className="text-right p-3 font-medium">الدور</th>
+   405→  4523→                              <th className="text-right p-3 font-medium">الحالة</th>
+   406→  4524→                              <th className="text-right p-3 font-medium">آخر دخول</th>
+   407→  4525→                              <th className="text-right p-3 font-medium">الإجراءات</th>
+   408→  4526→                            </tr>
+   409→  4527→                          </thead>
+   410→  4528→                          <tbody>
+   411→  4529→                            {[
+   412→  4530→                              { name: 'مدير النظام', role: 'مدير', status: 'نشط', lastLogin: 'الآن' },
+   413→  4531→                              { name: 'أحمد محمد', role: 'محاسب', status: 'نشط', lastLogin: 'منذ ساعة' },
+   414→  4532→                              { name: 'سارة علي', role: 'مندوب مبيعات', status: 'نشط', lastLogin: 'منذ 3 ساعات' }
+   415→  4533→                            ].map((user, idx) => (
+   416→  4534→                              <tr key={idx} className="border-b hover:bg-gray-50">
+   417→  4535→                                <td className="p-3 font-medium">{user.name}</td>
+   418→  4536→                                <td className="p-3"><Badge className="bg-blue-100 text-blue-800">{user.role}</Badge></td>
+   419→  4537→                                <td className="p-3"><Badge className="bg-green-100 text-green-800">{user.status}</Badge></td>
+   420→  4538→                                <td className="p-3 text-gray-500">{user.lastLogin}</td>
+   421→  4539→                                <td className="p-3">
+   422→  4540→                                  <div className="flex items-center gap-1">
+   423→  4541→                                    <Button variant="ghost" size="icon" title="تعديل"><Edit2 className="w-4 h-4" /></Button>
+   424→  4542→                                    <Button variant="ghost" size="icon" title="صلاحيات"><Shield className="w-4 h-4" /></Button>
+   425→  4543→                                    <Button variant="ghost" size="icon" title="حذف"><Trash2 className="w-4 h-4 text-red-600" /></Button>
+   426→  4544→                                  </div>
+   427→  4545→                                </td>
+   428→  4546→                              </tr>
+   429→  4547→                            ))}
+   430→  4548→                          </tbody>
+   431→  4549→                        </table>
+   432→  4550→                      </div>
+   433→  4551→                    </CardContent>
+   434→  4552→                  </Card>
+   435→  4553→                </TabsContent>
+   436→  4554→
+   437→  4555→                <TabsContent value="backup">
+   438→  4556→                  <Card>
+   439→  4557→                    <CardHeader><CardTitle>النسخ الاحتياطي والاستعادة</CardHeader></CardHeader>
+   440→  4558→                    <CardContent className="space-y-4">
+   441→  4559→                      <div className="grid grid-cols-2 gap-4">
+   442→  4560→                        <Card className="border-dashed"><CardContent className="pt-6 text-center"><Database className="w-12 h-12 mx-auto text-gray-400 mb-3" /><p className="font-medium">إنشاء نسخة احتياطية</p><p className="text-sm text-gray-500 mt-1">حفظ نسخة كاملة من البيانات</p><Button className="mt-3 bg-gradient-to-r from-[#005f73] to-[#0a9396]"><Upload className="ml-2 h-4 w-4" />نسخ احتياطي الآن</Button></CardContent></Card>
+   443→  4561→                        <Card className="border-dashed"><CardContent className="pt-6 text-center"><Database className="w-12 h-12 mx-auto text-gray-400 mb-3" /><p className="font-medium">استعادة نسخة احتياطية</p><p className="text-sm text-gray-500 mt-1">استرجاع البيانات من نسخة سابقة</p><Button className="mt-3" variant="outline"><Download className="ml-2 h-4 w-4" />استعادة</Button></CardContent></Card>
+   444→  4562→                      </div>
+   445→  4563→                      <Separator />
+   446→  4564→                      <div>
+   447→  4565→                        <h4 className="font-medium mb-3">النسخ الاحتياطية السابقة</h4>
+   448→  4566→                        <div className="space-y-2">
+   449→  4567→                          {['backup_2024_01_19.zip', 'backup_2024_01_12.zip', 'backup_2024_01_05.zip'].map((backup, idx) => (
+   450→  4568→                            <div key={idx} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
+   451→  4569→                              <div className="flex items-center gap-3"><Archive className="w-5 h-5 text-gray-400" /><span>{backup}</span></div>
+   452→  4570→                              <div className="flex items-center gap-2"><span className="text-sm text-gray-500">{(2.5 - idx * 0.5).toFixed(1)} MB</span><Button variant="ghost" size="sm" title="تحميل"><Download className="w-4 h-4" /></Button><Button variant="ghost" size="sm" title="استعادة"><Upload className="w-4 h-4" /></Button><Button variant="ghost" size="sm" title="حذف"><Trash2 className="w-4 h-4 text-red-600" /></Button></div>
+   453→  4571→                            </div>
+   454→  4572→                          ))}
+   455→  4573→                        </div>
+   456→  4574→                      </div>
+   457→  4575→                    </CardContent>
+   458→  4576→                  </Card>
+   459→  4577→                </TabsContent>
+   460→  4578→              </Tabs>
+   461→  4579→            </div>
+   462→  4580→          )}
+   463→  4581→        </div>
+   464→  4582→      </main>
+   465→  4583→
+   466→  4584→      {/* ============ INVOICE DIALOG (MATCHING SCREENSHOT DESIGN) ============ */}
+   467→  4585→      <Dialog open={showInvoiceDialog} onOpenChange={setShowInvoiceDialog}>
+   468→  4586→        <DialogContent className="max-w-[98%] w-[98%] h-[96vh] max-h-[96vh] overflow-y-auto p-8" dir="rtl" style={{ width: '98vw', maxWidth: '98vw' }}>
+   469→  4587→          <DialogHeader className="flex flex-row items-center justify-between pb-6 border-b-2">
+   470→  4588→            <div>
+   471→  4589→              <DialogTitle className="text-4xl font-bold text-[#005f73]">
+   472→  4590→                {editingInvoice ? '✏️ تعديل فاتورة مبيعات' : '📄 إشعار فاتورة مبيعات جديد'}
+   473→  4591→              </DialogTitle>
+   474→  4592→            </div>
+   475→  4593→            <Button 
+   476→  4594→              type="button"
+   477→  4595→              variant="outline" 
+   478→  4596→              size="lg"
+   479→  4597→              onClick={() => setShowInvoiceDialog(false)}
+   480→  4598→              className="h-14 w-14 text-2xl rounded-xl"
+   481→  4599→            >
+   482→  4600→              ✕
+   483→  4601→            </Button>
+   484→  4602→          </DialogHeader>
+   485→  4603→          
+   486→  4604→          <div className="space-y-8 mt-6">
+   487→  4605→            {/* Top Row: Date | Customer | Tax */}
+   488→  4606→            <div className="grid grid-cols-4 gap-8">
+   489→  4607→              <div>
+   490→  4608→                <Label className="text-2xl font-bold text-gray-800">📅 التاريخ</Label>
+   491→  4609→                <Input 
+   492→  4610→                  type="date" 
+   493→  4611→                  className="mt-3 border-3 border-gray-300 focus:border-[#0a9396] focus:ring-4 focus:ring-[#0a9396]/20 text-2xl p-5 h-18 rounded-2xl"
+   494→  4612→                  value={invoiceForm.date}
+   495→  4613→                  onChange={(e) => setInvoiceForm(prev => ({ ...prev, date: e.target.value }))}
+   496→  4614→                />
+   497→  4615→              </div>
+   498→  4616→              <div>
+   499→  4617→                <Label className="text-2xl font-bold text-gray-800">👤 اختر العميل</Label>
+   500→  4618→                <div className="flex gap-3 mt-3">
+   501→
+   502→[showing lines 4119-4618 of 5916; use offset=4619 with limit to continue reading]
