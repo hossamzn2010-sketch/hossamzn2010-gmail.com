@@ -2166,13 +2166,77 @@ function AccountingApp() {
           {/* ============ SALES MODULE (ENHANCED) ============ */}
           {activeModule === 'sales' && (
             <div className="space-y-6">
-              {/* Sales Summary Cards */}
-              <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-                <Card><CardContent className="pt-6"><div className="flex items-center gap-3"><div className="w-12 h-12 bg-green-100 rounded-full flex items-center justify-center"><DollarSign className="w-6 h-6 text-green-600" /></div><div><p className="text-sm text-gray-500">مبيعات اليوم</p><p className="text-xl font-bold text-green-600">5,200 ج.م</p></div></div></CardContent></Card>
-                <Card><CardContent className="pt-6"><div className="flex items-center gap-3"><div className="w-12 h-12 bg-blue-100 rounded-full flex items-center justify-center"><FileText className="w-6 h-6 text-blue-600" /></div><div><p className="text-sm text-gray-500">الفواتير</p><p className="text-xl font-bold text-blue-600">{invoices.length}</p></div></div></CardContent></Card>
-                <Card><CardContent className="pt-6"><div className="flex items-center gap-3"><div className="w-12 h-12 bg-yellow-100 rounded-full flex items-center justify-center"><Clock className="w-6 h-6 text-yellow-600" /></div><div><p className="text-sm text-gray-500">غير المدفوعة</p><p className="text-xl font-bold text-yellow-600">{invoices.filter(i => i.status !== 'paid').length}</p></div></div></CardContent></Card>
-                <Card><CardContent className="pt-6"><div className="flex items-center gap-3"><div className="w-12 h-12 bg-purple-100 rounded-full flex items-center justify-center"><Eye className="w-6 h-6 text-purple-600" /></div><div><p className="text-sm text-gray-500">عروض الأسعار</p><p className="text-xl font-bold text-purple-600">{mockQuotations.length}</p></div></div></CardContent></Card>
-              </div>
+              {/* Sales Summary Cards - from Journal Entries */}
+              {(() => {
+                // حسابات المبيعات من القيود المحاسبية
+                const salesAccounts: Record<string, { name: string; debit: number; credit: number; net: number }> = {}
+                
+                journalEntries.forEach(entry => {
+                  entry.lines.forEach(line => {
+                    const code = String(line.accountCode || '')
+                    // حسابات المبيعات تبدأ بـ 4
+                    if (code.startsWith('4')) {
+                      if (!salesAccounts[code]) {
+                        salesAccounts[code] = { name: line.accountName || '', debit: 0, credit: 0, net: 0 }
+                      }
+                      salesAccounts[code].debit += Number(line.debit) || 0
+                      salesAccounts[code].credit += Number(line.credit) || 0
+                    }
+                  })
+                })
+                
+                // حساب صافي كل حساب مبيعات
+                Object.keys(salesAccounts).forEach(code => {
+                  salesAccounts[code].net = salesAccounts[code].credit - salesAccounts[code].debit
+                })
+                
+                // إجمالي المبيعات (مجموع الأرصدة الدائنة لحسابات 4xxx)
+                const totalSales = Object.values(salesAccounts).reduce((sum, acc) => sum + Math.max(0, acc.net), 0)
+                
+                // عدد قيود المبيعات (القيود التي تحتوي على حسابات 4xxx)
+                const salesEntriesCount = journalEntries.filter(entry => 
+                  entry.lines.some(line => String(line.accountCode || '').startsWith('4'))
+                ).length
+                
+                // المبالغ المستحقة من العملاء (حسابات 121x - رصيد مدين)
+                let totalReceivables = 0
+                const customerAccounts: Record<string, { name: string; debit: number; credit: number }> = {}
+                
+                journalEntries.forEach(entry => {
+                  entry.lines.forEach(line => {
+                    const code = String(line.accountCode || '')
+                    if (code.startsWith('121')) {
+                      if (!customerAccounts[code]) {
+                        customerAccounts[code] = { name: line.accountName || '', debit: 0, credit: 0 }
+                      }
+                      customerAccounts[code].debit += Number(line.debit) || 0
+                      customerAccounts[code].credit += Number(line.credit) || 0
+                    }
+                  })
+                })
+                
+                totalReceivables = Object.values(customerAccounts).reduce((sum, acc) => 
+                  sum + Math.max(0, acc.debit - acc.credit), 0
+                )
+                
+                // المبيعات النقدية (قيود تحتوي على مبيعات + صندوق)
+                const cashSalesEntries = journalEntries.filter(entry =>
+                  entry.lines.some(l => String(l.accountCode || '').startsWith('4')) &&
+                  entry.lines.some(l => l.accountCode === '1111')
+                )
+                const cashSalesTotal = cashSalesEntries.reduce((sum, entry) => 
+                  sum + entry.lines.filter(l => String(l.accountCode || '').startsWith('4'))
+                    .reduce((s, l) => s + (Number(l.credit) || 0), 0), 0
+                )
+
+                return (
+                  <>
+                    <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+                      <Card><CardContent className="pt-6"><div className="flex items-center gap-3"><div className="w-12 h-12 bg-green-100 rounded-full flex items-center justify-center"><DollarSign className="w-6 h-6 text-green-600" /></div><div><p className="text-sm text-gray-500">إجمالي المبيعات</p><p className="text-xl font-bold text-green-600">{totalSales.toLocaleString()} ج.م</p></div></div></CardContent></Card>
+                      <Card><CardContent className="pt-6"><div className="flex items-center gap-3"><div className="w-12 h-12 bg-blue-100 rounded-full flex items-center justify-center"><FileText className="w-6 h-6 text-blue-600" /></div><div><p className="text-sm text-gray-500">قيود المبيعات</p><p className="text-xl font-bold text-blue-600">{salesEntriesCount} قيد</p></div></div></CardContent></Card>
+                      <Card><CardContent className="pt-6"><div className="flex items-center gap-3"><div className="w-12 h-12 bg-yellow-100 rounded-full flex items-center justify-center"><Clock className="w-6 h-6 text-yellow-600" /></div><div><p className="text-sm text-gray-500">العملاء المدينون</p><p className="text-xl font-bold text-yellow-600">{totalReceivables.toLocaleString()} ج.م</p></div></div></CardContent></Card>
+                      <Card><CardContent className="pt-6"><div className="flex items-center gap-3"><div className="w-12 h-12 bg-purple-100 rounded-full flex items-center justify-center"><Eye className="w-6 h-6 text-purple-600" /></div><div><p className="text-sm text-gray-500">المبيعات النقدية</p><p className="text-xl font-bold text-purple-600">{cashSalesTotal.toLocaleString()} ج.م</p></div></div></CardContent></Card>
+                    </div>
 
               {/* Action Bar */}
               <Card>
@@ -2384,17 +2448,85 @@ function AccountingApp() {
                   </Card>
                 </TabsContent>
               </Tabs>
+                  </>
+                )
+              })()}
             </div>
           )}
 
           {/* ============ PURCHASES MODULE ============ */}
           {activeModule === 'purchases' && (
             <div className="space-y-6">
+              {/* Purchases Summary Cards - from Journal Entries */}
+              {(() => {
+                // حسابات المشتريات والمصروفات من القيود المحاسبية
+                const purchaseAccounts: Record<string, { name: string; debit: number; credit: number; net: number }> = {}
+                
+                journalEntries.forEach(entry => {
+                  entry.lines.forEach(line => {
+                    const code = String(line.accountCode || '')
+                    // حسابات المشتريات/التكلفة تبدأ بـ 5
+                    if (code.startsWith('5')) {
+                      if (!purchaseAccounts[code]) {
+                        purchaseAccounts[code] = { name: line.accountName || '', debit: 0, credit: 0, net: 0 }
+                      }
+                      purchaseAccounts[code].debit += Number(line.debit) || 0
+                      purchaseAccounts[code].credit += Number(line.credit) || 0
+                    }
+                  })
+                })
+                
+                // حساب صافي كل حساب مشتريات
+                Object.keys(purchaseAccounts).forEach(code => {
+                  purchaseAccounts[code].net = purchaseAccounts[code].debit - purchaseAccounts[code].credit
+                })
+                
+                // إجمالي المشتريات (مجموع الأرصدة المدينة لحسابات 5xxx)
+                const totalPurchases = Object.values(purchaseAccounts).reduce((sum, acc) => sum + Math.max(0, acc.net), 0)
+                
+                // عدد قيود المشتريات
+                const purchasesEntriesCount = journalEntries.filter(entry => 
+                  entry.lines.some(line => String(line.accountCode || '').startsWith('5'))
+                ).length
+                
+                // المبالغ المستحقة للموردين (حسابات 221x - رصيد دائن)
+                let totalPayables = 0
+                const supplierAccounts: Record<string, { name: string; debit: number; credit: number }> = {}
+                
+                journalEntries.forEach(entry => {
+                  entry.lines.forEach(line => {
+                    const code = String(line.accountCode || '')
+                    if (code.startsWith('221')) {
+                      if (!supplierAccounts[code]) {
+                        supplierAccounts[code] = { name: line.accountName || '', debit: 0, credit: 0 }
+                      }
+                      supplierAccounts[code].debit += Number(line.debit) || 0
+                      supplierAccounts[code].credit += Number(line.credit) || 0
+                    }
+                  })
+                })
+                
+                totalPayables = Object.values(supplierAccounts).reduce((sum, acc) => 
+                  sum + Math.max(0, acc.credit - acc.debit), 0
+                )
+                
+                // المشتريات النقدية (قيود تحتوي على مشتريات + صندوق)
+                const cashPurchasesEntries = journalEntries.filter(entry =>
+                  entry.lines.some(l => String(l.accountCode || '').startsWith('5')) &&
+                  entry.lines.some(l => l.accountCode === '1111')
+                )
+                const cashPurchasesTotal = cashPurchasesEntries.reduce((sum, entry) => 
+                  sum + entry.lines.filter(l => String(l.accountCode || '').startsWith('5'))
+                    .reduce((s, l) => s + (Number(l.debit) || 0), 0), 0
+                )
+
+                return (
+                  <>
               <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-                <Card><CardContent className="pt-6"><div className="flex items-center gap-3"><div className="w-12 h-12 bg-red-100 rounded-full flex items-center justify-center"><TrendingDown className="w-6 h-6 text-red-600" /></div><div><p className="text-sm text-gray-500">إجمالي المشتريات</p><p className="text-xl font-bold text-red-600">{purchaseInvoices.reduce((sum, p) => sum + p.total, 0).toLocaleString()} ج.م</p></div></div></CardContent></Card>
-                <Card><CardContent className="pt-6"><div className="flex items-center gap-3"><div className="w-12 h-12 bg-blue-100 rounded-full flex items-center justify-center"><ClipboardList className="w-6 h-6 text-blue-600" /></div><div><p className="text-sm text-gray-500">فواتير الشراء</p><p className="text-xl font-bold text-blue-600">{purchaseInvoices.length}</p></div></div></CardContent></Card>
-                <Card><CardContent className="pt-6"><div className="flex items-center gap-3"><div className="w-12 h-12 bg-yellow-100 rounded-full flex items-center justify-center"><Clock className="w-6 h-6 text-yellow-600" /></div><div><p className="text-sm text-gray-500">قيد الانتظار</p><p className="text-xl font-bold text-yellow-600">{purchaseInvoices.filter(p => p.status === 'draft').length}</p></div></div></CardContent></Card>
-                <Card><CardContent className="pt-6"><div className="flex items-center gap-3"><div className="w-12 h-12 bg-purple-100 rounded-full flex items-center justify-center"><Truck className="w-6 h-6 text-purple-600" /></div><div><p className="text-sm text-gray-500">تم الاستلام</p><p className="text-xl font-bold text-purple-600">{purchaseInvoices.filter(p => p.status === 'paid' || p.status === 'posted').length}</p></div></div></CardContent></Card>
+                <Card><CardContent className="pt-6"><div className="flex items-center gap-3"><div className="w-12 h-12 bg-red-100 rounded-full flex items-center justify-center"><TrendingDown className="w-6 h-6 text-red-600" /></div><div><p className="text-sm text-gray-500">إجمالي المشتريات</p><p className="text-xl font-bold text-red-600">{totalPurchases.toLocaleString()} ج.م</p></div></div></CardContent></Card>
+                <Card><CardContent className="pt-6"><div className="flex items-center gap-3"><div className="w-12 h-12 bg-blue-100 rounded-full flex items-center justify-center"><ClipboardList className="w-6 h-6 text-blue-600" /></div><div><p className="text-sm text-gray-500">قيود المشتريات</p><p className="text-xl font-bold text-blue-600">{purchasesEntriesCount} قيد</p></div></div></CardContent></Card>
+                <Card><CardContent className="pt-6"><div className="flex items-center gap-3"><div className="w-12 h-12 bg-yellow-100 rounded-full flex items-center justify-center"><Clock className="w-6 h-6 text-yellow-600" /></div><div><p className="text-sm text-gray-500">الموردين الدائنون</p><p className="text-xl font-bold text-yellow-600">{totalPayables.toLocaleString()} ج.م</p></div></div></CardContent></Card>
+                <Card><CardContent className="pt-6"><div className="flex items-center gap-3"><div className="w-12 h-12 bg-purple-100 rounded-full flex items-center justify-center"><Truck className="w-6 h-6 text-purple-600" /></div><div><p className="text-sm text-gray-500">المشتريات النقدية</p><p className="text-xl font-bold text-purple-600">{cashPurchasesTotal.toLocaleString()} ج.م</p></div></div></CardContent></Card>
               </div>
 
               <Card>
@@ -2496,6 +2628,9 @@ function AccountingApp() {
                   </div>
                 </CardContent>
               </Card>
+                  </>
+                )
+              })()}
             </div>
           )}
 
