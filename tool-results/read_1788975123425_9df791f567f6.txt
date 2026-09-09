@@ -1,0 +1,502 @@
+  3114→          {activeModule === 'journal-entries' && (
+  3115→            <div className="space-y-6">
+  3116→              {/* Summary Cards */}
+  3117→              <div className="grid grid-cols-1 md:grid-cols-5 gap-4">
+  3118→                <Card className="border-r-4 border-r-indigo-500">
+  3119→                  <CardContent className="pt-6">
+  3120→                    <div className="flex items-center gap-3">
+  3121→                      <div className="w-12 h-12 bg-indigo-100 rounded-full flex items-center justify-center">
+  3122→                        <BookOpen className="w-6 h-6 text-indigo-600" />
+  3123→                      </div>
+  3124→                      <div>
+  3125→                        <p className="text-sm text-gray-500">إجمالى القيود</p>
+  3126→                        <p className="text-xl font-bold text-indigo-600">{journalEntries.length}</p>
+  3127→                      </div>
+  3128→                    </div>
+  3129→                  </CardContent>
+  3130→                </Card>
+  3131→                <Card className="border-r-4 border-r-green-500">
+  3132→                  <CardContent className="pt-6">
+  3133→                    <div className="flex items-center gap-3">
+  3134→                      <div className="w-12 h-12 bg-green-100 rounded-full flex items-center justify-center">
+  3135→                        <TrendingUp className="w-6 h-6 text-green-600" />
+  3136→                      </div>
+  3137→                      <div>
+  3138→                        <p className="text-sm text-gray-500">إجمالى المدين</p>
+  3139→                        <p className="text-xl font-bold text-green-600">{journalEntries.reduce((sum, e) => sum + e.totalDebit, 0).toLocaleString()} ج.م</p>
+  3140→                      </div>
+  3141→                    </div>
+  3142→                  </CardContent>
+  3143→                </Card>
+  3144→                <Card className="border-r-4 border-r-red-500">
+  3145→                  <CardContent className="pt-6">
+  3146→                    <div className="flex items-center gap-3">
+  3147→                      <div className="w-12 h-12 bg-red-100 rounded-full flex items-center justify-center">
+  3148→                        <TrendingDown className="w-6 h-6 text-red-600" />
+  3149→                      </div>
+  3150→                      <div>
+  3151→                        <p className="text-sm text-gray-500">إجمالى الدائن</p>
+  3152→                        <p className="text-xl font-bold text-red-600">{journalEntries.reduce((sum, e) => sum + e.totalCredit, 0).toLocaleString()} ج.م</p>
+  3153→                      </div>
+  3154→                    </div>
+  3155→                  </CardContent>
+  3156→                </Card>
+  3157→                <Card className="border-r-4 border-r-blue-500">
+  3158→                  <CardContent className="pt-6">
+  3159→                    <div className="flex items-center gap-3">
+  3160→                      <div className="w-12 h-12 bg-blue-100 rounded-full flex items-center justify-center">
+  3161→                        <CheckCircle className="w-6 h-6 text-blue-600" />
+  3162→                      </div>
+  3163→                      <div>
+  3164→                        <p className="text-sm text-gray-500">قيود مرحلة</p>
+  3165→                        <p className="text-xl font-bold text-blue-600">{journalEntries.filter(e => e.status === 'posted').length}</p>
+  3166→                      </div>
+  3167→                    </div>
+  3168→                  </CardContent>
+  3169→                </Card>
+  3170→                <Card className="border-r-4 border-r-yellow-500">
+  3171→                  <CardContent className="pt-6">
+  3172→                    <div className="flex items-center gap-3">
+  3173→                      <div className="w-12 h-12 bg-yellow-100 rounded-full flex items-center justify-center">
+  3174→                        <FileText className="w-6 h-6 text-yellow-600" />
+  3175→                      </div>
+  3176→                      <div>
+  3177→                        <p className="text-sm text-gray-500">قيود مسودة</p>
+  3178→                        <p className="text-xl font-bold text-yellow-600">{journalEntries.filter(e => e.status === 'draft').length}</p>
+  3179→                      </div>
+  3180→                    </div>
+  3181→                  </CardContent>
+  3182→                </Card>
+  3183→              </div>
+  3184→
+  3185→              {/* Journal Entries Table */}
+  3186→              <Card>
+  3187→                <CardHeader className="flex flex-row items-center justify-between">
+  3188→                  <CardTitle className="flex items-center gap-2">
+  3189→                    <BookOpen className="w-6 h-6 text-indigo-600" />
+  3190→                    القيود المحاسبية
+  3191→                  </CardTitle>
+  3192→                  <div className="flex items-center gap-2">
+  3193→                    <div className="relative">
+  3194→                      <Search className="absolute right-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400" />
+  3195→                      <Input
+  3196→                        placeholder="بحث بالبيان أو الحساب..."
+  3197→                        value={journalSearchTerm}
+  3198→                        onChange={(e) => setJournalSearchTerm(e.target.value)}
+  3199→                        className="pr-10 w-64"
+  3200→                      />
+  3201→                    </div>
+  3202→                    <Input
+  3203→                      type="date"
+  3204→                      value={journalDateFilter}
+  3205→                      onChange={(e) => setJournalDateFilter(e.target.value)}
+  3206→                      className="w-40"
+  3207→                    />
+  3208→                    <Button 
+  3209→                      onClick={() => setShowJournalDialog(true)}
+  3210→                      className="bg-indigo-500 hover:bg-indigo-600"
+  3211→                    >
+  3212→                      <Plus className="ml-2 h-4 w-4" />قيد جديد
+  3213→                    </Button>
+  3214→                  </div>
+  3215→                </CardHeader>
+  3216→                <CardContent>
+  3217→                  <div className="overflow-x-auto">
+  3218→                    <table className="w-full text-sm">
+  3219→                      <thead>
+  3220→                        <tr className="border-b-2 bg-gradient-to-l from-indigo-50 to-purple-50">
+  3221→                          <th className="text-right p-3 font-bold text-indigo-700">#</th>
+  3222→                          <th className="text-right p-3 font-bold text-indigo-700">التاريخ</th>
+  3223→                          <th className="text-right p-3 font-bold text-indigo-700">البيان</th>
+  3224→                          <th className="text-right p-3 font-bold text-indigo-700">الحسابات</th>
+  3225→                          <th className="text-right p-3 font-bold text-indigo-700">المدين</th>
+  3226→                          <th className="text-right p-3 font-bold text-indigo-700">الدائن</th>
+  3227→                          <th className="text-right p-3 font-bold text-indigo-700">الحالة</th>
+  3228→                          <th className="text-right p-3 font-bold text-indigo-700">الإجراءات</th>
+  3229→                        </tr>
+  3230→                      </thead>
+  3231→                      <tbody>
+  3232→                        {journalEntries
+  3233→                          .filter(entry => {
+  3234→                            if (journalSearchTerm && !entry.description?.includes(journalSearchTerm) && 
+  3235→                                !entry.lines.some(l => l.accountName.includes(journalSearchTerm))) {
+  3236→                              return false
+  3237→                            }
+  3238→                            if (journalDateFilter && entry.date !== journalDateFilter) {
+  3239→                              return false
+  3240→                            }
+  3241→                            return true
+  3242→                          })
+  3243→                          .sort((a, b) => b.entryNumber - a.entryNumber)
+  3244→                          .map((entry) => (
+  3245→                          <tr key={entry.id} className="border-b hover:bg-indigo-50/30 transition-colors">
+  3246→                            <td className="p-3 font-bold text-indigo-600">#{entry.entryNumber}</td>
+  3247→                            <td className="p-3">{entry.date}</td>
+  3248→                            <td className="p-3 max-w-xs truncate" title={entry.description}>
+  3249→                              {entry.description || '-'}
+  3250→                            </td>
+  3251→                            <td className="p-3">
+  3252→                              <div className="flex flex-col gap-1">
+  3253→                                {entry.lines.slice(0, 2).map((line, idx) => (
+  3254→                                  <span key={idx} className={`text-xs px-2 py-1 rounded ${line.debit > 0 ? 'bg-red-50 text-red-700' : 'bg-green-50 text-green-700'}`}>
+  3255→                                    {line.accountName}
+  3256→                                  </span>
+  3257→                                ))}
+  3258→                                {entry.lines.length > 2 && (
+  3259→                                  <span className="text-xs text-gray-500">+{entry.lines.length - 2} حساب آخر</span>
+  3260→                                )}
+  3261→                              </div>
+  3262→                            </td>
+  3263→                            <td className="p-3 font-bold text-red-600">{entry.totalDebit.toLocaleString()}</td>
+  3264→                            <td className="p-3 font-bold text-green-600">{entry.totalCredit.toLocaleString()}</td>
+  3265→                            <td className="p-3">
+  3266→                              <Badge className={
+  3267→                                entry.status === 'posted' ? 'bg-blue-100 text-blue-800' :
+  3268→                                entry.status === 'draft' ? 'bg-yellow-100 text-yellow-800' :
+  3269→                                'bg-gray-100 text-gray-800'
+  3270→                              }>
+  3271→                                {entry.status === 'posted' ? 'مرحل' : entry.status === 'draft' ? 'مسودة' : 'ملغى'}
+  3272→                              </Badge>
+  3273→                            </td>
+  3274→                            <td className="p-3">
+  3275→                              <div className="flex items-center gap-1">
+  3276→                                <Button 
+  3277→                                  variant="ghost" 
+  3278→                                  size="icon" 
+  3279→                                  title="عرض القيد"
+  3280→                                  onClick={() => setViewingJournalEntry(entry)}
+  3281→                                >
+  3282→                                  <Eye className="w-4 h-4 text-blue-600" />
+  3283→                                </Button>
+  3284→                                <Button variant="ghost" size="icon" title="طباعة">
+  3285→                                  <Printer className="w-4 h-4 text-purple-600" />
+  3286→                                </Button>
+  3287→                              </div>
+  3288→                            </td>
+  3289→                          </tr>
+  3290→                        ))}
+  3291→                        {journalEntries.filter(entry => {
+  3292→                          if (journalSearchTerm && !entry.description?.includes(journalSearchTerm) && 
+  3293→                              !entry.lines.some(l => l.accountName.includes(journalSearchTerm))) {
+  3294→                            return false
+  3295→                          }
+  3296→                          if (journalDateFilter && entry.date !== journalDateFilter) {
+  3297→                            return false
+  3298→                          }
+  3299→                          return true
+  3300→                        }).length === 0 && (
+  3301→                          <tr>
+  3302→                            <td colSpan={8} className="p-8 text-center text-gray-500">
+  3303→                              <BookOpen className="w-12 h-12 mx-auto mb-3 text-gray-300" />
+  3304→                              <p>لا توجد قيود محاسبية</p>
+  3305→                            </td>
+  3306→                          </tr>
+  3307→                        )}
+  3308→                      </tbody>
+  3309→                    </table>
+  3310→                  </div>
+  3311→                </CardContent>
+  3312→              </Card>
+  3313→            </div>
+  3314→          )}
+  3315→
+  3316→          {/* Journal Entry View Dialog */}
+  3317→          <Dialog open={!!viewingJournalEntry} onOpenChange={() => setViewingJournalEntry(null)}>
+  3318→            <DialogContent className="max-w-[90vw] w-[90vw] h-[85vh] max-h-[85vh] overflow-y-auto p-8" dir="rtl">
+  3319→              <DialogHeader className="pb-6 border-b-2 border-indigo-200">
+  3320→                <DialogTitle className="text-3xl font-bold text-indigo-700 flex items-center gap-3">
+  3321→                  <BookOpen className="w-8 h-8" />
+  3322→                  تفاصيل القيد المحاسبي #{viewingJournalEntry?.entryNumber}
+  3323→                </DialogTitle>
+  3324→                <DialogDescription className="text-lg mt-2 text-gray-600">
+  3325→                  التاريخ: {viewingJournalEntry?.date} | الحالة: 
+  3326→                  <Badge className="mr-2 bg-blue-100 text-blue-800">
+  3327→                    {viewingJournalEntry?.status === 'posted' ? 'مرحل' : viewingJournalEntry?.status === 'draft' ? 'مسودة' : 'ملغى'}
+  3328→                  </Badge>
+  3329→                </DialogDescription>
+  3330→              </DialogHeader>
+  3331→              
+  3332→              {viewingJournalEntry && (
+  3333→                <div className="mt-6 space-y-6">
+  3334→                  {/* Description Card */}
+  3335→                  <Card className="bg-gradient-to-l from-indigo-50 to-purple-50 border-2 border-indigo-200">
+  3336→                    <CardContent className="pt-6">
+  3337→                      <div className="flex items-start gap-3">
+  3338→                        <FileText className="w-6 h-6 text-indigo-600 mt-1" />
+  3339→                        <div>
+  3340→                          <p className="font-semibold text-gray-700 mb-1">البيان:</p>
+  3341→                          <p className="text-xl text-gray-900">{viewingJournalEntry.description}</p>
+  3342→                        </div>
+  3343→                      </div>
+  3344→                    </CardContent>
+  3345→                  </Card>
+  3346→
+  3347→                  {/* Entry Lines Table */}
+  3348→                  <Card>
+  3349→                    <CardHeader className="bg-gradient-to-l from-gray-50 to-gray-100">
+  3350→                      <CardTitle className="text-xl flex items-center gap-2">
+  3351→                        <ClipboardList className="w-5 h-5" />
+  3352→                        تفاصيل القيد
+  3353→                      </CardTitle>
+  3354→                    </CardHeader>
+  3355→                    <CardContent className="p-0">
+  3356→                      <table className="w-full">
+  3357→                        <thead>
+  3358→                          <tr className="border-b-2 bg-gray-100">
+  3359→                            <th className="text-right p-4 font-bold">كود الحساب</th>
+  3360→                            <th className="text-right p-4 font-bold">اسم الحساب</th>
+  3361→                            <th className="text-right p-4 font-bold text-red-600">مدين</th>
+  3362→                            <th className="text-right p-4 font-bold text-green-600">دائن</th>
+  3363→                          </tr>
+  3364→                        </thead>
+  3365→                        <tbody>
+  3366→                          {viewingJournalEntry.lines.map((line, idx) => (
+  3367→                            <tr key={idx} className={`border-b ${idx % 2 === 0 ? 'bg-white' : 'bg-gray-50'}`}>
+  3368→                              <td className="p-4 font-mono font-bold text-indigo-600">{line.accountCode}</td>
+  3369→                              <td className="p-4 font-semibold">{line.accountName}</td>
+  3370→                              <td className="p-4">
+  3371→                                {line.debit > 0 ? (
+  3372→                                  <span className="font-bold text-red-600 text-lg">{line.debit.toLocaleString()} ج.م</span>
+  3373→                                ) : <span className="text-gray-300">-</span>}
+  3374→                              </td>
+  3375→                              <td className="p-4">
+  3376→                                {line.credit > 0 ? (
+  3377→                                  <span className="font-bold text-green-600 text-lg">{line.credit.toLocaleString()} ج.م</span>
+  3378→                                ) : <span className="text-gray-300">-</span>}
+  3379→                              </td>
+  3380→                            </tr>
+  3381→                          ))}
+  3382→                        </tbody>
+  3383→                        <tfoot>
+  3384→                          <tr className="border-t-2 bg-gradient-to-l from-gray-100 to-gray-200">
+  3385→                            <td colSpan={2} className="p-4 font-bold text-lg text-left">الإجمالي:</td>
+  3386→                            <td className="p-4 font-bold text-xl text-red-600">
+  3387→                              {viewingJournalEntry.totalDebit.toLocaleString()} ج.م
+  3388→                            </td>
+  3389→                            <td className="p-4 font-bold text-xl text-green-600">
+  3390→                              {viewingJournalEntry.totalCredit.toLocaleString()} ج.م
+  3391→                            </td>
+  3392→                          </tr>
+  3393→                        </tfoot>
+  3394→                      </table>
+  3395→                    </CardContent>
+  3396→                  </Card>
+  3397→
+  3398→                  {/* Balance Verification */}
+  3399→                  <div className={`p-4 rounded-xl border-2 ${
+  3400→                    viewingJournalEntry.totalDebit === viewingJournalEntry.totalCredit 
+  3401→                      ? 'bg-green-50 border-green-300' 
+  3402→                      : 'bg-red-50 border-red-300'
+  3403→                  }`}>
+  3404→                    <div className="flex items-center justify-center gap-3">
+  3405→                      {viewingJournalEntry.totalDebit === viewingJournalEntry.totalCredit ? (
+  3406→                        <>
+  3407→                          <CheckCircle className="w-6 h-6 text-green-600" />
+  3408→                          <span className="font-bold text-green-700 text-lg">القيد متوازن ✓</span>
+  3409→                        </>
+  3410→                      ) : (
+  3411→                        <>
+  3412→                          <AlertCircle className="w-6 h-6 text-red-600" />
+  3413→                          <span className="font-bold text-red-700 text-lg">القيد غير متوازن - الفرق: {Math.abs(viewingJournalEntry.totalDebit - viewingJournalEntry.totalCredit).toLocaleString()} ج.م</span>
+  3414→                        </>
+  3415→                      )}
+  3416→                    </div>
+  3417→                  </div>
+  3418→
+  3419→                  {/* Action Buttons */}
+  3420→                  <div className="flex justify-end gap-3 pt-4">
+  3421→                    <Button 
+  3422→                      variant="outline" 
+  3423→                      onClick={() => setViewingJournalEntry(null)}
+  3424→                      className="px-8 py-3 text-lg"
+  3425→                    >
+  3426→                      إغلاق
+  3427→                    </Button>
+  3428→                    <Button className="bg-indigo-500 hover:bg-indigo-600 px-8 py-3 text-lg">
+  3429→                      <Printer className="ml-2 h-5 w-5" />
+  3430→                      طباعة القيد
+  3431→                    </Button>
+  3432→                  </div>
+  3433→                </div>
+  3434→              )}
+  3435→            </DialogContent>
+  3436→          </Dialog>
+  3437→
+  3438→          {/* ============ REPORTS MODULE ============ */}
+  3439→          {activeModule === 'reports' && (
+  3440→            <div className="space-y-6">
+  3441→              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+  3442→                {[
+  3443→                  { icon: BarChart3, title: 'قائمة الدخل', desc: 'الإيرادات والمصروفات وصافي الربح', color: 'green' },
+  3444→                  { icon: PieChart, title: 'الميزانية العمومية', desc: 'الأصول والخصوم وحقوق الملكية', color: 'blue' },
+  3445→                  { icon: LineChart, title: 'التدفقات النقدية', desc: 'مصادر واستخدامات النقدية', color: 'purple' },
+  3446→                  { icon: FileBarChart, title: 'ميزان المراجعة', desc: 'أرصدة جميع الحسابات', color: 'orange' },
+  3447→                  { icon: BookOpen, title: 'الأستاذ العام', desc: 'تفصيل حركات كل حساب', color: 'pink' },
+  3448→                  { icon: ClipboardList, title: 'تقرير العمر', desc: 'أرصدة العملاء والموردين', color: 'cyan' }
+  3449→                ].map((report, idx) => (
+  3450→                  <Card key={idx} className="hover:shadow-lg transition-shadow cursor-pointer group">
+  3451→                    <CardContent className="pt-6">
+  3452→                      <div className="flex items-start gap-4">
+  3453→                        <div className={`w-14 h-14 bg-${report.color}-100 rounded-xl flex items-center justify-center group-hover:scale-110 transition-transform`}>
+  3454→                          <report.icon className={`w-7 h-7 text-${report.color}-600`} />
+  3455→                        </div>
+  3456→                        <div className="flex-1">
+  3457→                          <h3 className="font-bold text-lg">{report.title}</h3>
+  3458→                          <p className="text-sm text-gray-500 mt-1">{report.desc}</p>
+  3459→                          <div className="flex items-center gap-2 mt-4">
+  3460→                            <Button size="sm" variant="outline" className="text-xs"><Eye className="ml-1 h-3 w-3" />عرض</Button>
+  3461→                            <Button size="sm" variant="outline" className="text-xs"><Printer className="ml-1 h-3 w-3" />طباعة</Button>
+  3462→                            <Button size="sm" variant="outline" className="text-xs"><Download className="ml-1 h-3 w-3" />تصدير</Button>
+  3463→                          </div>
+  3464→                        </div>
+  3465→                      </div>
+  3466→                    </CardContent>
+  3467→                  </Card>
+  3468→                ))}
+  3469→              </div>
+  3470→
+  3471→              <Card>
+  3472→                <CardHeader><CardTitle>إعدادات التقرير</CardHeader></CardHeader>
+  3473→                <CardContent>
+  3474→                  <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+  3475→                    <div><Label>من تاريخ</Label><Input type="date" className="mt-1" /></div>
+  3476→                    <div><Label>إلى تاريخ</Label><Input type="date" className="mt-1" /></div>
+  3477→                    <div><Label>نوع التقرير</Label><Select><SelectTrigger className="mt-1"><SelectValue placeholder="اختر النوع" /></SelectTrigger><SelectContent><SelectItem value="detailed">تفصيلي</SelectItem><SelectItem value="summary">ملخص</SelectItem></SelectContent></Select></div>
+  3478→                    <div className="flex items-end"><Button className="w-full bg-gradient-to-r from-[#005f73] to-[#0a9396]"><BarChart3 className="ml-2 h-4 w-4" />عرض التقرير</Button></div>
+  3479→                  </div>
+  3480→                </CardContent>
+  3481→              </Card>
+  3482→            </div>
+  3483→          )}
+  3484→
+  3485→          {/* ============ SETTINGS MODULE ============ */}
+  3486→          {activeModule === 'settings' && (
+  3487→            <div className="space-y-6">
+  3488→              <Tabs defaultValue="general">
+  3489→                <TabsList className="grid w-full grid-cols-5">
+  3490→                  <TabsTrigger value="general">عام</TabsTrigger>
+  3491→                  <TabsTrigger value="company">الشركة</TabsTrigger>
+  3492→                  <TabsTrigger value="invoice">الفواتير</TabsTrigger>
+  3493→                  <TabsTrigger value="users">المستخدمون</TabsTrigger>
+  3494→                  <TabsTrigger value="backup">النسخ الاحتياطي</TabsTrigger>
+  3495→                </TabsList>
+  3496→
+  3497→                <TabsContent value="general">
+  3498→                  <Card>
+  3499→                    <CardHeader><CardTitle>الإعدادات العامة</CardTitle></CardHeader>
+  3500→                    <CardContent className="space-y-4">
+  3501→                      <div className="grid grid-cols-2 gap-4">
+  3502→                        <div><Label>اللغة</Label><Select><SelectTrigger className="mt-1"><SelectValue /></SelectTrigger><SelectContent><SelectItem value="ar">العربية</SelectItem><SelectItem value="en">English</SelectItem></SelectContent></Select></div>
+  3503→                        <div><Label>العملة</Label><Select defaultValue="egp"><SelectTrigger className="mt-1"><SelectValue /></SelectTrigger><SelectContent><SelectItem value="egp">جنيه مصري (ج.م)</SelectItem><SelectItem value="sar">ريال سعودي</SelectItem><SelectItem value="aed">درهم إماراتي</SelectItem><SelectItem value="usd">دولار أمريكي</SelectItem></SelectContent></Select></div>
+  3504→                        <div><Label>السنة المالية</Label><Input type="number" className="mt-1" defaultValue="2024" /></div>
+  3505→                        <div><Label>بداية السنة</Label><Input type="month" className="mt-1" defaultValue="2024-01" /></div>
+  3506→                      </div>
+  3507→                      <Button className="bg-gradient-to-r from-[#005f73] to-[#0a9396]"><Save className="ml-2 h-4 w-4" />حفظ الإعدادات</Button>
+  3508→                    </CardContent>
+  3509→                  </Card>
+  3510→                </TabsContent>
+  3511→
+  3512→                <TabsContent value="company">
+  3513→                  <Card>
+  3514→                    <CardHeader><CardTitle>بيانات الشركة</CardTitle></CardHeader>
+  3515→                    <CardContent className="space-y-4">
+  3516→                      <div className="grid grid-cols-2 gap-4">
+  3517→                        <div><Label>اسم الشركة</Label><Input className="mt-1" defaultValue="شركة إنجاز للحلول المحاسبية" /></div>
+  3518→                        <div><Label>الاسم بالإنجليزية</Label><Input className="mt-1" defaultValue="Injaz Accounting Solutions" dir="ltr" /></div>
+  3519→                        <div><Label>السجل التجاري</Label><Input className="mt-1" defaultValue="1010123456" /></div>
+  3520→                        <div><Label>الضريبة</Label><Input className="mt-1" defaultValue="300123456789003" /></div>
+  3521→                        <div className="col-span-2"><Label>العنوان</Label><Textarea className="mt-1" defaultValue="الرياض، المملكة العربية السعودية" /></div>
+  3522→                        <div><Label>الهاتف</Label><Input className="mt-1" defaultValue="+966501234567" /></div>
+  3523→                        <div><Label>البريد الإلكتروني</Label><Input className="mt-1" defaultValue="info@injaz-sa.com" /></div>
+  3524→                      </div>
+  3525→                      <Button className="bg-gradient-to-r from-[#005f73] to-[#0a9396]"><Save className="ml-2 h-4 w-4" />حفظ البيانات</Button>
+  3526→                    </CardContent>
+  3527→                  </Card>
+  3528→                </TabsContent>
+  3529→
+  3530→                <TabsContent value="invoice">
+  3531→                  <Card>
+  3532→                    <CardHeader><CardTitle>إعدادات الفواتير</CardTitle></CardHeader>
+  3533→                    <CardContent className="space-y-4">
+  3534→                      <div className="grid grid-cols-2 gap-4">
+  3535→                        <div><Label>بداية ترقيم الفواتير</Label><Input className="mt-1" defaultValue="1" /></div>
+  3536→                        <div><Label>بادئة الفواتير</Label><Input className="mt-1" defaultValue="INV-" /></div>
+  3537→                        <div><Label>شروط الدفع (بالأيام)</Label><Input type="number" className="mt-1" defaultValue="30" /></div>
+  3538→                        <div><Label>الضريبة المضافة %</Label><Input type="number" className="mt-1" defaultValue="15" /></div>
+  3539→                      </div>
+  3540→                      <div><Label>ملاحظات الفاتورة الافتراضية</Label><Textarea className="mt-1" defaultValue="شكراً لتعاملكم معنا" /></div>
+  3541→                      <Button className="bg-gradient-to-r from-[#005f73] to-[#0a9396]"><Save className="ml-2 h-4 w-4" />حفظ الإعدادات</Button>
+  3542→                    </CardContent>
+  3543→                  </Card>
+  3544→                </TabsContent>
+  3545→
+  3546→                <TabsContent value="users">
+  3547→                  <Card>
+  3548→                    <CardHeader className="flex flex-row items-center justify-between">
+  3549→                      <CardTitle>المستخدمون والصلاحيات</CardTitle>
+  3550→                      <Button className="bg-gradient-to-r from-[#005f73] to-[#0a9396]"><Plus className="ml-2 h-4 w-4" />مستخدم جديد</Button>
+  3551→                    </CardHeader>
+  3552→                    <CardContent>
+  3553→                      <div className="overflow-x-auto">
+  3554→                        <table className="w-full text-sm">
+  3555→                          <thead>
+  3556→                            <tr className="border-b bg-gray-50">
+  3557→                              <th className="text-right p-3 font-medium">المستخدم</th>
+  3558→                              <th className="text-right p-3 font-medium">الدور</th>
+  3559→                              <th className="text-right p-3 font-medium">الحالة</th>
+  3560→                              <th className="text-right p-3 font-medium">آخر دخول</th>
+  3561→                              <th className="text-right p-3 font-medium">الإجراءات</th>
+  3562→                            </tr>
+  3563→                          </thead>
+  3564→                          <tbody>
+  3565→                            {[
+  3566→                              { name: 'مدير النظام', role: 'مدير', status: 'نشط', lastLogin: 'الآن' },
+  3567→                              { name: 'أحمد محمد', role: 'محاسب', status: 'نشط', lastLogin: 'منذ ساعة' },
+  3568→                              { name: 'سارة علي', role: 'مندوب مبيعات', status: 'نشط', lastLogin: 'منذ 3 ساعات' }
+  3569→                            ].map((user, idx) => (
+  3570→                              <tr key={idx} className="border-b hover:bg-gray-50">
+  3571→                                <td className="p-3 font-medium">{user.name}</td>
+  3572→                                <td className="p-3"><Badge className="bg-blue-100 text-blue-800">{user.role}</Badge></td>
+  3573→                                <td className="p-3"><Badge className="bg-green-100 text-green-800">{user.status}</Badge></td>
+  3574→                                <td className="p-3 text-gray-500">{user.lastLogin}</td>
+  3575→                                <td className="p-3">
+  3576→                                  <div className="flex items-center gap-1">
+  3577→                                    <Button variant="ghost" size="icon" title="تعديل"><Edit2 className="w-4 h-4" /></Button>
+  3578→                                    <Button variant="ghost" size="icon" title="صلاحيات"><Shield className="w-4 h-4" /></Button>
+  3579→                                    <Button variant="ghost" size="icon" title="حذف"><Trash2 className="w-4 h-4 text-red-600" /></Button>
+  3580→                                  </div>
+  3581→                                </td>
+  3582→                              </tr>
+  3583→                            ))}
+  3584→                          </tbody>
+  3585→                        </table>
+  3586→                      </div>
+  3587→                    </CardContent>
+  3588→                  </Card>
+  3589→                </TabsContent>
+  3590→
+  3591→                <TabsContent value="backup">
+  3592→                  <Card>
+  3593→                    <CardHeader><CardTitle>النسخ الاحتياطي والاستعادة</CardHeader></CardHeader>
+  3594→                    <CardContent className="space-y-4">
+  3595→                      <div className="grid grid-cols-2 gap-4">
+  3596→                        <Card className="border-dashed"><CardContent className="pt-6 text-center"><Database className="w-12 h-12 mx-auto text-gray-400 mb-3" /><p className="font-medium">إنشاء نسخة احتياطية</p><p className="text-sm text-gray-500 mt-1">حفظ نسخة كاملة من البيانات</p><Button className="mt-3 bg-gradient-to-r from-[#005f73] to-[#0a9396]"><Upload className="ml-2 h-4 w-4" />نسخ احتياطي الآن</Button></CardContent></Card>
+  3597→                        <Card className="border-dashed"><CardContent className="pt-6 text-center"><Database className="w-12 h-12 mx-auto text-gray-400 mb-3" /><p className="font-medium">استعادة نسخة احتياطية</p><p className="text-sm text-gray-500 mt-1">استرجاع البيانات من نسخة سابقة</p><Button className="mt-3" variant="outline"><Download className="ml-2 h-4 w-4" />استعادة</Button></CardContent></Card>
+  3598→                      </div>
+  3599→                      <Separator />
+  3600→                      <div>
+  3601→                        <h4 className="font-medium mb-3">النسخ الاحتياطية السابقة</h4>
+  3602→                        <div className="space-y-2">
+  3603→                          {['backup_2024_01_19.zip', 'backup_2024_01_12.zip', 'backup_2024_01_05.zip'].map((backup, idx) => (
+  3604→                            <div key={idx} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
+  3605→                              <div className="flex items-center gap-3"><Archive className="w-5 h-5 text-gray-400" /><span>{backup}</span></div>
+  3606→                              <div className="flex items-center gap-2"><span className="text-sm text-gray-500">{(2.5 - idx * 0.5).toFixed(1)} MB</span><Button variant="ghost" size="sm" title="تحميل"><Download className="w-4 h-4" /></Button><Button variant="ghost" size="sm" title="استعادة"><Upload className="w-4 h-4" /></Button><Button variant="ghost" size="sm" title="حذف"><Trash2 className="w-4 h-4 text-red-600" /></Button></div>
+  3607→                            </div>
+  3608→                          ))}
+  3609→                        </div>
+  3610→                      </div>
+  3611→                    </CardContent>
+  3612→                  </Card>
+  3613→                </TabsContent>
+
+[showing lines 3114-3613 of 4952; use offset=3614 with limit to continue reading]

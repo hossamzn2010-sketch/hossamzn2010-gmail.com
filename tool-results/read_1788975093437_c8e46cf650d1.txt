@@ -1,0 +1,2002 @@
+     1→[
+     2→  {
+     3→    "id": "je-1",
+     4→    "entryNumber": 1,
+     5→    "date": "2026-06-06",
+     6→    "description": "نقل العفش والمكن والعدة",
+     7→    "lines": [
+     8→      {
+     9→        "accountCode": "5015",
+    10→        "accountName": "صيانة وتصليحات",
+    11→        "debit": 600,
+    12→        "credit": 0
+    13→      },
+    14→      {
+    15→        "accountCode": "1111",
+    16→        "accountName": "الصندوق",
+    17→        "debit": 0,
+    18→        "credit": 600
+    19→      }
+    20→    ],
+    21→    "totalDebit": 600,
+    22→    "totalCredit": 600,
+    23→    "status": "posted"
+    24→  },
+    25→  {
+    26→    "id": "je-2",
+    27→    "entryNumber": 2,
+    28→    "date": "2026-06-06",
+    29→    "description": "اثبات مساهمة حسام  المحول الى ليلى 200 الف ومنبقى لديها 82600",
+    30→    "lines": [
+    31→      {
+    32→        "accountCode": "1111",
+    33→        "accountName": "الصندوق",
+    34→        "debit": 117400,
+    35→        "credit": 0
+    36→      },
+    37→      {
+    38→        "accountCode": "3001",
+    39→        "accountName": "رأس المال",
+    40→        "debit": 0,
+    41→        "credit": 117400
+    42→      },
+    43→      {
+    44→        "accountCode": "1111",
+    45→        "accountName": "الصندوق",
+    46→        "debit": 96314,
+    47→        "credit": 0
+    48→      }
+    49→    ],
+    50→    "totalDebit": 213714,
+    51→    "totalCredit": 117400,
+    52→    "status": "posted"
+    53→  },
+    54→  {
+    55→    "id": "je-3",
+    56→    "entryNumber": 3,
+    57→    "date": "2026-06-06",
+    58→    "description": "اثبات مساهمة محمود تصفيىة الصندوق في 18-7-2026",
+    59→    "lines": [
+    60→      {
+    61→        "accountCode": "3001",
+    62→        "accountName": "رأس المال",
+    63→        "debit": 0,
+    64→        "credit": 96314
+    65→      }
+    66→    ],
+    67→    "totalDebit": 0,
+    68→    "totalCredit": 96314,
+    69→    "status": "posted"
+    70→  },
+    71→  {
+    72→    "id": "je-4",
+    73→    "entryNumber": 4,
+    74→    "date": "2026-06-06",
+    75→    "description": "محمد ايمن تطليع ونقل العدةوالمكن والعفش",
+    76→    "lines": [
+    77→      {
+    78→        "accountCode": "5015",
+    79→        "accountName": "صيانة وتصليحات",
+    80→        "debit": 1000,
+    81→        "credit": 0
+    82→      },
+    83→      {
+    84→        "accountCode": "1111",
+    85→        "accountName": "الصندوق",
+    86→        "debit": 0,
+    87→        "credit": 1000
+    88→      },
+    89→      {
+    90→        "accountCode": "5015",
+    91→        "accountName": "صيانة وتصليحات",
+    92→        "debit": 2810,
+    93→        "credit": 0
+    94→      }
+    95→    ],
+    96→    "totalDebit": 3810,
+    97→    "totalCredit": 1000,
+    98→    "status": "posted"
+    99→  },
+   100→  {
+   101→    "id": "je-5",
+   102→    "entryNumber": 5,
+   103→    "date": "2026-06-06",
+   104→    "description": "فاتورة صاج لتأسيس جبس المعرض",
+   105→    "lines": [
+   106→      {
+   107→        "accountCode": "1111",
+   108→        "accountName": "الصندوق",
+   109→        "debit": 0,
+   110→        "credit": 2810
+   111→      }
+   112→    ],
+   113→    "totalDebit": 0,
+   114→    "totalCredit": 2810,
+   115→    "status": "posted"
+   116→  },
+   117→  {
+   118→    "id": "je-6",
+   119→    "entryNumber": 6,
+   120→    "date": "2026-06-07",
+   121→    "description": "اتياش لتاسيس جبس المعرض",
+   122→    "lines": [
+   123→      {
+   124→        "accountCode": "5015",
+   125→        "accountName": "صيانة وتصليحات",
+   126→        "debit": 800,
+   127→        "credit": 0
+   128→      },
+   129→      {
+   130→        "accountCode": "1111",
+   131→        "accountName": "الصندوق",
+   132→        "debit": 0,
+   133→        "credit": 800
+   134→      },
+   135→      {
+   136→        "accountCode": "5015",
+   137→        "accountName": "صيانة وتصليحات",
+   138→        "debit": 1000,
+   139→        "credit": 0
+   140→      }
+   141→    ],
+   142→    "totalDebit": 1800,
+   143→    "totalCredit": 800,
+   144→    "status": "posted"
+   145→  },
+   146→  {
+   147→    "id": "je-7",
+   148→    "entryNumber": 7,
+   149→    "date": "2026-06-07",
+   150→    "description": "عربون يافطه",
+   151→    "lines": [
+   152→      {
+   153→        "accountCode": "1111",
+   154→        "accountName": "الصندوق",
+   155→        "debit": 0,
+   156→        "credit": 1000
+   157→      },
+   158→      {
+   159→        "accountCode": "5015",
+   160→        "accountName": "صيانة وتصليحات",
+   161→        "debit": 1000,
+   162→        "credit": 0
+   163→      }
+   164→    ],
+   165→    "totalDebit": 1000,
+   166→    "totalCredit": 1000,
+   167→    "status": "posted"
+   168→  },
+   169→  {
+   170→    "id": "je-8",
+   171→    "entryNumber": 8,
+   172→    "date": "2026-06-07",
+   173→    "description": "اشتراك جي بي تي",
+   174→    "lines": [
+   175→      {
+   176→        "accountCode": "1111",
+   177→        "accountName": "الصندوق",
+   178→        "debit": 0,
+   179→        "credit": 1000
+   180→      },
+   181→      {
+   182→        "accountCode": "5015",
+   183→        "accountName": "صيانة وتصليحات",
+   184→        "debit": 200,
+   185→        "credit": 0
+   186→      }
+   187→    ],
+   188→    "totalDebit": 200,
+   189→    "totalCredit": 1000,
+   190→    "status": "posted"
+   191→  },
+   192→  {
+   193→    "id": "je-9",
+   194→    "entryNumber": 9,
+   195→    "date": "2026-06-08",
+   196→    "description": "فطار صنايعية",
+   197→    "lines": [
+   198→      {
+   199→        "accountCode": "1111",
+   200→        "accountName": "الصندوق",
+   201→        "debit": 0,
+   202→        "credit": 200
+   203→      },
+   204→      {
+   205→        "accountCode": "5015",
+   206→        "accountName": "صيانة وتصليحات",
+   207→        "debit": 2500,
+   208→        "credit": 0
+   209→      }
+   210→    ],
+   211→    "totalDebit": 2500,
+   212→    "totalCredit": 200,
+   213→    "status": "posted"
+   214→  },
+   215→  {
+   216→    "id": "je-10",
+   217→    "entryNumber": 10,
+   218→    "date": "2026-06-08",
+   219→    "description": "شراء اركت كهربائي",
+   220→    "lines": [
+   221→      {
+   222→        "accountCode": "1111",
+   223→        "accountName": "الصندوق",
+   224→        "debit": 0,
+   225→        "credit": 2500
+   226→      },
+   227→      {
+   228→        "accountCode": "5015",
+   229→        "accountName": "صيانة وتصليحات",
+   230→        "debit": 500,
+   231→        "credit": 0
+   232→      }
+   233→    ],
+   234→    "totalDebit": 500,
+   235→    "totalCredit": 2500,
+   236→    "status": "posted"
+   237→  },
+   238→  {
+   239→    "id": "je-11",
+   240→    "entryNumber": 11,
+   241→    "date": "2026-06-08",
+   242→    "description": "وائل نظافة وتشوية",
+   243→    "lines": [
+   244→      {
+   245→        "accountCode": "1111",
+   246→        "accountName": "الصندوق",
+   247→        "debit": 0,
+   248→        "credit": 500
+   249→      }
+   250→    ],
+   251→    "totalDebit": 0,
+   252→    "totalCredit": 500,
+   253→    "status": "posted"
+   254→  },
+   255→  {
+   256→    "id": "je-12",
+   257→    "entryNumber": 12,
+   258→    "date": "2026-06-08",
+   259→    "description": "وائل نظافة وتشوية",
+   260→    "lines": [
+   261→      {
+   262→        "accountCode": "5022",
+   263→        "accountName": "شحن وتوصيل",
+   264→        "debit": 2000,
+   265→        "credit": 0
+   266→      },
+   267→      {
+   268→        "accountCode": "1111",
+   269→        "accountName": "الصندوق",
+   270→        "debit": 0,
+   271→        "credit": 2000
+   272→      }
+   273→    ],
+   274→    "totalDebit": 2000,
+   275→    "totalCredit": 2000,
+   276→    "status": "posted"
+   277→  },
+   278→  {
+   279→    "id": "je-13",
+   280→    "entryNumber": 13,
+   281→    "date": "2026-06-09",
+   282→    "description": "فاتورة كهرباء 6عود ماجنتيك",
+   283→    "lines": [
+   284→      {
+   285→        "accountCode": "5015",
+   286→        "accountName": "صيانة وتصليحات",
+   287→        "debit": 4300,
+   288→        "credit": 0
+   289→      },
+   290→      {
+   291→        "accountCode": "1111",
+   292→        "accountName": "الصندوق",
+   293→        "debit": 0,
+   294→        "credit": 4300
+   295→      }
+   296→    ],
+   297→    "totalDebit": 4300,
+   298→    "totalCredit": 4300,
+   299→    "status": "posted"
+   300→  },
+   301→  {
+   302→    "id": "je-14",
+   303→    "entryNumber": 14,
+   304→    "date": "2026-06-09",
+   305→    "description": "نقل وحدات وكشف السباكة",
+   306→    "lines": [
+   307→      {
+   308→        "accountCode": "5015",
+   309→        "accountName": "صيانة وتصليحات",
+   310→        "debit": 300,
+   311→        "credit": 0
+   312→      },
+   313→      {
+   314→        "accountCode": "1111",
+   315→        "accountName": "الصندوق",
+   316→        "debit": 0,
+   317→        "credit": 300
+   318→      }
+   319→    ],
+   320→    "totalDebit": 300,
+   321→    "totalCredit": 300,
+   322→    "status": "posted"
+   323→  },
+   324→  {
+   325→    "id": "je-15",
+   326→    "entryNumber": 15,
+   327→    "date": "2026-06-09",
+   328→    "description": "حسام الكهربائي",
+   329→    "lines": [
+   330→      {
+   331→        "accountCode": "5015",
+   332→        "accountName": "صيانة وتصليحات",
+   333→        "debit": 1000,
+   334→        "credit": 0
+   335→      },
+   336→      {
+   337→        "accountCode": "1111",
+   338→        "accountName": "الصندوق",
+   339→        "debit": 0,
+   340→        "credit": 1000
+   341→      }
+   342→    ],
+   343→    "totalDebit": 1000,
+   344→    "totalCredit": 1000,
+   345→    "status": "posted"
+   346→  },
+   347→  {
+   348→    "id": "je-16",
+   349→    "entryNumber": 16,
+   350→    "date": "2026-06-10",
+   351→    "description": " راس مال من محمود الرحيمي تصفية قديمة",
+   352→    "lines": [
+   353→      {
+   354→        "accountCode": "1111",
+   355→        "accountName": "الصندوق",
+   356→        "debit": 10000,
+   357→        "credit": 0
+   358→      },
+   359→      {
+   360→        "accountCode": "3001",
+   361→        "accountName": "رأس المال",
+   362→        "debit": 0,
+   363→        "credit": 10000
+   364→      }
+   365→    ],
+   366→    "totalDebit": 10000,
+   367→    "totalCredit": 10000,
+   368→    "status": "posted"
+   369→  },
+   370→  {
+   371→    "id": "je-17",
+   372→    "entryNumber": 17,
+   373→    "date": "2026-06-11",
+   374→    "description": "رمل واسمنت",
+   375→    "lines": [
+   376→      {
+   377→        "accountCode": "5015",
+   378→        "accountName": "صيانة وتصليحات",
+   379→        "debit": 350,
+   380→        "credit": 0
+   381→      },
+   382→      {
+   383→        "accountCode": "1111",
+   384→        "accountName": "الصندوق",
+   385→        "debit": 0,
+   386→        "credit": 350
+   387→      }
+   388→    ],
+   389→    "totalDebit": 350,
+   390→    "totalCredit": 350,
+   391→    "status": "posted"
+   392→  },
+   393→  {
+   394→    "id": "je-18",
+   395→    "entryNumber": 18,
+   396→    "date": "2026-06-11",
+   397→    "description": "مصنعية سباكة",
+   398→    "lines": [
+   399→      {
+   400→        "accountCode": "5015",
+   401→        "accountName": "صيانة وتصليحات",
+   402→        "debit": 2000,
+   403→        "credit": 0
+   404→      },
+   405→      {
+   406→        "accountCode": "1111",
+   407→        "accountName": "الصندوق",
+   408→        "debit": 0,
+   409→        "credit": 2000
+   410→      }
+   411→    ],
+   412→    "totalDebit": 2000,
+   413→    "totalCredit": 2000,
+   414→    "status": "posted"
+   415→  },
+   416→  {
+   417→    "id": "je-19",
+   418→    "entryNumber": 19,
+   419→    "date": "2026-06-11",
+   420→    "description": "مصنعيات هاني ",
+   421→    "lines": [
+   422→      {
+   423→        "accountCode": "5002",
+   424→        "accountName": "مرتبات وأجور",
+   425→        "debit": 2000,
+   426→        "credit": 0
+   427→      }
+   428→    ],
+   429→    "totalDebit": 2000,
+   430→    "totalCredit": 0,
+   431→    "status": "posted"
+   432→  },
+   433→  {
+   434→    "id": "je-20",
+   435→    "entryNumber": 20,
+   436→    "date": "2026-06-11",
+   437→    "description": "مصنعيات هاني ",
+   438→    "lines": [
+   439→      {
+   440→        "accountCode": "1111",
+   441→        "accountName": "الصندوق",
+   442→        "debit": 0,
+   443→        "credit": 2000
+   444→      },
+   445→      {
+   446→        "accountCode": "5002",
+   447→        "accountName": "مرتبات وأجور",
+   448→        "debit": 1500,
+   449→        "credit": 0
+   450→      }
+   451→    ],
+   452→    "totalDebit": 1500,
+   453→    "totalCredit": 2000,
+   454→    "status": "posted"
+   455→  },
+   456→  {
+   457→    "id": "je-21",
+   458→    "entryNumber": 21,
+   459→    "date": "2026-06-12",
+   460→    "description": "مصنعيات محمد ايمن",
+   461→    "lines": [
+   462→      {
+   463→        "accountCode": "1111",
+   464→        "accountName": "الصندوق",
+   465→        "debit": 0,
+   466→        "credit": 1500
+   467→      },
+   468→      {
+   469→        "accountCode": "5003",
+   470→        "accountName": "إيجار المصنع",
+   471→        "debit": 2000,
+   472→        "credit": 0
+   473→      }
+   474→    ],
+   475→    "totalDebit": 2000,
+   476→    "totalCredit": 1500,
+   477→    "status": "posted"
+   478→  },
+   479→  {
+   480→    "id": "je-22",
+   481→    "entryNumber": 22,
+   482→    "date": "2026-06-12",
+   483→    "description": "ايجار الورشة",
+   484→    "lines": [
+   485→      {
+   486→        "accountCode": "1111",
+   487→        "accountName": "الصندوق",
+   488→        "debit": 0,
+   489→        "credit": 2000
+   490→      },
+   491→      {
+   492→        "accountCode": "5015",
+   493→        "accountName": "صيانة وتصليحات",
+   494→        "debit": 430,
+   495→        "credit": 0
+   496→      }
+   497→    ],
+   498→    "totalDebit": 430,
+   499→    "totalCredit": 2000,
+   500→    "status": "posted"
+   501→  },
+   502→  {
+   503→    "id": "je-23",
+   504→    "entryNumber": 23,
+   505→    "date": "2026-06-12",
+   506→    "description": "اسمنت وطوب",
+   507→    "lines": [
+   508→      {
+   509→        "accountCode": "1111",
+   510→        "accountName": "الصندوق",
+   511→        "debit": 0,
+   512→        "credit": 430
+   513→      },
+   514→      {
+   515→        "accountCode": "3001",
+   516→        "accountName": "رأس المال",
+   517→        "debit": 6915,
+   518→        "credit": 0
+   519→      }
+   520→    ],
+   521→    "totalDebit": 6915,
+   522→    "totalCredit": 430,
+   523→    "status": "posted"
+   524→  },
+   525→  {
+   526→    "id": "je-24",
+   527→    "entryNumber": 24,
+   528→    "date": "2026-06-13",
+   529→    "description": "تقفيل حساب عبدالحميد الشافعي",
+   530→    "lines": [
+   531→      {
+   532→        "accountCode": "1111",
+   533→        "accountName": "الصندوق",
+   534→        "debit": 0,
+   535→        "credit": 6915
+   536→      },
+   537→      {
+   538→        "accountCode": "5015",
+   539→        "accountName": "صيانة وتصليحات",
+   540→        "debit": 500,
+   541→        "credit": 0
+   542→      }
+   543→    ],
+   544→    "totalDebit": 500,
+   545→    "totalCredit": 6915,
+   546→    "status": "posted"
+   547→  },
+   548→  {
+   549→    "id": "je-25",
+   550→    "entryNumber": 25,
+   551→    "date": "2026-06-13",
+   552→    "description": "حساب البنا",
+   553→    "lines": [
+   554→      {
+   555→        "accountCode": "1111",
+   556→        "accountName": "الصندوق",
+   557→        "debit": 0,
+   558→        "credit": 500
+   559→      },
+   560→      {
+   561→        "accountCode": "5015",
+   562→        "accountName": "صيانة وتصليحات",
+   563→        "debit": 2000,
+   564→        "credit": 0
+   565→      }
+   566→    ],
+   567→    "totalDebit": 2000,
+   568→    "totalCredit": 500,
+   569→    "status": "posted"
+   570→  },
+   571→  {
+   572→    "id": "je-26",
+   573→    "entryNumber": 26,
+   574→    "date": "2026-06-13",
+   575→    "description": "كاميرات",
+   576→    "lines": [
+   577→      {
+   578→        "accountCode": "1111",
+   579→        "accountName": "الصندوق",
+   580→        "debit": 0,
+   581→        "credit": 2000
+   582→      },
+   583→      {
+   584→        "accountCode": "5002",
+   585→        "accountName": "مرتبات وأجور",
+   586→        "debit": 100,
+   587→        "credit": 0
+   588→      }
+   589→    ],
+   590→    "totalDebit": 100,
+   591→    "totalCredit": 2000,
+   592→    "status": "posted"
+   593→  },
+   594→  {
+   595→    "id": "je-27",
+   596→    "entryNumber": 27,
+   597→    "date": "2026-06-13",
+   598→    "description": "مصنعيات هاني ",
+   599→    "lines": [
+   600→      {
+   601→        "accountCode": "1111",
+   602→        "accountName": "الصندوق",
+   603→        "debit": 0,
+   604→        "credit": 100
+   605→      },
+   606→      {
+   607→        "accountCode": "5002",
+   608→        "accountName": "مرتبات وأجور",
+   609→        "debit": 500,
+   610→        "credit": 0
+   611→      }
+   612→    ],
+   613→    "totalDebit": 500,
+   614→    "totalCredit": 100,
+   615→    "status": "posted"
+   616→  },
+   617→  {
+   618→    "id": "je-28",
+   619→    "entryNumber": 28,
+   620→    "date": "2026-06-14",
+   621→    "description": "مصنعيات هاني ",
+   622→    "lines": [
+   623→      {
+   624→        "accountCode": "1111",
+   625→        "accountName": "الصندوق",
+   626→        "debit": 0,
+   627→        "credit": 500
+   628→      }
+   629→    ],
+   630→    "totalDebit": 0,
+   631→    "totalCredit": 500,
+   632→    "status": "posted"
+   633→  },
+   634→  {
+   635→    "id": "je-29",
+   636→    "entryNumber": 29,
+   637→    "date": "2026-06-14",
+   638→    "description": "شراء خشب للصندرة",
+   639→    "lines": [
+   640→      {
+   641→        "accountCode": "5015",
+   642→        "accountName": "صيانة وتصليحات",
+   643→        "debit": 6000,
+   644→        "credit": 0
+   645→      },
+   646→      {
+   647→        "accountCode": "1111",
+   648→        "accountName": "الصندوق",
+   649→        "debit": 0,
+   650→        "credit": 6000
+   651→      }
+   652→    ],
+   653→    "totalDebit": 6000,
+   654→    "totalCredit": 6000,
+   655→    "status": "posted"
+   656→  },
+   657→  {
+   658→    "id": "je-30",
+   659→    "entryNumber": 30,
+   660→    "date": "2026-06-15",
+   661→    "description": "دخان مخزن",
+   662→    "lines": [
+   663→      {
+   664→        "accountCode": "5015",
+   665→        "accountName": "صيانة وتصليحات",
+   666→        "debit": 100,
+   667→        "credit": 0
+   668→      },
+   669→      {
+   670→        "accountCode": "1111",
+   671→        "accountName": "الصندوق",
+   672→        "debit": 0,
+   673→        "credit": 100
+   674→      }
+   675→    ],
+   676→    "totalDebit": 100,
+   677→    "totalCredit": 100,
+   678→    "status": "posted"
+   679→  },
+   680→  {
+   681→    "id": "je-31",
+   682→    "entryNumber": 31,
+   683→    "date": "2026-06-15",
+   684→    "description": "فاتورة سباكة",
+   685→    "lines": [
+   686→      {
+   687→        "accountCode": "5015",
+   688→        "accountName": "صيانة وتصليحات",
+   689→        "debit": 2300,
+   690→        "credit": 0
+   691→      },
+   692→      {
+   693→        "accountCode": "1111",
+   694→        "accountName": "الصندوق",
+   695→        "debit": 0,
+   696→        "credit": 2300
+   697→      }
+   698→    ],
+   699→    "totalDebit": 2300,
+   700→    "totalCredit": 2300,
+   701→    "status": "posted"
+   702→  },
+   703→  {
+   704→    "id": "je-32",
+   705→    "entryNumber": 32,
+   706→    "date": "2026-06-15",
+   707→    "description": "نقل",
+   708→    "lines": [
+   709→      {
+   710→        "accountCode": "5015",
+   711→        "accountName": "صيانة وتصليحات",
+   712→        "debit": 200,
+   713→        "credit": 0
+   714→      },
+   715→      {
+   716→        "accountCode": "1111",
+   717→        "accountName": "الصندوق",
+   718→        "debit": 0,
+   719→        "credit": 200
+   720→      }
+   721→    ],
+   722→    "totalDebit": 200,
+   723→    "totalCredit": 200,
+   724→    "status": "posted"
+   725→  },
+   726→  {
+   727→    "id": "je-33",
+   728→    "entryNumber": 33,
+   729→    "date": "2026-06-15",
+   730→    "description": "شراء خشب للصندرة",
+   731→    "lines": [
+   732→      {
+   733→        "accountCode": "5015",
+   734→        "accountName": "صيانة وتصليحات",
+   735→        "debit": 570,
+   736→        "credit": 0
+   737→      },
+   738→      {
+   739→        "accountCode": "1111",
+   740→        "accountName": "الصندوق",
+   741→        "debit": 0,
+   742→        "credit": 570
+   743→      }
+   744→    ],
+   745→    "totalDebit": 570,
+   746→    "totalCredit": 570,
+   747→    "status": "posted"
+   748→  },
+   749→  {
+   750→    "id": "je-34",
+   751→    "entryNumber": 34,
+   752→    "date": "2026-06-15",
+   753→    "description": "م / بسنت تصميمات",
+   754→    "lines": [
+   755→      {
+   756→        "accountCode": "5002",
+   757→        "accountName": "مرتبات وأجور",
+   758→        "debit": 400,
+   759→        "credit": 0
+   760→      },
+   761→      {
+   762→        "accountCode": "1111",
+   763→        "accountName": "الصندوق",
+   764→        "debit": 0,
+   765→        "credit": 400
+   766→      }
+   767→    ],
+   768→    "totalDebit": 400,
+   769→    "totalCredit": 400,
+   770→    "status": "posted"
+   771→  },
+   772→  {
+   773→    "id": "je-35",
+   774→    "entryNumber": 35,
+   775→    "date": "2026-06-16",
+   776→    "description": "عبد الحميد الشافعي",
+   777→    "lines": [
+   778→      {
+   779→        "accountCode": "2211",
+   780→        "accountName": "مورد 1 عبد الحميد الشافعى",
+   781→        "debit": 5000,
+   782→        "credit": 0
+   783→      },
+   784→      {
+   785→        "accountCode": "1111",
+   786→        "accountName": "الصندوق",
+   787→        "debit": 0,
+   788→        "credit": 5000
+   789→      }
+   790→    ],
+   791→    "totalDebit": 5000,
+   792→    "totalCredit": 5000,
+   793→    "status": "posted"
+   794→  },
+   795→  {
+   796→    "id": "je-36",
+   797→    "entryNumber": 36,
+   798→    "date": "2026-06-17",
+   799→    "description": "مصنع السلطان تقفيل التقطيع القديم",
+   800→    "lines": [
+   801→      {
+   802→        "accountCode": "5015",
+   803→        "accountName": "صيانة وتصليحات",
+   804→        "debit": 1000,
+   805→        "credit": 0
+   806→      }
+   807→    ],
+   808→    "totalDebit": 1000,
+   809→    "totalCredit": 0,
+   810→    "status": "posted"
+   811→  },
+   812→  {
+   813→    "id": "je-37",
+   814→    "entryNumber": 37,
+   815→    "date": "2026-06-17",
+   816→    "description": "مصنع السلطان تقفيل التقطيع القديم",
+   817→    "lines": [
+   818→      {
+   819→        "accountCode": "1111",
+   820→        "accountName": "الصندوق",
+   821→        "debit": 0,
+   822→        "credit": 1000
+   823→      },
+   824→      {
+   825→        "accountCode": "5002",
+   826→        "accountName": "مرتبات وأجور",
+   827→        "debit": 2000,
+   828→        "credit": 0
+   829→      }
+   830→    ],
+   831→    "totalDebit": 2000,
+   832→    "totalCredit": 1000,
+   833→    "status": "posted"
+   834→  },
+   835→  {
+   836→    "id": "je-38",
+   837→    "entryNumber": 38,
+   838→    "date": "2026-06-17",
+   839→    "description": "هاني المحمدي",
+   840→    "lines": [
+   841→      {
+   842→        "accountCode": "1111",
+   843→        "accountName": "الصندوق",
+   844→        "debit": 0,
+   845→        "credit": 2000
+   846→      },
+   847→      {
+   848→        "accountCode": "5002",
+   849→        "accountName": "مرتبات وأجور",
+   850→        "debit": 1000,
+   851→        "credit": 0
+   852→      }
+   853→    ],
+   854→    "totalDebit": 1000,
+   855→    "totalCredit": 2000,
+   856→    "status": "posted"
+   857→  },
+   858→  {
+   859→    "id": "je-39",
+   860→    "entryNumber": 39,
+   861→    "date": "2026-06-18",
+   862→    "description": "احمد محمد",
+   863→    "lines": [
+   864→      {
+   865→        "accountCode": "1111",
+   866→        "accountName": "الصندوق",
+   867→        "debit": 0,
+   868→        "credit": 1000
+   869→      },
+   870→      {
+   871→        "accountCode": "5015",
+   872→        "accountName": "صيانة وتصليحات",
+   873→        "debit": 2000,
+   874→        "credit": 0
+   875→      }
+   876→    ],
+   877→    "totalDebit": 2000,
+   878→    "totalCredit": 1000,
+   879→    "status": "posted"
+   880→  },
+   881→  {
+   882→    "id": "je-40",
+   883→    "entryNumber": 40,
+   884→    "date": "2026-06-21",
+   885→    "description": "شراء خشب موسكي",
+   886→    "lines": [
+   887→      {
+   888→        "accountCode": "1111",
+   889→        "accountName": "الصندوق",
+   890→        "debit": 0,
+   891→        "credit": 2000
+   892→      },
+   893→      {
+   894→        "accountCode": "5022",
+   895→        "accountName": "شحن وتوصيل",
+   896→        "debit": 100,
+   897→        "credit": 0
+   898→      }
+   899→    ],
+   900→    "totalDebit": 100,
+   901→    "totalCredit": 2000,
+   902→    "status": "posted"
+   903→  },
+   904→  {
+   905→    "id": "je-41",
+   906→    "entryNumber": 41,
+   907→    "date": "2026-06-21",
+   908→    "description": "نقل",
+   909→    "lines": [
+   910→      {
+   911→        "accountCode": "1111",
+   912→        "accountName": "الصندوق",
+   913→        "debit": 0,
+   914→        "credit": 100
+   915→      },
+   916→      {
+   917→        "accountCode": "5015",
+   918→        "accountName": "صيانة وتصليحات",
+   919→        "debit": 500,
+   920→        "credit": 0
+   921→      }
+   922→    ],
+   923→    "totalDebit": 500,
+   924→    "totalCredit": 100,
+   925→    "status": "posted"
+   926→  },
+   927→  {
+   928→    "id": "je-42",
+   929→    "entryNumber": 42,
+   930→    "date": "2026-06-21",
+   931→    "description": "رفايع حدايد",
+   932→    "lines": [
+   933→      {
+   934→        "accountCode": "1111",
+   935→        "accountName": "الصندوق",
+   936→        "debit": 0,
+   937→        "credit": 500
+   938→      },
+   939→      {
+   940→        "accountCode": "5015",
+   941→        "accountName": "صيانة وتصليحات",
+   942→        "debit": 1000,
+   943→        "credit": 0
+   944→      }
+   945→    ],
+   946→    "totalDebit": 1000,
+   947→    "totalCredit": 500,
+   948→    "status": "posted"
+   949→  },
+   950→  {
+   951→    "id": "je-43",
+   952→    "entryNumber": 43,
+   953→    "date": "2026-06-22",
+   954→    "description": "حسام الكهربائي",
+   955→    "lines": [
+   956→      {
+   957→        "accountCode": "1111",
+   958→        "accountName": "الصندوق",
+   959→        "debit": 0,
+   960→        "credit": 1000
+   961→      },
+   962→      {
+   963→        "accountCode": "5015",
+   964→        "accountName": "صيانة وتصليحات",
+   965→        "debit": 1605,
+   966→        "credit": 0
+   967→      }
+   968→    ],
+   969→    "totalDebit": 1605,
+   970→    "totalCredit": 1000,
+   971→    "status": "posted"
+   972→  },
+   973→  {
+   974→    "id": "je-44",
+   975→    "entryNumber": 44,
+   976→    "date": "2026-06-23",
+   977→    "description": "فاتورة كهرباء 2",
+   978→    "lines": [
+   979→      {
+   980→        "accountCode": "1111",
+   981→        "accountName": "الصندوق",
+   982→        "debit": 0,
+   983→        "credit": 1605
+   984→      },
+   985→      {
+   986→        "accountCode": "5022",
+   987→        "accountName": "شحن وتوصيل",
+   988→        "debit": 1000,
+   989→        "credit": 0
+   990→      }
+   991→    ],
+   992→    "totalDebit": 1000,
+   993→    "totalCredit": 1605,
+   994→    "status": "posted"
+   995→  },
+   996→  {
+   997→    "id": "je-45",
+   998→    "entryNumber": 45,
+   999→    "date": "2026-06-23",
+  1000→    "description": "بنزين",
+  1001→    "lines": [
+  1002→      {
+  1003→        "accountCode": "1111",
+  1004→        "accountName": "الصندوق",
+  1005→        "debit": 0,
+  1006→        "credit": 1000
+  1007→      }
+  1008→    ],
+  1009→    "totalDebit": 0,
+  1010→    "totalCredit": 1000,
+  1011→    "status": "posted"
+  1012→  },
+  1013→  {
+  1014→    "id": "je-46",
+  1015→    "entryNumber": 46,
+  1016→    "date": "2026-06-24",
+  1017→    "description": "مشبك ",
+  1018→    "lines": [
+  1019→      {
+  1020→        "accountCode": "5022",
+  1021→        "accountName": "شحن وتوصيل",
+  1022→        "debit": 730,
+  1023→        "credit": 0
+  1024→      },
+  1025→      {
+  1026→        "accountCode": "1111",
+  1027→        "accountName": "الصندوق",
+  1028→        "debit": 0,
+  1029→        "credit": 730
+  1030→      }
+  1031→    ],
+  1032→    "totalDebit": 730,
+  1033→    "totalCredit": 730,
+  1034→    "status": "posted"
+  1035→  },
+  1036→  {
+  1037→    "id": "je-47",
+  1038→    "entryNumber": 47,
+  1039→    "date": "2026-06-24",
+  1040→    "description": "خشب وكونتر لتجاليد المعرض",
+  1041→    "lines": [
+  1042→      {
+  1043→        "accountCode": "5015",
+  1044→        "accountName": "صيانة وتصليحات",
+  1045→        "debit": 1900,
+  1046→        "credit": 0
+  1047→      },
+  1048→      {
+  1049→        "accountCode": "1111",
+  1050→        "accountName": "الصندوق",
+  1051→        "debit": 0,
+  1052→        "credit": 1900
+  1053→      }
+  1054→    ],
+  1055→    "totalDebit": 1900,
+  1056→    "totalCredit": 1900,
+  1057→    "status": "posted"
+  1058→  },
+  1059→  {
+  1060→    "id": "je-48",
+  1061→    "entryNumber": 48,
+  1062→    "date": "2026-06-25",
+  1063→    "description": "نقل",
+  1064→    "lines": [
+  1065→      {
+  1066→        "accountCode": "5022",
+  1067→        "accountName": "شحن وتوصيل",
+  1068→        "debit": 200,
+  1069→        "credit": 0
+  1070→      },
+  1071→      {
+  1072→        "accountCode": "1111",
+  1073→        "accountName": "الصندوق",
+  1074→        "debit": 0,
+  1075→        "credit": 200
+  1076→      }
+  1077→    ],
+  1078→    "totalDebit": 200,
+  1079→    "totalCredit": 200,
+  1080→    "status": "posted"
+  1081→  },
+  1082→  {
+  1083→    "id": "je-49",
+  1084→    "entryNumber": 49,
+  1085→    "date": "2026-06-25",
+  1086→    "description": "محلات احمد يحي",
+  1087→    "lines": [
+  1088→      {
+  1089→        "accountCode": "2212",
+  1090→        "accountName": "مورد 2 احمد يحيى",
+  1091→        "debit": 2500,
+  1092→        "credit": 0
+  1093→      },
+  1094→      {
+  1095→        "accountCode": "1111",
+  1096→        "accountName": "الصندوق",
+  1097→        "debit": 0,
+  1098→        "credit": 2500
+  1099→      }
+  1100→    ],
+  1101→    "totalDebit": 2500,
+  1102→    "totalCredit": 2500,
+  1103→    "status": "posted"
+  1104→  },
+  1105→  {
+  1106→    "id": "je-50",
+  1107→    "entryNumber": 50,
+  1108→    "date": "2026-06-25",
+  1109→    "description": "عبد الحميد الشافعي",
+  1110→    "lines": [
+  1111→      {
+  1112→        "accountCode": "2211",
+  1113→        "accountName": "مورد 1 عبد الحميد الشافعى",
+  1114→        "debit": 6000,
+  1115→        "credit": 0
+  1116→      },
+  1117→      {
+  1118→        "accountCode": "1111",
+  1119→        "accountName": "الصندوق",
+  1120→        "debit": 0,
+  1121→        "credit": 6000
+  1122→      }
+  1123→    ],
+  1124→    "totalDebit": 6000,
+  1125→    "totalCredit": 6000,
+  1126→    "status": "posted"
+  1127→  },
+  1128→  {
+  1129→    "id": "je-51",
+  1130→    "entryNumber": 51,
+  1131→    "date": "2026-06-25",
+  1132→    "description": "فاتورة كهرباء",
+  1133→    "lines": [
+  1134→      {
+  1135→        "accountCode": "5015",
+  1136→        "accountName": "صيانة وتصليحات",
+  1137→        "debit": 1530,
+  1138→        "credit": 0
+  1139→      },
+  1140→      {
+  1141→        "accountCode": "1111",
+  1142→        "accountName": "الصندوق",
+  1143→        "debit": 0,
+  1144→        "credit": 1530
+  1145→      }
+  1146→    ],
+  1147→    "totalDebit": 1530,
+  1148→    "totalCredit": 1530,
+  1149→    "status": "posted"
+  1150→  },
+  1151→  {
+  1152→    "id": "je-52",
+  1153→    "entryNumber": 52,
+  1154→    "date": "2026-06-25",
+  1155→    "description": "هاني المحمدي",
+  1156→    "lines": [
+  1157→      {
+  1158→        "accountCode": "5002",
+  1159→        "accountName": "مرتبات وأجور",
+  1160→        "debit": 4000,
+  1161→        "credit": 0
+  1162→      },
+  1163→      {
+  1164→        "accountCode": "1111",
+  1165→        "accountName": "الصندوق",
+  1166→        "debit": 0,
+  1167→        "credit": 4000
+  1168→      }
+  1169→    ],
+  1170→    "totalDebit": 4000,
+  1171→    "totalCredit": 4000,
+  1172→    "status": "posted"
+  1173→  },
+  1174→  {
+  1175→    "id": "je-53",
+  1176→    "entryNumber": 53,
+  1177→    "date": "2026-06-25",
+  1178→    "description": "احمد محمد",
+  1179→    "lines": [
+  1180→      {
+  1181→        "accountCode": "5002",
+  1182→        "accountName": "مرتبات وأجور",
+  1183→        "debit": 800,
+  1184→        "credit": 0
+  1185→      }
+  1186→    ],
+  1187→    "totalDebit": 800,
+  1188→    "totalCredit": 0,
+  1189→    "status": "posted"
+  1190→  },
+  1191→  {
+  1192→    "id": "je-54",
+  1193→    "entryNumber": 54,
+  1194→    "date": "2026-06-25",
+  1195→    "description": "احمد محمد",
+  1196→    "lines": [
+  1197→      {
+  1198→        "accountCode": "1111",
+  1199→        "accountName": "الصندوق",
+  1200→        "debit": 0,
+  1201→        "credit": 800
+  1202→      },
+  1203→      {
+  1204→        "accountCode": "1391",
+  1205→        "accountName": "مخزون البضاعة",
+  1206→        "debit": 3600,
+  1207→        "credit": 0
+  1208→      }
+  1209→    ],
+  1210→    "totalDebit": 3600,
+  1211→    "totalCredit": 800,
+  1212→    "status": "posted"
+  1213→  },
+  1214→  {
+  1215→    "id": "je-55",
+  1216→    "entryNumber": 55,
+  1217→    "date": "2026-06-25",
+  1218→    "description": "2كرتونة فوم",
+  1219→    "lines": [
+  1220→      {
+  1221→        "accountCode": "1111",
+  1222→        "accountName": "الصندوق",
+  1223→        "debit": 0,
+  1224→        "credit": 3600
+  1225→      },
+  1226→      {
+  1227→        "accountCode": "2211",
+  1228→        "accountName": "مورد 1 عبد الحميد الشافعى",
+  1229→        "debit": 5000,
+  1230→        "credit": 0
+  1231→      }
+  1232→    ],
+  1233→    "totalDebit": 5000,
+  1234→    "totalCredit": 3600,
+  1235→    "status": "posted"
+  1236→  },
+  1237→  {
+  1238→    "id": "je-56",
+  1239→    "entryNumber": 56,
+  1240→    "date": "2026-06-27",
+  1241→    "description": "عبد الحميد الشافعي",
+  1242→    "lines": [
+  1243→      {
+  1244→        "accountCode": "1111",
+  1245→        "accountName": "الصندوق",
+  1246→        "debit": 0,
+  1247→        "credit": 5000
+  1248→      },
+  1249→      {
+  1250→        "accountCode": "5022",
+  1251→        "accountName": "شحن وتوصيل",
+  1252→        "debit": 100,
+  1253→        "credit": 0
+  1254→      }
+  1255→    ],
+  1256→    "totalDebit": 100,
+  1257→    "totalCredit": 5000,
+  1258→    "status": "posted"
+  1259→  },
+  1260→  {
+  1261→    "id": "je-57",
+  1262→    "entryNumber": 57,
+  1263→    "date": "2026-06-27",
+  1264→    "description": "فطار صنايعية",
+  1265→    "lines": [
+  1266→      {
+  1267→        "accountCode": "1111",
+  1268→        "accountName": "الصندوق",
+  1269→        "debit": 0,
+  1270→        "credit": 100
+  1271→      },
+  1272→      {
+  1273→        "accountCode": "5015",
+  1274→        "accountName": "صيانة وتصليحات",
+  1275→        "debit": 2430,
+  1276→        "credit": 0
+  1277→      }
+  1278→    ],
+  1279→    "totalDebit": 2430,
+  1280→    "totalCredit": 100,
+  1281→    "status": "posted"
+  1282→  },
+  1283→  {
+  1284→    "id": "je-58",
+  1285→    "entryNumber": 58,
+  1286→    "date": "2026-06-27",
+  1287→    "description": "فاتورة كهرباء ",
+  1288→    "lines": [
+  1289→      {
+  1290→        "accountCode": "1111",
+  1291→        "accountName": "الصندوق",
+  1292→        "debit": 0,
+  1293→        "credit": 2430
+  1294→      },
+  1295→      {
+  1296→        "accountCode": "5002",
+  1297→        "accountName": "مرتبات وأجور",
+  1298→        "debit": 1500,
+  1299→        "credit": 0
+  1300→      }
+  1301→    ],
+  1302→    "totalDebit": 1500,
+  1303→    "totalCredit": 2430,
+  1304→    "status": "posted"
+  1305→  },
+  1306→  {
+  1307→    "id": "je-59",
+  1308→    "entryNumber": 59,
+  1309→    "date": "2026-06-27",
+  1310→    "description": "هاني المحمدي",
+  1311→    "lines": [
+  1312→      {
+  1313→        "accountCode": "1111",
+  1314→        "accountName": "الصندوق",
+  1315→        "debit": 0,
+  1316→        "credit": 1500
+  1317→      },
+  1318→      {
+  1319→        "accountCode": "5002",
+  1320→        "accountName": "مرتبات وأجور",
+  1321→        "debit": 1000,
+  1322→        "credit": 0
+  1323→      }
+  1324→    ],
+  1325→    "totalDebit": 1000,
+  1326→    "totalCredit": 1500,
+  1327→    "status": "posted"
+  1328→  },
+  1329→  {
+  1330→    "id": "je-60",
+  1331→    "entryNumber": 60,
+  1332→    "date": "2026-06-29",
+  1333→    "description": "تصميمات",
+  1334→    "lines": [
+  1335→      {
+  1336→        "accountCode": "1111",
+  1337→        "accountName": "الصندوق",
+  1338→        "debit": 0,
+  1339→        "credit": 1000
+  1340→      },
+  1341→      {
+  1342→        "accountCode": "5015",
+  1343→        "accountName": "صيانة وتصليحات",
+  1344→        "debit": 1000,
+  1345→        "credit": 0
+  1346→      }
+  1347→    ],
+  1348→    "totalDebit": 1000,
+  1349→    "totalCredit": 1000,
+  1350→    "status": "posted"
+  1351→  },
+  1352→  {
+  1353→    "id": "je-61",
+  1354→    "entryNumber": 61,
+  1355→    "date": "2026-06-29",
+  1356→    "description": "حسام النقاش",
+  1357→    "lines": [
+  1358→      {
+  1359→        "accountCode": "1111",
+  1360→        "accountName": "الصندوق",
+  1361→        "debit": 0,
+  1362→        "credit": 1000
+  1363→      }
+  1364→    ],
+  1365→    "totalDebit": 0,
+  1366→    "totalCredit": 1000,
+  1367→    "status": "posted"
+  1368→  },
+  1369→  {
+  1370→    "id": "je-62",
+  1371→    "entryNumber": 62,
+  1372→    "date": "2026-06-29",
+  1373→    "description": "نقل",
+  1374→    "lines": [
+  1375→      {
+  1376→        "accountCode": "5022",
+  1377→        "accountName": "شحن وتوصيل",
+  1378→        "debit": 500,
+  1379→        "credit": 0
+  1380→      },
+  1381→      {
+  1382→        "accountCode": "1111",
+  1383→        "accountName": "الصندوق",
+  1384→        "debit": 0,
+  1385→        "credit": 500
+  1386→      }
+  1387→    ],
+  1388→    "totalDebit": 500,
+  1389→    "totalCredit": 500,
+  1390→    "status": "posted"
+  1391→  },
+  1392→  {
+  1393→    "id": "je-63",
+  1394→    "entryNumber": 63,
+  1395→    "date": "2026-06-29",
+  1396→    "description": "نثريات",
+  1397→    "lines": [
+  1398→      {
+  1399→        "accountCode": "5022",
+  1400→        "accountName": "شحن وتوصيل",
+  1401→        "debit": 100,
+  1402→        "credit": 0
+  1403→      },
+  1404→      {
+  1405→        "accountCode": "1111",
+  1406→        "accountName": "الصندوق",
+  1407→        "debit": 0,
+  1408→        "credit": 100
+  1409→      }
+  1410→    ],
+  1411→    "totalDebit": 100,
+  1412→    "totalCredit": 100,
+  1413→    "status": "posted"
+  1414→  },
+  1415→  {
+  1416→    "id": "je-64",
+  1417→    "entryNumber": 64,
+  1418→    "date": "2026-06-30",
+  1419→    "description": "حسام النقاش",
+  1420→    "lines": [
+  1421→      {
+  1422→        "accountCode": "5022",
+  1423→        "accountName": "شحن وتوصيل",
+  1424→        "debit": 500,
+  1425→        "credit": 0
+  1426→      },
+  1427→      {
+  1428→        "accountCode": "1111",
+  1429→        "accountName": "الصندوق",
+  1430→        "debit": 0,
+  1431→        "credit": 500
+  1432→      }
+  1433→    ],
+  1434→    "totalDebit": 500,
+  1435→    "totalCredit": 500,
+  1436→    "status": "posted"
+  1437→  },
+  1438→  {
+  1439→    "id": "je-65",
+  1440→    "entryNumber": 65,
+  1441→    "date": "2026-07-01",
+  1442→    "description": "عبد الحميد الشافعي",
+  1443→    "lines": [
+  1444→      {
+  1445→        "accountCode": "2211",
+  1446→        "accountName": "مورد 1 عبد الحميد الشافعى",
+  1447→        "debit": 5000,
+  1448→        "credit": 0
+  1449→      },
+  1450→      {
+  1451→        "accountCode": "1111",
+  1452→        "accountName": "الصندوق",
+  1453→        "debit": 0,
+  1454→        "credit": 5000
+  1455→      }
+  1456→    ],
+  1457→    "totalDebit": 5000,
+  1458→    "totalCredit": 5000,
+  1459→    "status": "posted"
+  1460→  },
+  1461→  {
+  1462→    "id": "je-66",
+  1463→    "entryNumber": 66,
+  1464→    "date": "2026-07-01",
+  1465→    "description": "محلات احمد يحي",
+  1466→    "lines": [
+  1467→      {
+  1468→        "accountCode": "2212",
+  1469→        "accountName": "مورد 2 احمد يحيى",
+  1470→        "debit": 5000,
+  1471→        "credit": 0
+  1472→      },
+  1473→      {
+  1474→        "accountCode": "1111",
+  1475→        "accountName": "الصندوق",
+  1476→        "debit": 0,
+  1477→        "credit": 5000
+  1478→      }
+  1479→    ],
+  1480→    "totalDebit": 5000,
+  1481→    "totalCredit": 5000,
+  1482→    "status": "posted"
+  1483→  },
+  1484→  {
+  1485→    "id": "je-67",
+  1486→    "entryNumber": 67,
+  1487→    "date": "2026-07-01",
+  1488→    "description": "فاتورة جبس",
+  1489→    "lines": [
+  1490→      {
+  1491→        "accountCode": "5022",
+  1492→        "accountName": "شحن وتوصيل",
+  1493→        "debit": 915,
+  1494→        "credit": 0
+  1495→      },
+  1496→      {
+  1497→        "accountCode": "1111",
+  1498→        "accountName": "الصندوق",
+  1499→        "debit": 0,
+  1500→        "credit": 915
+  1501→      }
+  1502→    ],
+  1503→    "totalDebit": 915,
+  1504→    "totalCredit": 915,
+  1505→    "status": "posted"
+  1506→  },
+  1507→  {
+  1508→    "id": "je-68",
+  1509→    "entryNumber": 68,
+  1510→    "date": "2026-07-02",
+  1511→    "description": "عينات للوجو",
+  1512→    "lines": [
+  1513→      {
+  1514→        "accountCode": "5015",
+  1515→        "accountName": "صيانة وتصليحات",
+  1516→        "debit": 750,
+  1517→        "credit": 0
+  1518→      },
+  1519→      {
+  1520→        "accountCode": "1111",
+  1521→        "accountName": "الصندوق",
+  1522→        "debit": 0,
+  1523→        "credit": 750
+  1524→      }
+  1525→    ],
+  1526→    "totalDebit": 750,
+  1527→    "totalCredit": 750,
+  1528→    "status": "posted"
+  1529→  },
+  1530→  {
+  1531→    "id": "je-69",
+  1532→    "entryNumber": 69,
+  1533→    "date": "2026-07-02",
+  1534→    "description": "هاني المحمدي",
+  1535→    "lines": [
+  1536→      {
+  1537→        "accountCode": "5002",
+  1538→        "accountName": "مرتبات وأجور",
+  1539→        "debit": 1500,
+  1540→        "credit": 0
+  1541→      },
+  1542→      {
+  1543→        "accountCode": "1111",
+  1544→        "accountName": "الصندوق",
+  1545→        "debit": 0,
+  1546→        "credit": 1500
+  1547→      }
+  1548→    ],
+  1549→    "totalDebit": 1500,
+  1550→    "totalCredit": 1500,
+  1551→    "status": "posted"
+  1552→  },
+  1553→  {
+  1554→    "id": "je-70",
+  1555→    "entryNumber": 70,
+  1556→    "date": "2026-07-02",
+  1557→    "description": "احمد محمد",
+  1558→    "lines": [
+  1559→      {
+  1560→        "accountCode": "5002",
+  1561→        "accountName": "مرتبات وأجور",
+  1562→        "debit": 800,
+  1563→        "credit": 0
+  1564→      }
+  1565→    ],
+  1566→    "totalDebit": 800,
+  1567→    "totalCredit": 0,
+  1568→    "status": "posted"
+  1569→  },
+  1570→  {
+  1571→    "id": "je-71",
+  1572→    "entryNumber": 71,
+  1573→    "date": "2026-07-02",
+  1574→    "description": "احمد محمد",
+  1575→    "lines": [
+  1576→      {
+  1577→        "accountCode": "1111",
+  1578→        "accountName": "الصندوق",
+  1579→        "debit": 0,
+  1580→        "credit": 800
+  1581→      },
+  1582→      {
+  1583→        "accountCode": "5022",
+  1584→        "accountName": "شحن وتوصيل",
+  1585→        "debit": 400,
+  1586→        "credit": 0
+  1587→      }
+  1588→    ],
+  1589→    "totalDebit": 400,
+  1590→    "totalCredit": 800,
+  1591→    "status": "posted"
+  1592→  },
+  1593→  {
+  1594→    "id": "je-72",
+  1595→    "entryNumber": 72,
+  1596→    "date": "2026-07-02",
+  1597→    "description": "نقل",
+  1598→    "lines": [
+  1599→      {
+  1600→        "accountCode": "1111",
+  1601→        "accountName": "الصندوق",
+  1602→        "debit": 0,
+  1603→        "credit": 400
+  1604→      },
+  1605→      {
+  1606→        "accountCode": "5022",
+  1607→        "accountName": "شحن وتوصيل",
+  1608→        "debit": 500,
+  1609→        "credit": 0
+  1610→      }
+  1611→    ],
+  1612→    "totalDebit": 500,
+  1613→    "totalCredit": 400,
+  1614→    "status": "posted"
+  1615→  },
+  1616→  {
+  1617→    "id": "je-73",
+  1618→    "entryNumber": 73,
+  1619→    "date": "2026-07-02",
+  1620→    "description": "حسام النقاش",
+  1621→    "lines": [
+  1622→      {
+  1623→        "accountCode": "1111",
+  1624→        "accountName": "الصندوق",
+  1625→        "debit": 0,
+  1626→        "credit": 500
+  1627→      },
+  1628→      {
+  1629→        "accountCode": "1111",
+  1630→        "accountName": "الصندوق",
+  1631→        "debit": 70000,
+  1632→        "credit": 0
+  1633→      }
+  1634→    ],
+  1635→    "totalDebit": 70000,
+  1636→    "totalCredit": 500,
+  1637→    "status": "posted"
+  1638→  },
+  1639→  {
+  1640→    "id": "je-74",
+  1641→    "entryNumber": 74,
+  1642→    "date": "2026-07-03",
+  1643→    "description": "مطبخ سارة",
+  1644→    "lines": [
+  1645→      {
+  1646→        "accountCode": "1212",
+  1647→        "accountName": "عميل 2 مطبخ سارة",
+  1648→        "debit": 0,
+  1649→        "credit": 70000
+  1650→      },
+  1651→      {
+  1652→        "accountCode": "2211",
+  1653→        "accountName": "مورد 1 عبد الحميد الشافعى",
+  1654→        "debit": 25000,
+  1655→        "credit": 0
+  1656→      }
+  1657→    ],
+  1658→    "totalDebit": 25000,
+  1659→    "totalCredit": 70000,
+  1660→    "status": "posted"
+  1661→  },
+  1662→  {
+  1663→    "id": "je-75",
+  1664→    "entryNumber": 75,
+  1665→    "date": "2026-07-04",
+  1666→    "description": "عبد الحميد الشافعي",
+  1667→    "lines": [
+  1668→      {
+  1669→        "accountCode": "1111",
+  1670→        "accountName": "الصندوق",
+  1671→        "debit": 0,
+  1672→        "credit": 25000
+  1673→      },
+  1674→      {
+  1675→        "accountCode": "1391",
+  1676→        "accountName": "مخزون البضاعة",
+  1677→        "debit": 550,
+  1678→        "credit": 0
+  1679→      }
+  1680→    ],
+  1681→    "totalDebit": 550,
+  1682→    "totalCredit": 25000,
+  1683→    "status": "posted"
+  1684→  },
+  1685→  {
+  1686→    "id": "je-76",
+  1687→    "entryNumber": 76,
+  1688→    "date": "2026-07-04",
+  1689→    "description": "درج معالق",
+  1690→    "lines": [
+  1691→      {
+  1692→        "accountCode": "1111",
+  1693→        "accountName": "الصندوق",
+  1694→        "debit": 0,
+  1695→        "credit": 550
+  1696→      },
+  1697→      {
+  1698→        "accountCode": "5022",
+  1699→        "accountName": "شحن وتوصيل",
+  1700→        "debit": 500,
+  1701→        "credit": 0
+  1702→      }
+  1703→    ],
+  1704→    "totalDebit": 500,
+  1705→    "totalCredit": 550,
+  1706→    "status": "posted"
+  1707→  },
+  1708→  {
+  1709→    "id": "je-77",
+  1710→    "entryNumber": 77,
+  1711→    "date": "2026-07-04",
+  1712→    "description": "حسام الكهربائي",
+  1713→    "lines": [
+  1714→      {
+  1715→        "accountCode": "1111",
+  1716→        "accountName": "الصندوق",
+  1717→        "debit": 0,
+  1718→        "credit": 500
+  1719→      },
+  1720→      {
+  1721→        "accountCode": "5015",
+  1722→        "accountName": "صيانة وتصليحات",
+  1723→        "debit": 500,
+  1724→        "credit": 0
+  1725→      }
+  1726→    ],
+  1727→    "totalDebit": 500,
+  1728→    "totalCredit": 500,
+  1729→    "status": "posted"
+  1730→  },
+  1731→  {
+  1732→    "id": "je-78",
+  1733→    "entryNumber": 78,
+  1734→    "date": "2026-07-04",
+  1735→    "description": "حسام النقاش",
+  1736→    "lines": [
+  1737→      {
+  1738→        "accountCode": "1111",
+  1739→        "accountName": "الصندوق",
+  1740→        "debit": 0,
+  1741→        "credit": 500
+  1742→      }
+  1743→    ],
+  1744→    "totalDebit": 0,
+  1745→    "totalCredit": 500,
+  1746→    "status": "posted"
+  1747→  },
+  1748→  {
+  1749→    "id": "je-79",
+  1750→    "entryNumber": 79,
+  1751→    "date": "2026-07-04",
+  1752→    "description": "حسام الكهربائي",
+  1753→    "lines": [
+  1754→      {
+  1755→        "accountCode": "5015",
+  1756→        "accountName": "صيانة وتصليحات",
+  1757→        "debit": 500,
+  1758→        "credit": 0
+  1759→      },
+  1760→      {
+  1761→        "accountCode": "1111",
+  1762→        "accountName": "الصندوق",
+  1763→        "debit": 0,
+  1764→        "credit": 500
+  1765→      }
+  1766→    ],
+  1767→    "totalDebit": 500,
+  1768→    "totalCredit": 500,
+  1769→    "status": "posted"
+  1770→  },
+  1771→  {
+  1772→    "id": "je-80",
+  1773→    "entryNumber": 80,
+  1774→    "date": "2026-07-04",
+  1775→    "description": "عبد الحميد الشافعي",
+  1776→    "lines": [
+  1777→      {
+  1778→        "accountCode": "2211",
+  1779→        "accountName": "مورد 1 عبد الحميد الشافعى",
+  1780→        "debit": 10000,
+  1781→        "credit": 0
+  1782→      },
+  1783→      {
+  1784→        "accountCode": "1111",
+  1785→        "accountName": "الصندوق",
+  1786→        "debit": 0,
+  1787→        "credit": 10000
+  1788→      }
+  1789→    ],
+  1790→    "totalDebit": 10000,
+  1791→    "totalCredit": 10000,
+  1792→    "status": "posted"
+  1793→  },
+  1794→  {
+  1795→    "id": "je-81",
+  1796→    "entryNumber": 81,
+  1797→    "date": "2026-07-05",
+  1798→    "description": "ايجار الورشة",
+  1799→    "lines": [
+  1800→      {
+  1801→        "accountCode": "5003",
+  1802→        "accountName": "إيجار المصنع",
+  1803→        "debit": 2000,
+  1804→        "credit": 0
+  1805→      },
+  1806→      {
+  1807→        "accountCode": "1111",
+  1808→        "accountName": "الصندوق",
+  1809→        "debit": 0,
+  1810→        "credit": 2000
+  1811→      }
+  1812→    ],
+  1813→    "totalDebit": 2000,
+  1814→    "totalCredit": 2000,
+  1815→    "status": "posted"
+  1816→  },
+  1817→  {
+  1818→    "id": "je-82",
+  1819→    "entryNumber": 82,
+  1820→    "date": "2026-07-05",
+  1821→    "description": "حسام النقاش",
+  1822→    "lines": [
+  1823→      {
+  1824→        "accountCode": "5015",
+  1825→        "accountName": "صيانة وتصليحات",
+  1826→        "debit": 1000,
+  1827→        "credit": 0
+  1828→      },
+  1829→      {
+  1830→        "accountCode": "1111",
+  1831→        "accountName": "الصندوق",
+  1832→        "debit": 0,
+  1833→        "credit": 1000
+  1834→      }
+  1835→    ],
+  1836→    "totalDebit": 1000,
+  1837→    "totalCredit": 1000,
+  1838→    "status": "posted"
+  1839→  },
+  1840→  {
+  1841→    "id": "je-83",
+  1842→    "entryNumber": 83,
+  1843→    "date": "2026-07-06",
+  1844→    "description": "حسام الكهربائي",
+  1845→    "lines": [
+  1846→      {
+  1847→        "accountCode": "5015",
+  1848→        "accountName": "صيانة وتصليحات",
+  1849→        "debit": 1000,
+  1850→        "credit": 0
+  1851→      },
+  1852→      {
+  1853→        "accountCode": "1111",
+  1854→        "accountName": "الصندوق",
+  1855→        "debit": 0,
+  1856→        "credit": 1000
+  1857→      }
+  1858→    ],
+  1859→    "totalDebit": 1000,
+  1860→    "totalCredit": 1000,
+  1861→    "status": "posted"
+  1862→  },
+  1863→  {
+  1864→    "id": "je-84",
+  1865→    "entryNumber": 84,
+  1866→    "date": "2026-07-06",
+  1867→    "description": "عبد الحميد الشافعي",
+  1868→    "lines": [
+  1869→      {
+  1870→        "accountCode": "2211",
+  1871→        "accountName": "مورد 1 عبد الحميد الشافعى",
+  1872→        "debit": 12000,
+  1873→        "credit": 0
+  1874→      },
+  1875→      {
+  1876→        "accountCode": "1111",
+  1877→        "accountName": "الصندوق",
+  1878→        "debit": 0,
+  1879→        "credit": 12000
+  1880→      }
+  1881→    ],
+  1882→    "totalDebit": 12000,
+  1883→    "totalCredit": 12000,
+  1884→    "status": "posted"
+  1885→  },
+  1886→  {
+  1887→    "id": "je-85",
+  1888→    "entryNumber": 85,
+  1889→    "date": "2026-07-06",
+  1890→    "description": "فاتورة كهرباء",
+  1891→    "lines": [
+  1892→      {
+  1893→        "accountCode": "5022",
+  1894→        "accountName": "شحن وتوصيل",
+  1895→        "debit": 5090,
+  1896→        "credit": 0
+  1897→      },
+  1898→      {
+  1899→        "accountCode": "1111",
+  1900→        "accountName": "الصندوق",
+  1901→        "debit": 0,
+  1902→        "credit": 5090
+  1903→      }
+  1904→    ],
+  1905→    "totalDebit": 5090,
+  1906→    "totalCredit": 5090,
+  1907→    "status": "posted"
+  1908→  },
+  1909→  {
+  1910→    "id": "je-86",
+  1911→    "entryNumber": 86,
+  1912→    "date": "2026-07-06",
+  1913→    "description": "علي الشرقاوي اكسسوارات",
+  1914→    "lines": [
+  1915→      {
+  1916→        "accountCode": "1391",
+  1917→        "accountName": "مخزون البضاعة",
+  1918→        "debit": 2850,
+  1919→        "credit": 0
+  1920→      },
+  1921→      {
+  1922→        "accountCode": "1111",
+  1923→        "accountName": "الصندوق",
+  1924→        "debit": 0,
+  1925→        "credit": 2850
+  1926→      }
+  1927→    ],
+  1928→    "totalDebit": 2850,
+  1929→    "totalCredit": 2850,
+  1930→    "status": "posted"
+  1931→  },
+  1932→  {
+  1933→    "id": "je-87",
+  1934→    "entryNumber": 87,
+  1935→    "date": "2026-07-07",
+  1936→    "description": " محمد فتحي ( المرور )",
+  1937→    "lines": [
+  1938→      {
+  1939→        "accountCode": "1111",
+  1940→        "accountName": "الصندوق",
+  1941→        "debit": 10000,
+  1942→        "credit": 0
+  1943→      }
+  1944→    ],
+  1945→    "totalDebit": 10000,
+  1946→    "totalCredit": 0,
+  1947→    "status": "posted"
+  1948→  },
+  1949→  {
+  1950→    "id": "je-88",
+  1951→    "entryNumber": 88,
+  1952→    "date": "2026-07-07",
+  1953→    "description": " محمد فتحي ( المرور )",
+  1954→    "lines": [
+  1955→      {
+  1956→        "accountCode": "1213",
+  1957→        "accountName": "عميل 3 محمد فتحى المرور",
+  1958→        "debit": 0,
+  1959→        "credit": 10000
+  1960→      },
+  1961→      {
+  1962→        "accountCode": "1391",
+  1963→        "accountName": "مخزون البضاعة",
+  1964→        "debit": 4050,
+  1965→        "credit": 0
+  1966→      }
+  1967→    ],
+  1968→    "totalDebit": 4050,
+  1969→    "totalCredit": 10000,
+  1970→    "status": "posted"
+  1971→  },
+  1972→  {
+  1973→    "id": "je-89",
+  1974→    "entryNumber": 89,
+  1975→    "date": "2026-07-07",
+  1976→    "description": "علي الشرقاوي اكسسوارات",
+  1977→    "lines": [
+  1978→      {
+  1979→        "accountCode": "1111",
+  1980→        "accountName": "الصندوق",
+  1981→        "debit": 0,
+  1982→        "credit": 4050
+  1983→      },
+  1984→      {
+  1985→        "accountCode": "2211",
+  1986→        "accountName": "مورد 1 عبد الحميد الشافعى",
+  1987→        "debit": 15000,
+  1988→        "credit": 0
+  1989→      }
+  1990→    ],
+  1991→    "totalDebit": 15000,
+  1992→    "totalCredit": 4050,
+  1993→    "status": "posted"
+  1994→  },
+  1995→  {
+  1996→    "id": "je-90",
+  1997→    "entryNumber": 90,
+  1998→    "date": "2026-07-07",
+  1999→    "description": "عبد الحميد الشافعي",
+  2000→    "lines": [
+
+[showing lines 1-2000 of 3551; use offset=2001 with limit to continue reading]

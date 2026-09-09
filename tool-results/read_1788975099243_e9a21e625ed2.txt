@@ -1,0 +1,2002 @@
+     1→     1→'use client'
+     2→     2→
+     3→     3→import React, { useState, useEffect, useCallback } from 'react'
+     4→     4→import { 
+     5→     5→  LayoutDashboard, ShoppingCart, Package, Users, Wallet, FileText, Settings,
+     6→     6→  Menu, X, Plus, Search, Filter, Download, Printer, Eye, Edit2, Trash2,
+     7→     7→  TrendingUp, TrendingDown, DollarSign, AlertCircle, CheckCircle, Clock,
+     8→     8→  ArrowUpRight, ArrowDownLeft, Receipt, Send, BarChart3, PieChart as PieChartIcon,
+     9→     9→  ChevronDown, ChevronLeft, RefreshCw, Save, XCircle, Calendar, Building2,
+    10→    10→  Phone, Mail, MapPin, Hash, Percent, CreditCard, Banknote, Calculator,
+    11→    11→  Lock, User, UserCheck, Shield, LogOut, Bell, AlertTriangle,
+    12→    12→  GitBranch, BookOpen, Landmark, ClipboardList, UserCircle, Briefcase,
+    13→    13→  CalendarDays, Clock3, HandCoins, Plane, FileCheck, FileBarChart,
+    14→    14→  ChevronRight, ChevronUp, ZoomIn, QrCode, Truck, RotateCcw,
+    15→    15→  Star, Award, Target, Activity, PieChart, LineChart, Scissors,
+    16→    16→  Upload, Database, Key, EyeOff, ToggleLeft, ToggleRight, Zap,
+    17→    17→  Undo2, Copy, Archive, CheckSquare, Square
+    18→    18→} from 'lucide-react'
+    19→    19→import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
+    20→    20→import { Button } from '@/components/ui/button'
+    21→    21→import { Input } from '@/components/ui/input'
+    22→    22→import { Label } from '@/components/ui/label'
+    23→    23→import { Badge } from '@/components/ui/badge'
+    24→    24→import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
+    25→    25→import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog'
+    26→    26→import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
+    27→    27→import { Textarea } from '@/components/ui/textarea'
+    28→    28→import { Separator } from '@/components/ui/separator'
+    29→    29→import { ScrollArea } from '@/components/ui/scroll-area'
+    30→    30→
+    31→    31→// ============ TYPES ============
+    32→    32→type ModuleType = 'dashboard' | 'sales' | 'purchases' | 'inventory' | 'parties' | 'treasury' | 'reports' | 'settings' | 'accounts' | 'banks' | 'hr' | 'expenses' | 'chart-of-accounts' | 'journal-entries'
+    33→    33→
+    34→    34→interface Invoice {
+    35→    35→  id: string
+    36→    36→  number: string
+    37→    37→  date: string
+    38→    38→  customerName: string
+    39→    39→  total: number
+    40→    40→  paidAmount: number
+    41→    41→  remainingAmount: number
+    42→    42→  paymentMethod: 'cash' | 'bank' | 'check' | 'partial'
+    43→    43→  status: 'draft' | 'posted' | 'paid' | 'cancelled'
+    44→    44→  items: InvoiceItem[]
+    45→    45→}
+    46→    46→
+    47→    47→interface PurchaseInvoice {
+    48→    48→  id: string
+    49→    49→  number: string
+    50→    50→  date: string
+    51→    51→  supplierName: string
+    52→    52→  total: number
+    53→    53→  paidAmount: number
+    54→    54→  remainingAmount: number
+    55→    55→  paymentMethod: 'cash' | 'bank' | 'check' | 'partial'
+    56→    56→  status: 'draft' | 'posted' | 'paid' | 'cancelled'
+    57→    57→  items: InvoiceItem[]
+    58→    58→}
+    59→    59→
+    60→    60→interface InvoiceItem {
+    61→    61→  id: string
+    62→    62→  name: string
+    63→    63→  quantity: number
+    64→    64→  price: number
+    65→    65→  total: number
+    66→    66→}
+    67→    67→
+    68→    68→interface Item {
+    69→    69→  id: string
+    70→    70→  nameAr: string
+    71→    71→  code: string
+    72→    72→  category: string
+    73→    73→  stock: number
+    74→    74→  price: number
+    75→    75→}
+    76→    76→
+    77→    77→interface Party {
+    78→    78→  id: string
+    79→    79→  nameAr: string
+    80→    80→  type: 'customer' | 'supplier' | 'both'
+    81→    81→  phone: string
+    82→    82→  balance: number
+    83→    83→}
+    84→    84→
+    85→    85→interface Transaction {
+    86→    86→  id: string
+    87→    87→  date: string
+    88→    88→  description: string
+    89→    89→  amount: number
+    90→    90→  type: 'income' | 'expense'
+    91→    91→  category: string
+    92→    92→}
+    93→    93→
+    94→    94→interface Account {
+    95→    95→  id: string
+    96→    96→  code: string
+    97→    97→  name: string
+    98→    98→  type: 'asset' | 'liability' | 'equity' | 'revenue' | 'expense'
+    99→    99→  level: number
+   100→   100→  parentId: string | null
+   101→   101→  balance: number
+   102→   102→}
+   103→   103→
+   104→   104→interface JournalEntryLine {
+   105→   105→  accountCode: string
+   106→   106→  accountName: string
+   107→   107→  debit: number
+   108→   108→  credit: number
+   109→   109→}
+   110→   110→
+   111→   111→interface JournalEntry {
+   112→   112→  id: string
+   113→   113→  entryNumber: number
+   114→   114→  date: string
+   115→   115→  description: string
+   116→   116→  lines: JournalEntryLine[]
+   117→   117→  totalDebit: number
+   118→   118→  totalCredit: number
+   119→   119→  status: 'draft' | 'posted' | 'reversed'
+   120→   120→}
+   121→   121→
+   122→   122→// ============ EMPTY DATA ARRAYS FOR MANUAL ENTRY ============
+   123→   123→const mockInvoices: Invoice[] = []
+   124→   124→const mockQuotations: any[] = []
+   125→   125→const mockSalesReturns: any[] = []
+   126→   126→const mockItems: Item[] = [
+   127→   127→  { id: 'item-001', nameAr: 'مطبخ مودرن', code: 'MK-001', category: 'أثاث مطابخ', stock: 10, price: 15000 },
+   128→   128→  { id: 'item-002', nameAr: 'دريسينج رووم', code: 'DR-001', category: 'غرف نوم', stock: 15, price: 4500 },
+   129→   129→  { id: 'item-003', nameAr: 'كوفى كورنر', code: 'CC-001', category: 'أثاث صالات', stock: 8, price: 6500 },
+   130→   130→  { id: 'item-004', nameAr: 'تربيزة شاشة', code: 'TV-001', category: 'أثاث صالات', stock: 20, price: 1200 },
+   131→   131→  { id: 'item-005', nameAr: 'مكتب', code: 'DS-001', category: 'مكاتب', stock: 12, price: 2800 },
+   132→   132→  { id: 'item-006', nameAr: 'غرفة نوم', code: 'BR-001', category: 'غرف نوم', stock: 6, price: 12000 }
+   133→   133→]
+   134→   134→const mockParties: Party[] = []
+   135→   135→const mockTransactions: Transaction[] = []
+   136→   136→const mockPurchaseOrders: any[] = []
+   137→   137→const mockAccounts: Account[] = [
+   138→   138→  // ============ الأصول (1000) ============
+   139→   139→  { id: 'acc-1000', code: '1000', name: 'الأصول', type: 'asset', level: 1, parentId: null, balance: 0 },
+   140→   140→  
+   141→   141→  // الأصول المتداولة (1100)
+   142→   142→  { id: 'acc-1100', code: '1100', name: 'الأصول المتداولة', type: 'asset', level: 2, parentId: 'acc-1000', balance: 0 },
+   143→   143→  
+   144→   144→  // النقدية والبنوك (1110)
+   145→   145→  { id: 'acc-1110', code: '1110', name: 'النقدية والبنوك', type: 'asset', level: 3, parentId: 'acc-1100', balance: 0 },
+   146→   146→  { id: 'acc-1111', code: '1111', name: 'الصندوق', type: 'asset', level: 4, parentId: 'acc-1110', balance: 0 },
+   147→   147→  { id: 'acc-1112', code: '1112', name: 'البنك - الرصيد الحالي', type: 'asset', level: 4, parentId: 'acc-1110', balance: 0 },
+   148→   148→  
+   149→   149→  // المدينون (1200)
+   150→   150→  { id: 'acc-1200', code: '1200', name: 'المدينون', type: 'asset', level: 2, parentId: 'acc-1000', balance: 0 },
+   151→   151→  { id: 'acc-1210', code: '1210', name: 'العملاء', type: 'asset', level: 3, parentId: 'acc-1200', balance: 0 },
+   152→   152→  { id: 'acc-1211', code: '1211', name: 'عميل 1', type: 'asset', level: 4, parentId: 'acc-1210', balance: 0 },
+   153→   153→  { id: 'acc-1212', code: '1212', name: 'عميل 2', type: 'asset', level: 4, parentId: 'acc-1210', balance: 0 },
+   154→   154→  { id: 'acc-1213', code: '1213', name: 'عميل 3', type: 'asset', level: 4, parentId: 'acc-1210', balance: 0 },
+   155→   155→  { id: 'acc-1214', code: '1214', name: 'عميل 4', type: 'asset', level: 4, parentId: 'acc-1210', balance: 0 },
+   156→   156→  { id: 'acc-1220', code: '1220', name: 'أوراق قبض', type: 'asset', level: 3, parentId: 'acc-1200', balance: 0 },
+   157→   157→  { id: 'acc-1230', code: '1230', name: 'مصاريف مقدمه', type: 'asset', level: 3, parentId: 'acc-1200', balance: 0 },
+   158→   158→  
+   159→   159→  // المخزون (1300)
+   160→   160→  { id: 'acc-1300', code: '1300', name: 'المخزون', type: 'asset', level: 2, parentId: 'acc-1000', balance: 0 },
+   161→   161→  { id: 'acc-1301', code: '1301', name: 'مخزون البضاعة', type: 'asset', level: 3, parentId: 'acc-1300', balance: 0 },
+   162→   162→  { id: 'acc-1302', code: '1302', name: 'مخزون المواد الخام', type: 'asset', level: 3, parentId: 'acc-1300', balance: 0 },
+   163→   163→  { id: 'acc-1303', code: '1303', name: 'الضريبة القابلة للخصم', type: 'asset', level: 3, parentId: 'acc-1300', balance: 0 },
+   164→   164→  
+   165→   165→  // الأصول الثابتة (1400)
+   166→   166→  { id: 'acc-1400', code: '1400', name: 'الأصول الثابتة', type: 'asset', level: 2, parentId: 'acc-1000', balance: 0 },
+   167→   167→  { id: 'acc-1401', code: '1401', name: 'الأثاث والتجهيزات', type: 'asset', level: 3, parentId: 'acc-1400', balance: 0 },
+   168→   168→  { id: 'acc-1402', code: '1402', name: 'الحاسبات والأجهزة', type: 'asset', level: 3, parentId: 'acc-1400', balance: 0 },
+   169→   169→  { id: 'acc-1403', code: '1403', name: 'السيارات', type: 'asset', level: 3, parentId: 'acc-1400', balance: 0 },
+   170→   170→  { id: 'acc-1404', code: '1404', name: 'المباني', type: 'asset', level: 3, parentId: 'acc-1400', balance: 0 },
+   171→   171→  { id: 'acc-1405', code: '1405', name: 'الأرضي', type: 'asset', level: 3, parentId: 'acc-1400', balance: 0 },
+   172→   172→  { id: 'acc-1406', code: '1406', name: 'مجمع الإهلاك', type: 'asset', level: 3, parentId: 'acc-1400', balance: 0 },
+   173→   173→
+   174→   174→  // ============ الالتزامات (2000) ============
+   175→   175→  { id: 'acc-2000', code: '2000', name: 'الالتزامات', type: 'liability', level: 1, parentId: null, balance: 0 },
+   176→   176→  
+   177→   177→  // الالتزامات المتداولة (2100)
+   178→   178→  { id: 'acc-2100', code: '2100', name: 'الالتزامات المتداولة', type: 'liability', level: 2, parentId: 'acc-2000', balance: 0 },
+   179→   179→  { id: 'acc-2210', code: '2210', name: 'الموردون', type: 'liability', level: 3, parentId: 'acc-2100', balance: 0 },
+   180→   180→  { id: 'acc-2211', code: '2211', name: 'مورد 1', type: 'liability', level: 4, parentId: 'acc-2210', balance: 0 },
+   181→   181→  { id: 'acc-2212', code: '2212', name: 'مورد 2', type: 'liability', level: 4, parentId: 'acc-2210', balance: 0 },
+   182→   182→  { id: 'acc-2213', code: '2213', name: 'مورد 3', type: 'liability', level: 4, parentId: 'acc-2210', balance: 0 },
+   183→   183→  { id: 'acc-2214', code: '2214', name: 'مورد 4', type: 'liability', level: 4, parentId: 'acc-2210', balance: 0 },
+   184→   184→  { id: 'acc-2215', code: '2215', name: 'مورد 5', type: 'liability', level: 4, parentId: 'acc-2210', balance: 0 },
+   185→   185→  { id: 'acc-2216', code: '2216', name: 'مورد 6', type: 'liability', level: 4, parentId: 'acc-2210', balance: 0 },
+   186→   186→  { id: 'acc-2217', code: '2217', name: 'مورد 7', type: 'liability', level: 4, parentId: 'acc-2210', balance: 0 },
+   187→   187→  { id: 'acc-2218', code: '2218', name: 'مورد 8', type: 'liability', level: 4, parentId: 'acc-2210', balance: 0 },
+   188→   188→  { id: 'acc-2220', code: '2220', name: 'أوراق دفع', type: 'liability', level: 3, parentId: 'acc-2100', balance: 0 },
+   189→   189→  { id: 'acc-2230', code: '2230', name: 'الضريبة المستحقة', type: 'liability', level: 3, parentId: 'acc-2100', balance: 0 },
+   190→   190→  { id: 'acc-2240', code: '2240', name: 'مرتبات مستحقة', type: 'liability', level: 3, parentId: 'acc-2100', balance: 0 },
+   191→   191→  { id: 'acc-2250', code: '2250', name: 'إيرادات مستحقة', type: 'liability', level: 3, parentId: 'acc-2100', balance: 0 },
+   192→   192→  
+   193→   193→  // الالتزامات طويلة الأجل (2200)
+   194→   194→  { id: 'acc-2200', code: '2200', name: 'الالتزامات طويلة الأجل', type: 'liability', level: 2, parentId: 'acc-2000', balance: 0 },
+   195→   195→  { id: 'acc-2260', code: '2260', name: 'القروض طويلة الأجل', type: 'liability', level: 3, parentId: 'acc-2200', balance: 0 },
+   196→   196→  { id: 'acc-2270', code: '2270', name: 'السندات المستحقة', type: 'liability', level: 3, parentId: 'acc-2200', balance: 0 },
+   197→   197→
+   198→   198→  // ============ حقوق الملكية (3000) ============
+   199→   199→  { id: 'acc-3000', code: '3000', name: 'حقوق الملكية', type: 'equity', level: 1, parentId: null, balance: 0 },
+   200→   200→  { id: 'acc-3001', code: '3001', name: 'رأس المال', type: 'equity', level: 2, parentId: 'acc-3000', balance: 0 },
+   201→   201→  { id: 'acc-3002', code: '3002', name: 'احتياطي عام', type: 'equity', level: 2, parentId: 'acc-3000', balance: 0 },
+   202→   202→  { id: 'acc-3003', code: '3003', name: 'الأرباح المحتجزة', type: 'equity', level: 2, parentId: 'acc-3000', balance: 0 },
+   203→   203→  { id: 'acc-3004', code: '3004', name: 'الأسهم', type: 'equity', level: 2, parentId: 'acc-3000', balance: 0 },
+   204→   204→
+   205→   205→  // ============ الإيرادات (4000) ============
+   206→   206→  { id: 'acc-4000', code: '4000', name: 'الإيرادات', type: 'revenue', level: 1, parentId: null, balance: 0 },
+   207→   207→  { id: 'acc-4001', code: '4001', name: 'إيرادات المبيعات', type: 'revenue', level: 2, parentId: 'acc-4000', balance: 0 },
+   208→   208→  { id: 'acc-4002', code: '4002', name: 'إيرادات الخدمات', type: 'revenue', level: 2, parentId: 'acc-4000', balance: 0 },
+   209→   209→  { id: 'acc-4003', code: '4003', name: 'إيرادات أخرى', type: 'revenue', level: 2, parentId: 'acc-4000', balance: 0 },
+   210→   210→  { id: 'acc-4010', code: '4010', name: 'مردودات المبيعات', type: 'revenue', level: 2, parentId: 'acc-4000', balance: 0 },
+   211→   211→  { id: 'acc-4020', code: '4020', name: 'خصومات مسموح بها', type: 'revenue', level: 2, parentId: 'acc-4000', balance: 0 },
+   212→   212→
+   213→   213→  // ============ المصروفات (5000) ============
+   214→   214→  { id: 'acc-5000', code: '5000', name: 'المصروفات', type: 'expense', level: 1, parentId: null, balance: 0 },
+   215→   215→  { id: 'acc-5001', code: '5001', name: 'تكلفة المبيعات', type: 'expense', level: 2, parentId: 'acc-5000', balance: 0 },
+   216→   216→  { id: 'acc-5002', code: '5002', name: 'مرتبات وأجور', type: 'expense', level: 2, parentId: 'acc-5000', balance: 0 },
+   217→   217→  { id: 'acc-5003', code: '5003', name: 'إيجار المصنع', type: 'expense', level: 2, parentId: 'acc-5000', balance: 0 },
+   218→   218→  
+   219→   219→  // مصروفات إدارية وعامة (5010)
+   220→   220→  { id: 'acc-5010', code: '5010', name: 'مصروفات إدارية وعامة', type: 'expense', level: 2, parentId: 'acc-5000', balance: 0 },
+   221→   221→  { id: 'acc-5011', code: '5011', name: 'إيجار المكتب', type: 'expense', level: 3, parentId: 'acc-5010', balance: 0 },
+   222→   222→  { id: 'acc-5012', code: '5012', name: 'مرافق (كهرباء/مياه)', type: 'expense', level: 3, parentId: 'acc-5010', balance: 0 },
+   223→   223→  { id: 'acc-5013', code: '5013', name: 'اتصالات وانترنت', type: 'expense', level: 3, parentId: 'acc-5010', balance: 0 },
+   224→   224→  { id: 'acc-5014', code: '5014', name: 'قرطاسية ومستلزمات', type: 'expense', level: 3, parentId: 'acc-5010', balance: 0 },
+   225→   225→  { id: 'acc-5015', code: '5015', name: 'صيانة وتصليحات', type: 'expense', level: 3, parentId: 'acc-5010', balance: 0 },
+   226→   226→  { id: 'acc-5016', code: '5016', name: 'تأمينات', type: 'expense', level: 3, parentId: 'acc-5010', balance: 0 },
+   227→   227→  { id: 'acc-5017', code: '5017', name: 'سفر وإنتقالات', type: 'expense', level: 3, parentId: 'acc-5010', balance: 0 },
+   228→   228→  { id: 'acc-5018', code: '5018', name: 'إعلان ودعاية', type: 'expense', level: 3, parentId: 'acc-5010', balance: 0 },
+   229→   229→  
+   230→   230→  // مصروفات بيعية (5020)
+   231→   231→  { id: 'acc-5020', code: '5020', name: 'مصروفات بيعية', type: 'expense', level: 2, parentId: 'acc-5000', balance: 0 },
+   232→   232→  { id: 'acc-5021', code: '5021', name: 'عمولات المبيعات', type: 'expense', level: 3, parentId: 'acc-5020', balance: 0 },
+   233→   233→  { id: 'acc-5022', code: '5022', name: 'شحن وتوصيل', type: 'expense', level: 3, parentId: 'acc-5020', balance: 0 },
+   234→   234→  
+   235→   235→  // مصروفات مالية (5030)
+   236→   236→  { id: 'acc-5030', code: '5030', name: 'مصروفات مالية', type: 'expense', level: 2, parentId: 'acc-5000', balance: 0 },
+   237→   237→  { id: 'acc-5031', code: '5031', name: 'مصروفات فائدة', type: 'expense', level: 3, parentId: 'acc-5030', balance: 0 },
+   238→   238→  { id: 'acc-5032', code: '5032', name: 'خسائر عملة', type: 'expense', level: 3, parentId: 'acc-5030', balance: 0 },
+   239→   239→  
+   240→   240→  // الإهلاك (5040)
+   241→   241→  { id: 'acc-5040', code: '5040', name: 'الإهلاك', type: 'expense', level: 2, parentId: 'acc-5000', balance: 0 }
+   242→   242→]
+   243→   243→const mockBankAccounts: any[] = []
+   244→   244→const mockChecks: any[] = []
+   245→   245→const mockEmployees: any[] = []
+   246→   246→const mockExpenses: any[] = []
+   247→   247→const mockJournalEntries: JournalEntry[] = [
+   248→   248→  {
+   249→   249→    "id": "je-1",
+   250→   250→    "entryNumber": 1,
+   251→   251→    "date": "2026-06-06",
+   252→   252→    "description": "نقل العفش والمكن والعدة",
+   253→   253→    "lines": [
+   254→   254→      { "accountCode": "5015", "accountName": "صيانة وتصليحات", "debit": 600, "credit": 0 },
+   255→   255→      { "accountCode": "1111", "accountName": "الصندوق", "debit": 0, "credit": 600 }
+   256→   256→    ],
+   257→   257→    "totalDebit": 600,
+   258→   258→    "totalCredit": 600,
+   259→   259→    "status": "posted"
+   260→   260→  },
+   261→   261→  {
+   262→   262→    "id": "je-2",
+   263→   263→    "entryNumber": 2,
+   264→   264→    "date": "2026-06-06",
+   265→   265→    "description": "اثبات مساهمة حسام المحول الى ليلى 200 الف ومنبقى لديها 82600",
+   266→   266→    "lines": [
+   267→   267→      { "accountCode": "1111", "accountName": "الصندوق", "debit": 117400, "credit": 0 },
+   268→   268→      { "accountCode": "3001", "accountName": "رأس المال", "debit": 0, "credit": 117400 }
+   269→   269→    ],
+   270→   270→    "totalDebit": 117400,
+   271→   271→    "totalCredit": 117400,
+   272→   272→    "status": "posted"
+   273→   273→  },
+   274→   274→  {
+   275→   275→    "id": "je-3",
+   276→   276→    "entryNumber": 3,
+   277→   277→    "date": "2026-06-06",
+   278→   278→    "description": "اثبات مساهمة محمود تصفيىة الصندوق",
+   279→   279→    "lines": [
+   280→   280→      { "accountCode": "1111", "accountName": "الصندوق", "debit": 96314, "credit": 0 },
+   281→   281→      { "accountCode": "3001", "accountName": "رأس المال", "debit": 0, "credit": 96314 }
+   282→   282→    ],
+   283→   283→    "totalDebit": 96314,
+   284→   284→    "totalCredit": 96314,
+   285→   285→    "status": "posted"
+   286→   286→  },
+   287→   287→  {
+   288→   288→    "id": "je-4",
+   289→   289→    "entryNumber": 4,
+   290→   290→    "date": "2026-06-06",
+   291→   291→    "description": "محمد ايمن تطليع ونقل العدةوالمكن والعفش",
+   292→   292→    "lines": [
+   293→   293→      { "accountCode": "5015", "accountName": "صيانة وتصليحات", "debit": 1000, "credit": 0 },
+   294→   294→      { "accountCode": "1111", "accountName": "الصندوق", "debit": 0, "credit": 1000 }
+   295→   295→    ],
+   296→   296→    "totalDebit": 1000,
+   297→   297→    "totalCredit": 1000,
+   298→   298→    "status": "posted"
+   299→   299→  },
+   300→   300→  {
+   301→   301→    "id": "je-5",
+   302→   302→    "entryNumber": 5,
+   303→   303→    "date": "2026-06-15",
+   304→   304→    "description": "مشتريات من مورد عبد الحميد الشافعى",
+   305→   305→    "lines": [
+   306→   306→      { "accountCode": "5101", "accountName": "المشتريات", "debit": 25000, "credit": 0 },
+   307→   307→      { "accountCode": "2211", "accountName": "مورد 1 عبد الحميد الشافعى", "debit": 0, "credit": 25000 }
+   308→   308→    ],
+   309→   309→    "totalDebit": 25000,
+   310→   310→    "totalCredit": 25000,
+   311→   311→    "status": "posted"
+   312→   312→  },
+   313→   313→  {
+   314→   314→    "id": "je-6",
+   315→   315→    "entryNumber": 6,
+   316→   316→    "date": "2026-06-20",
+   317→   317→    "description": "مبيعات نقدية لمعرض الرحيمى",
+   318→   318→    "lines": [
+   319→   319→      { "accountCode": "1111", "accountName": "الصندوق", "debit": 35000, "credit": 0 },
+   320→   320→      { "accountCode": "4001", "accountName": "إيرادات المبيعات", "debit": 0, "credit": 35000 }
+   321→   321→    ],
+   322→   322→    "totalDebit": 35000,
+   323→   323→    "totalCredit": 35000,
+   324→   324→    "status": "posted"
+   325→   325→  },
+   326→   326→  {
+   327→   327→    "id": "je-7",
+   328→   328→    "entryNumber": 7,
+   329→   329→    "date": "2026-06-25",
+   330→   330→    "description": "صرف مرتبات الموظفين",
+   331→   331→    "lines": [
+   332→   332→      { "accountCode": "5002", "accountName": "مرتبات وأجور", "debit": 18000, "credit": 0 },
+   333→   333→      { "accountCode": "1111", "accountName": "الصندوق", "debit": 0, "credit": 18000 }
+   334→   334→    ],
+   335→   335→    "totalDebit": 18000,
+   336→   336→    "totalCredit": 18000,
+   337→   337→    "status": "posted"
+   338→   338→  },
+   339→   339→  {
+   340→   340→    "id": "je-8",
+   341→   341→    "entryNumber": 8,
+   342→   342→    "date": "2026-07-01",
+   343→   343→    "description": "إيجار المصنع شهر يوليو",
+   344→   344→    "lines": [
+   345→   345→      { "accountCode": "5003", "accountName": "إيجار المصنع", "debit": 8000, "credit": 0 },
+   346→   346→      { "accountCode": "1111", "accountName": "الصندوق", "debit": 0, "credit": 8000 }
+   347→   347→    ],
+   348→   348→    "totalDebit": 8000,
+   349→   349→    "totalCredit": 8000,
+   350→   350→    "status": "posted"
+   351→   351→  },
+   352→   352→  {
+   353→   353→    "id": "je-9",
+   354→   354→    "entryNumber": 9,
+   355→   355→    "date": "2026-07-05",
+   356→   356→    "description": "مبيعات آجل لمطبخ سارة",
+   357→   357→    "lines": [
+   358→   358→      { "accountCode": "1212", "accountName": "عميل 2 مطبخ سارة", "debit": 28000, "credit": 0 },
+   359→   359→      { "accountCode": "4001", "accountName": "إيرادات المبيعات", "debit": 0, "credit": 28000 }
+   360→   360→    ],
+   361→   361→    "totalDebit": 28000,
+   362→   362→    "totalCredit": 28000,
+   363→   363→    "status": "posted"
+   364→   364→  },
+   365→   365→  {
+   366→   366→    "id": "je-10",
+   367→   367→    "entryNumber": 10,
+   368→   368→    "date": "2026-07-10",
+   369→   369→    "description": "سداد لمورد احمد يحيى",
+   370→   370→    "lines": [
+   371→   371→      { "accountCode": "2212", "accountName": "مورد 2 احمد يحيى", "debit": 15000, "credit": 0 },
+   372→   372→      { "accountCode": "1111", "accountName": "الصندوق", "debit": 0, "credit": 15000 }
+   373→   373→    ],
+   374→   374→    "totalDebit": 15000,
+   375→   375→    "totalCredit": 15000,
+   376→   376→    "status": "posted"
+   377→   377→  },
+   378→   378→  {
+   379→   379→    "id": "je-11",
+   380→   380→    "entryNumber": 11,
+   381→   381→    "date": "2026-07-15",
+   382→   382→    "description": "مصروفات شحن وتوصيل",
+   383→   383→    "lines": [
+   384→   384→      { "accountCode": "5022", "accountName": "شحن وتوصيل", "debit": 2500, "credit": 0 },
+   385→   385→      { "accountCode": "1111", "accountName": "الصندوق", "debit": 0, "credit": 2500 }
+   386→   386→    ],
+   387→   387→    "totalDebit": 2500,
+   388→   388→    "totalCredit": 2500,
+   389→   389→    "status": "posted"
+   390→   390→  },
+   391→   391→  {
+   392→   392→    "id": "je-12",
+   393→   393→    "entryNumber": 12,
+   394→   394→    "date": "2026-07-20",
+   395→   395→    "description": "تحصيل من عميل محمد فتحى المرور",
+   396→   396→    "lines": [
+   397→   397→      { "accountCode": "1111", "accountName": "الصندوق", "debit": 22000, "credit": 0 },
+   398→   398→      { "accountCode": "1213", "accountName": "عميل 3 محمد فتحى المرور", "debit": 0, "credit": 22000 }
+   399→   399→    ],
+   400→   400→    "totalDebit": 22000,
+   401→   401→    "totalCredit": 22000,
+   402→   402→    "status": "posted"
+   403→   403→  },
+   404→   404→  {
+   405→   405→    "id": "je-13",
+   406→   406→    "entryNumber": 13,
+   407→   407→    "date": "2026-07-25",
+   408→   408→    "description": "مشتريات من شركة اشبيجيال",
+   409→   409→    "lines": [
+   410→   410→      { "accountCode": "5101", "accountName": "المشتريات", "debit": 42000, "credit": 0 },
+   411→   411→      { "accountCode": "2213", "accountName": "مورد 3 شركة اشبيجيال", "debit": 0, "credit": 42000 }
+   412→   412→    ],
+   413→   413→    "totalDebit": 42000,
+   414→   414→    "totalCredit": 42000,
+   415→   415→    "status": "posted"
+   416→   416→  },
+   417→   417→  {
+   418→   418→    "id": "je-14",
+   419→   419→    "entryNumber": 14,
+   420→   420→    "date": "2026-08-01",
+   421→   421→    "description": "صرف مصروفات صيانة",
+   422→   422→    "lines": [
+   423→   423→      { "accountCode": "5015", "accountName": "صيانة وتصليحات", "debit": 3500, "credit": 0 },
+   424→   424→      { "accountCode": "1111", "accountName": "الصندوق", "debit": 0, "credit": 3500 }
+   425→   425→    ],
+   426→   426→    "totalDebit": 3500,
+   427→   427→    "totalCredit": 3500,
+   428→   428→    "status": "posted"
+   429→   429→  },
+   430→   430→  {
+   431→   431→    "id": "je-15",
+   432→   432→    "entryNumber": 15,
+   433→   433→    "date": "2026-08-05",
+   434→   434→    "description": "مبيعات نقدية متنوعة",
+   435→   435→    "lines": [
+   436→   436→      { "accountCode": "1111", "accountName": "الصندوق", "debit": 48500, "credit": 0 },
+   437→   437→      { "accountCode": "4001", "accountName": "إيرادات المبيعات", "debit": 0, "credit": 48500 }
+   438→   438→    ],
+   439→   439→    "totalDebit": 48500,
+   440→   440→    "totalCredit": 48500,
+   441→   441→    "status": "posted"
+   442→   442→  },
+   443→   443→  {
+   444→   444→    "id": "je-16",
+   445→   445→    "entryNumber": 16,
+   446→   446→    "date": "2026-08-10",
+   447→   447→    "description": "مصروفات تقطيع ولزق شريط",
+   448→   448→    "lines": [
+   449→   449→      { "accountCode": "5301", "accountName": "مصروفات تقطيع ولزق شريط", "debit": 1200, "credit": 0 },
+   450→   450→      { "accountCode": "1111", "accountName": "الصندوق", "debit": 0, "credit": 1200 }
+   451→   451→    ],
+   452→   452→    "totalDebit": 1200,
+   453→   453→    "totalCredit": 1200,
+   454→   454→    "status": "posted"
+   455→   455→  },
+   456→   456→  {
+   457→   457→    "id": "je-17",
+   458→   458→    "entryNumber": 17,
+   459→   459→    "date": "2026-08-15",
+   460→   460→    "description": "سداد عجز صندوق",
+   461→   461→    "lines": [
+   462→   462→      { "accountCode": "5015", "accountName": "صيانة وتصليحات", "debit": 850, "credit": 0 },
+   463→   463→      { "accountCode": "1111", "accountName": "الصندوق", "debit": 0, "credit": 850 }
+   464→   464→    ],
+   465→   465→    "totalDebit": 850,
+   466→   466→    "totalCredit": 850,
+   467→   467→    "status": "posted"
+   468→   468→  },
+   469→   469→  {
+   470→   470→    "id": "je-18",
+   471→   471→    "entryNumber": 18,
+   472→   472→    "date": "2026-08-20",
+   473→   473→    "description": "مبيعات آجل لمعرض الرحيمى",
+   474→   474→    "lines": [
+   475→   475→      { "accountCode": "1211", "accountName": "عميل 1 معرض الرحيمى", "debit": 55000, "credit": 0 },
+   476→   476→      { "accountCode": "4001", "accountName": "إيرادات المبيعات", "debit": 0, "credit": 55000 }
+   477→   477→    ],
+   478→   478→    "totalDebit": 55000,
+   479→   479→    "totalCredit": 55000,
+   480→   480→    "status": "posted"
+   481→   481→  },
+   482→   482→  {
+   483→   483→    "id": "je-19",
+   484→   484→    "entryNumber": 19,
+   485→   485→    "date": "2026-08-25",
+   486→   486→    "description": "صرف إيجار المصنع شهر أغسطس",
+   487→   487→    "lines": [
+   488→   488→      { "accountCode": "5003", "accountName": "إيجار المصنع", "debit": 8000, "credit": 0 },
+   489→   489→      { "accountCode": "1111", "accountName": "الصندوق", "debit": 0, "credit": 8000 }
+   490→   490→    ],
+   491→   491→    "totalDebit": 8000,
+   492→   492→    "totalCredit": 8000,
+   493→   493→    "status": "posted"
+   494→   494→  },
+   495→   495→  {
+   496→   496→    "id": "je-20",
+   497→   497→    "entryNumber": 20,
+   498→   498→    "date": "2026-09-01",
+   499→   499→    "description": "صرف مرتبات سبتمبر",
+   500→   500→    "lines": [
+   501→   501→      { "accountCode": "5002", "accountName": "مرتبات وأجور", "debit": 18500, "credit": 0 },
+   502→   502→      { "accountCode": "1111", "accountName": "الصندوق", "debit": 0, "credit": 18500 }
+   503→   503→    ],
+   504→   504→    "totalDebit": 18500,
+   505→   505→    "totalCredit": 18500,
+   506→   506→    "status": "posted"
+   507→   507→  }
+   508→   508→]
+   509→   509→
+   510→   510→// ============ MAIN COMPONENT ============
+   511→   511→export default function AccountingApp() {
+   512→   512→  const [activeModule, setActiveModule] = useState<ModuleType>('dashboard')
+   513→   513→  const [sidebarOpen, setSidebarOpen] = useState(true)
+   514→   514→  const [isLoggedIn, setIsLoggedIn] = useState(false)
+   515→   515→  const [invoices, setInvoices] = useState<Invoice[]>([])
+   516→   516→  const [purchaseInvoices, setPurchaseInvoices] = useState<PurchaseInvoice[]>([])
+   517→   517→  const [items, setItems] = useState<Item[]>(mockItems)
+   518→   518→  const [parties, setParties] = useState<Party[]>([])
+   519→   519→  const [transactions, setTransactions] = useState<Transaction[]>([])
+   520→   520→  const [journalEntries, setJournalEntries] = useState<JournalEntry[]>(mockJournalEntries)
+   521→   521→  const [showJournalDialog, setShowJournalDialog] = useState(false)
+   522→   522→  const [viewingJournalEntry, setViewingJournalEntry] = useState<JournalEntry | null>(null)
+   523→   523→  const [journalSearchTerm, setJournalSearchTerm] = useState('')
+   524→   524→  const [journalDateFilter, setJournalDateFilter] = useState('')
+   525→   525→  const [expandedAccounts, setExpandedAccounts] = useState<Set<string>>(new Set(['acc-1000', 'acc-2000', 'acc-3000', 'acc-4000', 'acc-5000']))
+   526→   526→  const [searchTerm, setSearchTerm] = useState('')
+   527→   527→
+   528→   528→  // Toggle account expansion
+   529→   529→  const toggleAccountExpansion = (accountId: string) => {
+   530→   530→    setExpandedAccounts(prev => {
+   531→   531→      const newSet = new Set(prev)
+   532→   532→      if (newSet.has(accountId)) {
+   533→   533→        newSet.delete(accountId)
+   534→   534→      } else {
+   535→   535→        newSet.add(accountId)
+   536→   536→      }
+   537→   537→      return newSet
+   538→   538→    })
+   539→   539→  }
+   540→   540→  
+   541→   541→  // Invoice Form States
+   542→   542→  const [showInvoiceDialog, setShowInvoiceDialog] = useState(false)
+   543→   543→  const [editingInvoice, setEditingInvoice] = useState<Invoice | null>(null)
+   544→   544→  const [invoiceJustSaved, setInvoiceJustSaved] = useState(false)
+   545→   545→  const [currentInvoiceForPrint, setCurrentInvoiceForPrint] = useState<Invoice | null>(null)
+   546→   546→  const [invoiceForm, setInvoiceForm] = useState({
+   547→   547→    customerId: '',
+   548→   548→    date: new Date().toISOString().split('T')[0],
+   549→   549→    notes: '',
+   550→   550→    paymentMethod: 'cash' as 'cash' | 'bank' | 'check' | 'partial',
+   551→   551→    paidAmount: 0,
+   552→   552→    taxRate: 15,
+   553→   553→    discount: 0,
+   554→   554→    items: [] as { itemId: string; quantity: number; price: number; discount: number }[]
+   555→   555→  })
+   556→   556→
+   557→   557→  // Purchase Invoice Form States
+   558→   558→  const [showPurchaseDialog, setShowPurchaseDialog] = useState(false)
+   559→   559→  const [editingPurchase, setEditingPurchase] = useState<PurchaseInvoice | null>(null)
+   560→   560→  const [purchaseJustSaved, setPurchaseJustSaved] = useState(false)
+   561→   561→  const [currentPurchaseForPrint, setCurrentPurchaseForPrint] = useState<PurchaseInvoice | null>(null)
+   562→   562→  const [purchaseForm, setPurchaseForm] = useState({
+   563→   563→    supplierId: '',
+   564→   564→    date: new Date().toISOString().split('T')[0],
+   565→   565→    notes: '',
+   566→   566→    paymentMethod: 'cash' as 'cash' | 'bank' | 'check' | 'partial',
+   567→   567→    paidAmount: 0,
+   568→   568→    taxRate: 15,
+   569→   569→    discount: 0,
+   570→   570→    items: [] as { itemId: string; quantity: number; price: number; discount: number }[]
+   571→   571→  })
+   572→   572→  const [showAddSupplierDialog, setShowAddSupplierDialog] = useState(false)
+   573→   573→  const [newSupplier, setNewSupplier] = useState({ nameAr: '', type: 'supplier' as 'supplier' | 'customer' | 'both', phone: '' })
+   574→   574→
+   575→   575→  // Delete Confirmation State
+   576→   576→  const [deleteConfirm, setDeleteConfirm] = useState<{ show: boolean; type: string; id: string; name: string }>({ show: false, type: '', id: '', name: '' })
+   577→   577→
+   578→   578→  // Notification State - Empty for fresh start
+   579→   579→  const [notifications] = useState<any[]>([])
+   580→   580→
+   581→   581→  // Login Handler
+   582→   582→  const handleLogin = (e: React.FormEvent) => {
+   583→   583→    e.preventDefault()
+   584→   584→    setIsLoggedIn(true)
+   585→   585→  }
+   586→   586→
+   587→   587→  // ============ INVOICE ACTIONS ============
+   588→   588→  const openNewInvoice = () => {
+   589→   589→    setEditingInvoice(null)
+   590→   590→    setInvoiceForm({ 
+   591→   591→      customerId: '', 
+   592→   592→      date: new Date().toISOString().split('T')[0], 
+   593→   593→      notes: '', 
+   594→   594→      paymentMethod: 'cash',
+   595→   595→      paidAmount: 0,
+   596→   596→      taxRate: 15,
+   597→   597→      discount: 0,
+   598→   598→      items: [] 
+   599→   599→    })
+   600→   600→    setShowInvoiceDialog(true)
+   601→   601→  }
+   602→   602→
+   603→   603→  const openEditInvoice = (invoice: Invoice) => {
+   604→   604→    if (invoice.status === 'posted' || invoice.status === 'paid') {
+   605→   605→      alert('لا يمكن تعديل فاتورة مرحلة')
+   606→   606→      return
+   607→   607→    }
+   608→   608→    setEditingInvoice(invoice)
+   609→   609→    setInvoiceForm({
+   610→   610→      customerId: invoice.id,
+   611→   611→      date: invoice.date,
+   612→   612→      notes: '',
+   613→   613→      items: invoice.items.map(item => ({ itemId: item.id, quantity: item.quantity, price: item.price, discount: 0 }))
+   614→   614→    })
+   615→   615→    setShowInvoiceDialog(true)
+   616→   616→  }
+   617→   617→
+   618→   618→  // Add new customer/party on the fly
+   619→   619→  const [showAddCustomerDialog, setShowAddCustomerDialog] = useState(false)
+   620→   620→  const [newCustomer, setNewCustomer] = useState({ nameAr: '', type: 'customer' as 'customer' | 'supplier' | 'both', phone: '' })
+   621→   621→
+   622→   622→  const addNewCustomer = () => {
+   623→   623→    if (!newCustomer.nameAr) {
+   624→   624→      alert('يرجى إدخال اسم العميل')
+   625→   625→      return
+   626→   626→    }
+   627→   627→    const party: Party = {
+   628→   628→      id: Date.now().toString(),
+   629→   629→      nameAr: newCustomer.nameAr,
+   630→   630→      type: newCustomer.type,
+   631→   631→      phone: newCustomer.phone,
+   632→   632→      balance: 0
+   633→   633→    }
+   634→   634→    setParties(prev => [...prev, party])
+   635→   635→    setInvoiceForm(prev => ({ ...prev, customerId: party.id }))
+   636→   636→    setNewCustomer({ nameAr: '', type: 'customer', phone: '' })
+   637→   637→    setShowAddCustomerDialog(false)
+   638→   638→  }
+   639→   639→
+   640→   640→  // ============ PARTIES CRUD ============
+   641→   641→  const [showPartyDialog, setShowPartyDialog] = useState(false)
+   642→   642→  const [editingParty, setEditingParty] = useState<Party | null>(null)
+   643→   643→  const [partyForm, setPartyForm] = useState({ nameAr: '', type: 'customer' as 'customer' | 'supplier' | 'both', phone: '', balance: 0 })
+   644→   644→
+   645→   645→  const openNewParty = () => {
+   646→   646→    setEditingParty(null)
+   647→   647→    setPartyForm({ nameAr: '', type: 'customer', phone: '', balance: 0 })
+   648→   648→    setShowPartyDialog(true)
+   649→   649→  }
+   650→   650→
+   651→   651→  const openEditParty = (party: Party) => {
+   652→   652→    setEditingParty(party)
+   653→   653→    setPartyForm({
+   654→   654→      nameAr: party.nameAr,
+   655→   655→      type: party.type,
+   656→   656→      phone: party.phone,
+   657→   657→      balance: party.balance
+   658→   658→    })
+   659→   659→    setShowPartyDialog(true)
+   660→   660→  }
+   661→   661→
+   662→   662→  const saveParty = () => {
+   663→   663→    if (!partyForm.nameAr) {
+   664→   664→      alert('يرجى إدخال اسم الطرف')
+   665→   665→      return
+   666→   666→    }
+   667→   667→
+   668→   668→    if (editingParty) {
+   669→   669→      setParties(prev => prev.map(p => 
+   670→   670→        p.id === editingParty.id 
+   671→   671→          ? { ...p, ...partyForm }
+   672→   672→          : p
+   673→   673→      ))
+   674→   674→      alert('تم تحديث بيانات الطرف بنجاح')
+   675→   675→    } else {
+   676→   676→      const party: Party = {
+   677→   677→        id: Date.now().toString(),
+   678→   678→        nameAr: partyForm.nameAr,
+   679→   679→        type: partyForm.type,
+   680→   680→        phone: partyForm.phone,
+   681→   681→        balance: partyForm.balance
+   682→   682→      }
+   683→   683→      setParties(prev => [...prev, party])
+   684→   684→      alert('تم إضافة الطرف بنجاح')
+   685→   685→    }
+   686→   686→    
+   687→   687→    setShowPartyDialog(false)
+   688→   688→    setEditingParty(null)
+   689→   689→    setPartyForm({ nameAr: '', type: 'customer', phone: '', balance: 0 })
+   690→   690→  }
+   691→   691→
+   692→   692→  const deleteParty = (partyId: string, partyName: string) => {
+   693→   693→    setDeleteConfirm({
+   694→   694→      show: true,
+   695→   695→      type: 'party',
+   696→   696→      id: partyId,
+   697→   697→      name: partyName
+   698→   698→    })
+   699→   699→  }
+   700→   700→
+   701→   701→  const viewPartyDetails = (party: Party) => {
+   702→   702→    alert(`تفاصيل الطرف:\n\nالاسم: ${party.nameAr}\nالنوع: ${party.type === 'customer' ? 'عميل' : party.type === 'supplier' ? 'مورد' : 'كلاهما'}\nالهاتف: ${party.phone || 'غير محدد'}\nالرصيد: ${party.balance >= 0 ? '' : '-'}${Math.abs(party.balance).toLocaleString()} ج.م`)
+   703→   703→  }
+   704→   704→
+   705→   705→  const printPartyStatement = (party: Party) => {
+   706→   706→    const printWindow = window.open('', '_blank')
+   707→   707→    if (printWindow) {
+   708→   708→      printWindow.document.write(`
+   709→   709→        <html dir="rtl">
+   710→   710→        <head><title>كشف حساب - ${party.nameAr}</title>
+   711→   711→        <style>
+   712→   712→          body { font-family: Arial; padding: 20px; direction: rtl; }
+   713→   713→          h1 { color: #005f73; text-align: center; }
+   714→   714→          .info { margin: 10px 0; padding: 10px; background: #f5f5f5; border-radius: 8px; }
+   715→   715→          table { width: 100%; border-collapse: collapse; margin-top: 20px; }
+   716→   716→          th, td { border: 1px solid #ddd; padding: 8px; text-align: right; }
+   717→   717→          th { background: #005f73; color: white; }
+   718→   718→        </style>
+   719→   719→        </head>
+   720→   720→        <body>
+   721→   721→          <h1>📋 كشف حساب</h1>
+   722→   722→          <div class="info">
+   723→   723→            <p><strong>الاسم:</strong> ${party.nameAr}</p>
+   724→   724→            <p><strong>الهاتف:</strong> ${party.phone || '-'}</p>
+   725→   725→            <p><strong>الرصيد الحالي:</strong> ${party.balance >= 0 ? '' : '-'}${Math.abs(party.balance).toLocaleString()} ج.م</p>
+   726→   726→          </div>
+   727→   727→          <table>
+   728→   728→            <thead>
+   729→   729→              <tr><th>التاريخ</th><th>البيان</th><th>مدين</th><th>دائن</th><th>الرصيد</th></tr>
+   730→   730→            </thead>
+   731→   731→            <tbody>
+   732→   732→              <tr><td colspan="5" style="text-align:center;">لا توجد حركات</td></tr>
+   733→   733→            </tbody>
+   734→   734→          </table>
+   735→   735→        </body>
+   736→   736→        </html>
+   737→   737→      `)
+   738→   738→      printWindow.document.close()
+   739→   739→      printWindow.print()
+   740→   740→    }
+   741→   741→  }
+   742→   742→
+   743→   743→  // ============ TRANSACTIONS CRUD ============
+   744→   744→  const [showTransactionDialog, setShowTransactionDialog] = useState(false)
+   745→   745→  const [editingTransaction, setEditingTransaction] = useState<Transaction | null>(null)
+   746→   746→  const [transactionForm, setTransactionForm] = useState({ 
+   747→   747→    date: new Date().toISOString().split('T')[0], 
+   748→   748→    description: '', 
+   749→   749→    amount: 0, 
+   750→   750→    type: 'income' as 'income' | 'expense',
+   751→   751→    category: ''
+   752→   752→  })
+   753→   753→  const [viewingTransaction, setViewingTransaction] = useState<Transaction | null>(null)
+   754→   754→
+   755→   755→  const openNewTransaction = (type: 'income' | 'expense') => {
+   756→   756→    setEditingTransaction(null)
+   757→   757→    setTransactionForm({ 
+   758→   758→      date: new Date().toISOString().split('T')[0], 
+   759→   759→      description: '', 
+   760→   760→      amount: 0, 
+   761→   761→      type,
+   762→   762→      category: type === 'income' ? 'إيرادات أخرى' : 'مصروفات أخرى'
+   763→   763→    })
+   764→   764→    setShowTransactionDialog(true)
+   765→   765→  }
+   766→   766→
+   767→   767→  const openEditTransaction = (transaction: Transaction) => {
+   768→   768→    setEditingTransaction(transaction)
+   769→   769→    setTransactionForm({
+   770→   770→      date: transaction.date,
+   771→   771→      description: transaction.description,
+   772→   772→      amount: transaction.amount,
+   773→   773→      type: transaction.type,
+   774→   774→      category: transaction.category
+   775→   775→    })
+   776→   776→    setShowTransactionDialog(true)
+   777→   777→  }
+   778→   778→
+   779→   779→  const saveTransaction = () => {
+   780→   780→    if (!transactionForm.description) {
+   781→   781→      alert('يرجى إدخال الوصف')
+   782→   782→      return
+   783→   783→    }
+   784→   784→    if (!transactionForm.amount || transactionForm.amount <= 0) {
+   785→   785→      alert('يرجى إدخال مبلغ صحيح')
+   786→   786→      return
+   787→   787→    }
+   788→   788→
+   789→   789→    if (editingTransaction) {
+   790→   790→      setTransactions(prev => prev.map(t => 
+   791→   791→        t.id === editingTransaction.id 
+   792→   792→          ? { ...t, ...transactionForm }
+   793→   793→          : t
+   794→   794→      ))
+   795→   795→      alert('تم تحديث العملية بنجاح')
+   796→   796→    } else {
+   797→   797→      const transaction: Transaction = {
+   798→   798→        id: Date.now().toString(),
+   799→   799→        date: transactionForm.date,
+   800→   800→        description: transactionForm.description,
+   801→   801→        amount: transactionForm.amount,
+   802→   802→        type: transactionForm.type,
+   803→   803→        category: transactionForm.category
+   804→   804→      }
+   805→   805→      setTransactions(prev => [...prev, transaction])
+   806→   806→      alert('تمت إضافة العملية بنجاح')
+   807→   807→    }
+   808→   808→    
+   809→   809→    setShowTransactionDialog(false)
+   810→   810→    setEditingTransaction(null)
+   811→   811→    setTransactionForm({ date: new Date().toISOString().split('T')[0], description: '', amount: 0, type: 'income', category: '' })
+   812→   812→  }
+   813→   813→
+   814→   814→  const deleteTransaction = (transactionId: string, description: string) => {
+   815→   815→    setDeleteConfirm({
+   816→   816→      show: true,
+   817→   817→      type: 'transaction',
+   818→   818→      id: transactionId,
+   819→   819→      name: description
+   820→   820→    })
+   821→   821→  }
+   822→   822→
+   823→   823→  const viewTransactionDetails = (transaction: Transaction) => {
+   824→   824→    setViewingTransaction(transaction)
+   825→   825→  }
+   826→   826→
+   827→   827→  const printTransaction = (transaction: Transaction) => {
+   828→   828→    const printWindow = window.open('', '_blank')
+   829→   829→    if (printWindow) {
+   830→   830→      printWindow.document.write(`
+   831→   831→        <html dir="rtl">
+   832→   832→        <head><title>${transaction.type === 'income' ? 'إيصال إيراد' : 'إيصال مصروف'}</title>
+   833→   833→        <style>
+   834→   834→          body { font-family: Arial; padding: 40px; direction: rtl; max-width: 400px; margin: 0 auto; }
+   835→   835→          h1 { color: #005f73; text-align: center; border-bottom: 2px solid #005f73; padding-bottom: 10px; }
+   836→   836→          .details { margin: 20px 0; }
+   837→   837→          .row { display: flex; justify-content: space-between; padding: 8px 0; border-bottom: 1px dashed #ddd; }
+   838→   838→          .total { font-size: 24px; font-weight: bold; color: ${transaction.type === 'income' ? 'green' : 'red'}; text-align: center; margin-top: 20px; }
+   839→   839→          .date { text-align: center; color: #666; font-size: 12px; margin-top: 30px; }
+   840→   840→        </style>
+   841→   841→        </head>
+   842→   842→        <body>
+   843→   843→          <h1>${transaction.type === 'income' ? '💰 إيصال إيراد' : '💸 إيصال مصروف'}</h1>
+   844→   844→          <div class="details">
+   845→   845→            <div class="row"><span>رقم العملية:</span><span>#${transaction.id.slice(-6)}</span></div>
+   846→   846→            <div class="row"><span>التاريخ:</span><span>${transaction.date}</span></div>
+   847→   847→            <div class="row"><span>الوصف:</span><span>${transaction.description}</span></div>
+   848→   848→            <div class="row"><span>الفئة:</span><span>${transaction.category}</span></div>
+   849→   849→          </div>
+   850→   850→          <div class="total">${transaction.type === 'income' ? '+' : '-'}${transaction.amount.toLocaleString()} ج.م</div>
+   851→   851→          <div class="date">تاريخ الطباعة: ${new Date().toLocaleDateString('ar-SA')}</div>
+   852→   852→        </body>
+   853→   853→        </html>
+   854→   854→      `)
+   855→   855→      printWindow.document.close()
+   856→   856→      printWindow.print()
+   857→   857→    }
+   858→   858→  }
+   859→   859→
+   860→   860→  // Add new item on the fly (from invoice form)
+   861→   861→  const [showAddItemDialog, setShowAddItemDialog] = useState(false)
+   862→   862→  const [newItem, setNewItem] = useState({ nameAr: '', code: '', category: '', stock: 0, price: 0 })
+   863→   863→  const [itemEditIndex, setItemEditIndex] = useState<number | null>(null)
+   864→   864→
+   865→   865→  // Inventory Item Dialog State (for inventory tab)
+   866→   866→  const [showInventoryItemDialog, setShowInventoryItemDialog] = useState(false)
+   867→   867→  const [editingInventoryItem, setEditingInventoryItem] = useState<Item | null>(null)
+   868→   868→  const [inventoryItemForm, setInventoryItemForm] = useState({ nameAr: '', code: '', category: '', stock: 0, price: 0 })
+   869→   869→
+   870→   870→  const openNewInventoryItem = () => {
+   871→   871→    setEditingInventoryItem(null)
+   872→   872→    setInventoryItemForm({ nameAr: '', code: '', category: '', stock: 0, price: 0 })
+   873→   873→    setShowInventoryItemDialog(true)
+   874→   874→  }
+   875→   875→
+   876→   876→  const openEditInventoryItem = (item: Item) => {
+   877→   877→    setEditingInventoryItem(item)
+   878→   878→    setInventoryItemForm({
+   879→   879→      nameAr: item.nameAr,
+   880→   880→      code: item.code,
+   881→   881→      category: item.category,
+   882→   882→      stock: item.stock,
+   883→   883→      price: item.price
+   884→   884→    })
+   885→   885→    setShowInventoryItemDialog(true)
+   886→   886→  }
+   887→   887→
+   888→   888→  const saveInventoryItem = () => {
+   889→   889→    if (!inventoryItemForm.nameAr) {
+   890→   890→      alert('يرجى إدخال اسم الصنف')
+   891→   891→      return
+   892→   892→    }
+   893→   893→
+   894→   894→    if (editingInventoryItem) {
+   895→   895→      // Edit existing item
+   896→   896→      setItems(prev => prev.map(item => 
+   897→   897→        item.id === editingInventoryItem.id 
+   898→   898→          ? { ...item, ...inventoryItemForm }
+   899→   899→          : item
+   900→   900→      ))
+   901→   901→    } else {
+   902→   902→      // Add new item
+   903→   903→      const item: Item = {
+   904→   904→        id: Date.now().toString(),
+   905→   905→        nameAr: inventoryItemForm.nameAr,
+   906→   906→        code: inventoryItemForm.code || `P${items.length + 1}`,
+   907→   907→        category: inventoryItemForm.category || 'عام',
+   908→   908→        stock: inventoryItemForm.stock,
+   909→   909→        price: inventoryItemForm.price
+   910→   910→      }
+   911→   911→      setItems(prev => [...prev, item])
+   912→   912→    }
+   913→   913→    
+   914→   914→    setShowInventoryItemDialog(false)
+   915→   915→    setEditingInventoryItem(null)
+   916→   916→    setInventoryItemForm({ nameAr: '', code: '', category: '', stock: 0, price: 0 })
+   917→   917→  }
+   918→   918→
+   919→   919→  const deleteInventoryItem = (itemId: string, itemName: string) => {
+   920→   920→    setDeleteConfirm({
+   921→   921→      show: true,
+   922→   922→      type: 'item',
+   923→   923→      id: itemId,
+   924→   924→      name: itemName
+   925→   925→    })
+   926→   926→  }
+   927→   927→
+   928→   928→  const confirmDeleteItem = () => {
+   929→   929→    if (deleteConfirm.type === 'item') {
+   930→   930→      setItems(prev => prev.filter(item => item.id !== deleteConfirm.id))
+   931→   931→    }
+   932→   932→    setDeleteConfirm({ show: false, type: '', id: '', name: '' })
+   933→   933→  }
+   934→   934→
+   935→   935→  const addNewItem = () => {
+   936→   936→    if (!newItem.nameAr) {
+   937→   937→      alert('يرجى إدخال اسم الصنف')
+   938→   938→      return
+   939→   939→    }
+   940→   940→    const item: Item = {
+   941→   941→      id: Date.now().toString(),
+   942→   942→      nameAr: newItem.nameAr,
+   943→   943→      code: newItem.code || `P${items.length + 1}`,
+   944→   944→      category: newItem.category || 'عام',
+   945→   945→      stock: newItem.stock,
+   946→   946→      price: newItem.price
+   947→   947→    }
+   948→   948→    setItems(prev => [...prev, item])
+   949→   949→    
+   950→   950→    // If adding from invoice form, update the specific item row
+   951→   951→    if (itemEditIndex !== null) {
+   952→   952→      updateInvoiceItem(itemEditIndex, 'itemId', item.id)
+   953→   953→      updateInvoiceItem(itemEditIndex, 'price', item.price)
+   954→   954→      setItemEditIndex(null)
+   955→   955→    }
+   956→   956→    
+   957→   957→    setNewItem({ nameAr: '', code: '', category: '', stock: 0, price: 0 })
+   958→   958→    setShowAddItemDialog(false)
+   959→   959→  }
+   960→   960→
+   961→   961→  const addInvoiceItem = () => {
+   962→   962→    setInvoiceForm(prev => ({
+   963→   963→      ...prev,
+   964→   964→      items: [...prev.items, { itemId: '', quantity: 1, price: 0, discount: 0 }]
+   965→   965→    }))
+   966→   966→  }
+   967→   967→
+   968→   968→  const updateInvoiceItem = (index: number, field: string, value: any) => {
+   969→   969→    setInvoiceForm(prev => ({
+   970→   970→      ...prev,
+   971→   971→      items: prev.items.map((item, i) => i === index ? { ...item, [field]: value } : item)
+   972→   972→    }))
+   973→   973→  }
+   974→   974→
+   975→   975→  const removeInvoiceItem = (index: number) => {
+   976→   976→    setInvoiceForm(prev => ({
+   977→   977→      ...prev,
+   978→   978→      items: prev.items.filter((_, i) => i !== index)
+   979→   979→    }))
+   980→   980→  }
+   981→   981→
+   982→   982→  const saveInvoice = () => {
+   983→   983→    if (!invoiceForm.customerId) {
+   984→   984→      alert('يرجى اختيار العميل')
+   985→   985→      return
+   986→   986→    }
+   987→   987→    if (invoiceForm.items.length === 0) {
+   988→   988→      alert('يرجى إضافة بند واحد على الأقل')
+   989→   989→      return
+   990→   990→    }
+   991→   991→
+   992→   992→    const selectedCustomer = parties.find(p => p.id === invoiceForm.customerId)
+   993→   993→    
+   994→   994→    // حساب المجاميع
+   995→   995→    const subtotal = invoiceForm.items.reduce((sum, item) => sum + (item.quantity * item.price), 0)
+   996→   996→    const discountAmount = (subtotal * invoiceForm.discount) / 100
+   997→   997→    const afterDiscount = subtotal - discountAmount
+   998→   998→    const taxAmount = (afterDiscount * invoiceForm.taxRate) / 100
+   999→   999→    const grandTotal = afterDiscount + taxAmount
+  1000→  1000→    
+  1001→  1001→    // التحقق من المبلغ المدفوع
+  1002→  1002→    const paidAmount = invoiceForm.paidAmount || 0
+  1003→  1003→    const remainingAmount = grandTotal - paidAmount
+  1004→  1004→    
+  1005→  1005→    // تحديد طريقة السداد بناءً على المبلغ المدفوع
+  1006→  1006→    let paymentMethod = invoiceForm.paymentMethod
+  1007→  1007→    let status: 'draft' | 'posted' | 'paid' | 'cancelled' = 'draft'
+  1008→  1008→    
+  1009→  1009→    if (paidAmount >= grandTotal) {
+  1010→  1010→      status = 'paid'
+  1011→  1011→      paymentMethod = invoiceForm.paymentMethod === 'partial' ? 'cash' : invoiceForm.paymentMethod
+  1012→  1012→    } else if (paidAmount > 0 && paidAmount < grandTotal) {
+  1013→  1013→      paymentMethod = 'partial'
+  1014→  1014→    }
+  1015→  1015→
+  1016→  1016→    if (editingInvoice) {
+  1017→  1017→      setInvoices(prev => prev.map(inv => inv.id === editingInvoice.id ? {
+  1018→  1018→        ...inv,
+  1019→  1019→        customerName: selectedCustomer?.nameAr || '',
+  1020→  1020→        date: invoiceForm.date,
+  1021→  1021→        total: grandTotal,
+  1022→  1022→        paidAmount: paidAmount,
+  1023→  1023→        remainingAmount: Math.max(0, remainingAmount),
+  1024→  1024→        paymentMethod: paymentMethod,
+  1025→  1025→        status: status,
+  1026→  1026→        items: invoiceForm.items.map((item, idx) => ({
+  1027→  1027→          id: `new-${idx}`,
+  1028→  1028→          name: items.find(i => i.id === item.itemId)?.nameAr || 'منتج',
+  1029→  1029→          quantity: item.quantity,
+  1030→  1030→          price: item.price,
+  1031→  1031→          total: item.quantity * item.price
+  1032→  1032→        }))
+  1033→  1033→      } : inv))
+  1034→  1034→    } else {
+  1035→  1035→      const newInvoice: Invoice = {
+  1036→  1036→        id: Date.now().toString(),
+  1037→  1037→        number: `INV-${String(invoices.length + 1).padStart(3, '0')}`,
+  1038→  1038→        date: invoiceForm.date,
+  1039→  1039→        customerName: selectedCustomer?.nameAr || '',
+  1040→  1040→        total: grandTotal,
+  1041→  1041→        paidAmount: paidAmount,
+  1042→  1042→        remainingAmount: Math.max(0, remainingAmount),
+  1043→  1043→        paymentMethod: paymentMethod,
+  1044→  1044→        status: status,
+  1045→  1045→        items: invoiceForm.items.map((item, idx) => ({
+  1046→  1046→          id: `new-${idx}`,
+  1047→  1047→          name: items.find(i => i.id === item.itemId)?.nameAr || 'منتج',
+  1048→  1048→          quantity: item.quantity,
+  1049→  1049→          price: item.price,
+  1050→  1050→          total: item.quantity * item.price
+  1051→  1051→        }))
+  1052→  1052→      }
+  1053→  1053→      setInvoices(prev => [...prev, newInvoice])
+  1054→  1054→      setCurrentInvoiceForPrint(newInvoice)
+  1055→  1055→    }
+  1056→  1056→    
+  1057→  1057→    // تعيين حالة الحفظ لإظهار زر الطباعة
+  1058→  1058→    setInvoiceJustSaved(true)
+  1059→  1059→  }
+  1060→  1060→
+  1061→  1061→  const printInvoice = () => {
+  1062→  1062→    const selectedCustomer = parties.find(p => p.id === invoiceForm.customerId)
+  1063→  1063→    
+  1064→  1064→    // حساب المجاميع
+  1065→  1065→    const subtotal = invoiceForm.items.reduce((sum, item) => sum + (item.quantity * item.price), 0)
+  1066→  1066→    const discountAmount = (subtotal * invoiceForm.discount) / 100
+  1067→  1067→    const afterDiscount = subtotal - discountAmount
+  1068→  1068→    const taxAmount = (afterDiscount * invoiceForm.taxRate) / 100
+  1069→  1069→    const grandTotal = afterDiscount + taxAmount
+  1070→  1070→    const paidAmount = invoiceForm.paidAmount || 0
+  1071→  1071→    const remainingAmount = Math.max(0, grandTotal - paidAmount)
+  1072→  1072→
+  1073→  1073→    // تحديد نص طريقة السداد
+  1074→  1074→    const paymentMethodText = invoiceForm.paymentMethod === 'cash' ? 'نقدى' : 
+  1075→  1075→                             invoiceForm.paymentMethod === 'bank' ? 'تحويل بنكي' :
+  1076→  1076→                             invoiceForm.paymentMethod === 'check' ? 'شيك' : 'جزئي'
+  1077→  1077→
+  1078→  1078→    // إنشاء محتوى الفاتورة للطباعة
+  1079→  1079→    const printContent = `
+  1080→  1080→      <!DOCTYPE html>
+  1081→  1081→      <html dir="rtl" lang="ar">
+  1082→  1082→        <head>
+  1083→  1083→          <meta charset="UTF-8">
+  1084→  1084→          <title>فاتورة مبيعات</title>
+  1085→  1085→          <style>
+  1086→  1086→            * { margin: 0; padding: 0; box-sizing: border-box; }
+  1087→  1087→            body { 
+  1088→  1088→              font-family: 'Cairo', 'Tahoma', Arial, sans-serif; 
+  1089→  1089→              direction: rtl;
+  1090→  1090→              padding: 20px;
+  1091→  1091→              color: #333;
+  1092→  1092→            }
+  1093→  1093→            .invoice-header {
+  1094→  1094→              text-align: center;
+  1095→  1095→              border-bottom: 3px solid #005f73;
+  1096→  1096→              padding-bottom: 20px;
+  1097→  1097→              margin-bottom: 30px;
+  1098→  1098→            }
+  1099→  1099→            .invoice-title { font-size: 28px; font-weight: bold; color: #005f73; margin-bottom: 10px; }
+  1100→  1100→            .invoice-number { font-size: 18px; color: #666; }
+  1101→  1101→            .invoice-info {
+  1102→  1102→              display: flex;
+  1103→  1103→              justify-content: space-between;
+  1104→  1104→              margin-bottom: 30px;
+  1105→  1105→              background: #f8f9fa;
+  1106→  1106→              padding: 15px;
+  1107→  1107→              border-radius: 10px;
+  1108→  1108→            }
+  1109→  1109→            .info-item { margin-bottom: 5px; }
+  1110→  1110→            .info-label { font-weight: bold; color: #555; }
+  1111→  1111→            table { width: 100%; border-collapse: collapse; margin-bottom: 30px; }
+  1112→  1112→            th { background: #005f73; color: white; padding: 12px; text-align: right; }
+  1113→  1113→            td { padding: 12px; border-bottom: 1px solid #ddd; text-align: right; }
+  1114→  1114→            .totals { width: 50%; margin-right: auto; margin-left: 0; }
+  1115→  1115→            .totals tr td { padding: 8px 12px; }
+  1116→  1116→            .total-row { font-weight: bold; }
+  1117→  1117→            .grand-total { 
+  1118→  1118→              background: #005f73; 
+  1119→  1119→              color: white; 
+  1120→  1120→              font-size: 18px;
+  1121→  1121→            }
+  1122→  1122→            .payment-info {
+  1123→  1123→              background: #fff3cd;
+  1124→  1124→              border: 2px solid #ffc107;
+  1125→  1125→              padding: 15px;
+  1126→  1126→              border-radius: 10px;
+  1127→  1127→              margin-top: 20px;
+  1128→  1128→            }
+  1129→  1129→            .payment-info h3 { color: #856404; margin-bottom: 10px; }
+  1130→  1130→            .footer {
+  1131→  1131→              text-align: center;
+  1132→  1132→              margin-top: 40px;
+  1133→  1133→              padding-top: 20px;
+  1134→  1134→              border-top: 2px solid #ddd;
+  1135→  1135→              color: #666;
+  1136→  1136→            }
+  1137→  1137→            @media print {
+  1138→  1138→              body { padding: 0; }
+  1139→  1139→              .no-print { display: none; }
+  1140→  1140→            }
+  1141→  1141→          </style>
+  1142→  1142→        </head>
+  1143→  1143→        <body>
+  1144→  1144→          <div class="invoice-header">
+  1145→  1145→            <div class="invoice-title">📄 فاتورة مبيعات</div>
+  1146→  1146→            <div class="invoice-number">رقم الفاتورة: ${currentInvoiceForPrint?.number || 'NEW'}</div>
+  1147→  1147→            <div>التاريخ: ${invoiceForm.date}</div>
+  1148→  1148→          </div>
+  1149→  1149→
+  1150→  1150→          <div class="invoice-info">
+  1151→  1151→            <div>
+  1152→  1152→              <div class="info-item"><span class="info-label">العميل:</span> ${selectedCustomer?.nameAr || '-'}</div>
+  1153→  1153→              <div class="info-item"><span class="info-label">طريقة السداد:</span> ${paymentMethodText}</div>
+  1154→  1154→            </div>
+  1155→  1155→            <div style="text-align: left;">
+  1156→  1156→              <div class="info-item"><span class="info-label">التاريخ:</span> ${invoiceForm.date}</div>
+  1157→  1157→              <div class="info-item"><span class="info-label">الحالة:</span> ${paidAmount >= grandTotal ? '✅ مدفوع بالكامل' : paidAmount > 0 ? '⏳ دفع جزئي' : '📋 غير مدفوع'}</div>
+  1158→  1158→            </div>
+  1159→  1159→          </div>
+  1160→  1160→
+  1161→  1161→          <table>
+  1162→  1162→            <thead>
+  1163→  1163→              <tr>
+  1164→  1164→                <th>#</th>
+  1165→  1165→                <th>الصنف</th>
+  1166→  1166→                <th>الكمية</th>
+  1167→  1167→                <th>سعر الوحدة</th>
+  1168→  1168→                <th>الإجمالي</th>
+  1169→  1169→              </tr>
+  1170→  1170→            </thead>
+  1171→  1171→            <tbody>
+  1172→  1172→              ${invoiceForm.items.map((item, idx) => {
+  1173→  1173→                const itemName = items.find(i => i.id === item.itemId)?.nameAr || 'منتج'
+  1174→  1174→                return `
+  1175→  1175→                  <tr>
+  1176→  1176→                    <td>${idx + 1}</td>
+  1177→  1177→                    <td>${itemName}</td>
+  1178→  1178→                    <td>${item.quantity}</td>
+  1179→  1179→                    <td>${item.price.toLocaleString()} ج.م</td>
+  1180→  1180→                    <td>${(item.quantity * item.price).toLocaleString()} ج.م</td>
+  1181→  1181→                  </tr>
+  1182→  1182→                `
+  1183→  1183→              }).join('')}
+  1184→  1184→            </tbody>
+  1185→  1185→          </table>
+  1186→  1186→
+  1187→  1187→          <table class="totals">
+  1188→  1188→            <tr>
+  1189→  1189→              <td>المجموع الفرعي:</td>
+  1190→  1190→              <td>${subtotal.toLocaleString()} ج.م</td>
+  1191→  1191→            </tr>
+  1192→  1192→            ${invoiceForm.discount > 0 ? `
+  1193→  1193→            <tr>
+  1194→  1194→              <td>الخصم (${invoiceForm.discount}%):</td>
+  1195→  1195→              <td>-${discountAmount.toLocaleString()} ج.م</td>
+  1196→  1196→            </tr>
+  1197→  1197→            ` : ''}
+  1198→  1198→            <tr>
+  1199→  1199→              <td>الضريبة (${invoiceForm.taxRate}%):</td>
+  1200→  1200→              <td>+${taxAmount.toLocaleString()} ج.م</td>
+  1201→  1201→            </tr>
+  1202→  1202→            <tr class="grand-total">
+  1203→  1203→              <td>الإجمالي الكلي:</td>
+  1204→  1204→              <td>${grandTotal.toLocaleString()} ج.م</td>
+  1205→  1205→            </tr>
+  1206→  1206→          </table>
+  1207→  1207→
+  1208→  1208→          <div class="payment-info">
+  1209→  1209→            <h3>💰 تفاصيل السداد</h3>
+  1210→  1210→            <p><strong>المبلغ المدفوع:</strong> ${paidAmount.toLocaleString()} ج.م</p>
+  1211→  1211→            <p><strong>المتبقي:</strong> ${remainingAmount.toLocaleString()} ج.م</p>
+  1212→  1212→          </div>
+  1213→  1213→
+  1214→  1214→          ${invoiceForm.notes ? `
+  1215→  1215→          <div style="margin-top: 20px; padding: 15px; background: #e9ecef; border-radius: 10px;">
+  1216→  1216→            <strong>📝 ملاحظات:</strong><br>
+  1217→  1217→            ${invoiceForm.notes}
+  1218→  1218→          </div>
+  1219→  1219→          ` : ''}
+  1220→  1220→
+  1221→  1221→          <div class="footer">
+  1222→  1222→            <p>شكراً لتعاملكم معنا - نظام إنجاز المحاسبي</p>
+  1223→  1223→          </div>
+  1224→  1224→
+  1225→  1225→          <script>
+  1226→  1226→            window.onload = function() {
+  1227→  1227→              window.print();
+  1228→  1228→              window.onafterprint = function() {
+  1229→  1229→                window.close();
+  1230→  1230→              }
+  1231→  1231→            }
+  1232→  1232→          </script>
+  1233→  1233→        </body>
+  1234→  1234→      </html>
+  1235→  1235→    `
+  1236→  1236→
+  1237→  1237→    // فتح نافذة الطباعة
+  1238→  1238→    const printWindow = window.open('', '_blank', 'width=800,height=600')
+  1239→  1239→    if (printWindow) {
+  1240→  1240→      printWindow.document.write(printContent)
+  1241→  1241→      printWindow.document.close()
+  1242→  1242→    } else {
+  1243→  1243→      alert('يرجى السماح بالنوافذ المنبثقة لطباعة الفاتورة')
+  1244→  1244→    }
+  1245→  1245→  }
+  1246→  1246→
+  1247→  1247→  const postInvoice = (invoiceId: string) => {
+  1248→  1248→    setInvoices(prev => prev.map(inv => inv.id === invoiceId ? { ...inv, status: 'posted' as const } : inv))
+  1249→  1249→    alert('تم ترحيل الفاتورة بنجاح')
+  1250→  1250→  }
+  1251→  1251→
+  1252→  1252→  const unpostInvoice = (invoiceId: string) => {
+  1253→  1253→    if (confirm('هل أنت متأكد من إلغاء ترحيل هذه الفاتورة؟')) {
+  1254→  1254→      setInvoices(prev => prev.map(inv => inv.id === invoiceId ? { ...inv, status: 'draft' as const } : inv))
+  1255→  1255→      alert('تم إلغاء ترحيل الفاتورة')
+  1256→  1256→    }
+  1257→  1257→  }
+  1258→  1258→
+  1259→  1259→  const deleteInvoice = (invoiceId: string, invoiceNumber: string) => {
+  1260→  1260→    setDeleteConfirm({ show: true, type: 'invoice', id: invoiceId, name: invoiceNumber })
+  1261→  1261→  }
+  1262→  1262→
+  1263→  1263→  const confirmDelete = () => {
+  1264→  1264→    if (deleteConfirm.type === 'invoice') {
+  1265→  1265→      setInvoices(prev => prev.filter(inv => inv.id !== deleteConfirm.id))
+  1266→  1266→      alert('تم حذف الفاتورة بنجاح')
+  1267→  1267→    } else if (deleteConfirm.type === 'item') {
+  1268→  1268→      setItems(prev => prev.filter(item => item.id !== deleteConfirm.id))
+  1269→  1269→      alert('تم حذف الصنف بنجاح')
+  1270→  1270→    } else if (deleteConfirm.type === 'party') {
+  1271→  1271→      setParties(prev => prev.filter(party => party.id !== deleteConfirm.id))
+  1272→  1272→      alert('تم حذف الطرف بنجاح')
+  1273→  1273→    } else if (deleteConfirm.type === 'transaction') {
+  1274→  1274→      setTransactions(prev => prev.filter(t => t.id !== deleteConfirm.id))
+  1275→  1275→      alert('تم حذف العملية بنجاح')
+  1276→  1276→    }
+  1277→  1277→    setDeleteConfirm({ show: false, type: '', id: '', name: '' })
+  1278→  1278→  }
+  1279→  1279→
+  1280→  1280→  // Calculate invoice totals
+  1281→  1281→  const getInvoiceSubtotal = () => {
+  1282→  1282→    return invoiceForm.items.reduce((sum, item) => sum + (item.quantity * item.price), 0)
+  1283→  1283→  }
+  1284→  1284→
+  1285→  1285→  const getInvoiceDiscount = () => {
+  1286→  1286→    return invoiceForm.items.reduce((sum, item) => sum + item.discount, 0)
+  1287→  1287→  }
+  1288→  1288→
+  1289→  1289→  const getInvoiceTotal = () => {
+  1290→  1290→    return getInvoiceSubtotal() - getInvoiceDiscount()
+  1291→  1291→  }
+  1292→  1292→
+  1293→  1293→  // ============ PURCHASE INVOICE ACTIONS ============
+  1294→  1294→  const openNewPurchase = () => {
+  1295→  1295→    setEditingPurchase(null)
+  1296→  1296→    setPurchaseForm({ 
+  1297→  1297→      supplierId: '', 
+  1298→  1298→      date: new Date().toISOString().split('T')[0], 
+  1299→  1299→      notes: '', 
+  1300→  1300→      paymentMethod: 'cash',
+  1301→  1301→      paidAmount: 0,
+  1302→  1302→      taxRate: 15,
+  1303→  1303→      discount: 0,
+  1304→  1304→      items: [] 
+  1305→  1305→    })
+  1306→  1306→    setPurchaseJustSaved(false)
+  1307→  1307→    setCurrentPurchaseForPrint(null)
+  1308→  1308→    setShowPurchaseDialog(true)
+  1309→  1309→  }
+  1310→  1310→
+  1311→  1311→  const openEditPurchase = (purchase: PurchaseInvoice) => {
+  1312→  1312→    if (purchase.status === 'posted' || purchase.status === 'paid') {
+  1313→  1313→      alert('لا يمكن تعديل فاتورة مرحلة')
+  1314→  1314→      return
+  1315→  1315→    }
+  1316→  1316→    setEditingPurchase(purchase)
+  1317→  1317→    setPurchaseForm({
+  1318→  1318→      supplierId: parties.find(p => p.nameAr === purchase.supplierName)?.id || '',
+  1319→  1319→      date: purchase.date,
+  1320→  1320→      notes: '',
+  1321→  1321→      paymentMethod: purchase.paymentMethod,
+  1322→  1322→      paidAmount: purchase.paidAmount,
+  1323→  1323→      taxRate: 15,
+  1324→  1324→      discount: 0,
+  1325→  1325→      items: purchase.items.map(item => ({
+  1326→  1326→        itemId: items.find(i => i.nameAr === item.name)?.id || '',
+  1327→  1327→        quantity: item.quantity,
+  1328→  1328→        price: item.price,
+  1329→  1329→        discount: 0
+  1330→  1330→      }))
+  1331→  1331→    })
+  1332→  1332→    setPurchaseJustSaved(false)
+  1333→  1333→    setShowPurchaseDialog(true)
+  1334→  1334→  }
+  1335→  1335→
+  1336→  1336→  const addPurchaseItem = () => {
+  1337→  1337→    setPurchaseForm(prev => ({
+  1338→  1338→      ...prev,
+  1339→  1339→      items: [...prev.items, { itemId: '', quantity: 1, price: 0, discount: 0 }]
+  1340→  1340→    }))
+  1341→  1341→  }
+  1342→  1342→
+  1343→  1343→  const updatePurchaseItem = (index: number, field: string, value: any) => {
+  1344→  1344→    setPurchaseForm(prev => ({
+  1345→  1345→      ...prev,
+  1346→  1346→      items: prev.items.map((item, idx) => idx === index ? { ...item, [field]: value } : item)
+  1347→  1347→    }))
+  1348→  1348→  }
+  1349→  1349→
+  1350→  1350→  const removePurchaseItem = (index: number) => {
+  1351→  1351→    setPurchaseForm(prev => ({
+  1352→  1352→      ...prev,
+  1353→  1353→      items: prev.items.filter((_, i) => i !== index)
+  1354→  1354→    }))
+  1355→  1355→  }
+  1356→  1356→
+  1357→  1357→  const getPurchaseTotal = () => {
+  1358→  1358→    return purchaseForm.items.reduce((sum, item) => sum + (item.quantity * item.price), 0)
+  1359→  1359→  }
+  1360→  1360→
+  1361→  1361→  const savePurchase = () => {
+  1362→  1362→    if (!purchaseForm.supplierId) {
+  1363→  1363→      alert('يرجى اختيار المورد')
+  1364→  1364→      return
+  1365→  1365→    }
+  1366→  1366→    if (purchaseForm.items.length === 0) {
+  1367→  1367→      alert('يرجى إضافة بند واحد على الأقل')
+  1368→  1368→      return
+  1369→  1369→    }
+  1370→  1370→
+  1371→  1371→    const selectedSupplier = parties.find(p => p.id === purchaseForm.supplierId)
+  1372→  1372→    
+  1373→  1373→    // حساب المجاميع
+  1374→  1374→    const subtotal = purchaseForm.items.reduce((sum, item) => sum + (item.quantity * item.price), 0)
+  1375→  1375→    const discountAmount = (subtotal * purchaseForm.discount) / 100
+  1376→  1376→    const afterDiscount = subtotal - discountAmount
+  1377→  1377→    const taxAmount = (afterDiscount * purchaseForm.taxRate) / 100
+  1378→  1378→    const grandTotal = afterDiscount + taxAmount
+  1379→  1379→    
+  1380→  1380→    // التحقق من المبلغ المدفوع
+  1381→  1381→    const paidAmount = purchaseForm.paidAmount || 0
+  1382→  1382→    const remainingAmount = grandTotal - paidAmount
+  1383→  1383→    
+  1384→  1384→    let paymentMethod = purchaseForm.paymentMethod
+  1385→  1385→    let status: 'draft' | 'posted' | 'paid' | 'cancelled' = 'draft'
+  1386→  1386→    
+  1387→  1387→    if (paidAmount >= grandTotal) {
+  1388→  1388→      status = 'paid'
+  1389→  1389→      paymentMethod = purchaseForm.paymentMethod === 'partial' ? 'cash' : purchaseForm.paymentMethod
+  1390→  1390→    } else if (paidAmount > 0 && paidAmount < grandTotal) {
+  1391→  1391→      paymentMethod = 'partial'
+  1392→  1392→    }
+  1393→  1393→
+  1394→  1394→    if (editingPurchase) {
+  1395→  1395→      setPurchaseInvoices(prev => prev.map(pur => pur.id === editingPurchase.id ? {
+  1396→  1396→        ...pur,
+  1397→  1397→        supplierName: selectedSupplier?.nameAr || '',
+  1398→  1398→        date: purchaseForm.date,
+  1399→  1399→        total: grandTotal,
+  1400→  1400→        paidAmount: paidAmount,
+  1401→  1401→        remainingAmount: Math.max(0, remainingAmount),
+  1402→  1402→        paymentMethod: paymentMethod,
+  1403→  1403→        status: status,
+  1404→  1404→        items: purchaseForm.items.map((item, idx) => ({
+  1405→  1405→          id: `new-${idx}`,
+  1406→  1406→          name: items.find(i => i.id === item.itemId)?.nameAr || 'منتج',
+  1407→  1407→          quantity: item.quantity,
+  1408→  1408→          price: item.price,
+  1409→  1409→          total: item.quantity * item.price
+  1410→  1410→        }))
+  1411→  1411→      } : pur))
+  1412→  1412→    } else {
+  1413→  1413→      const newPurchase: PurchaseInvoice = {
+  1414→  1414→        id: Date.now().toString(),
+  1415→  1415→        number: `PUR-${String(purchaseInvoices.length + 1).padStart(3, '0')}`,
+  1416→  1416→        date: purchaseForm.date,
+  1417→  1417→        supplierName: selectedSupplier?.nameAr || '',
+  1418→  1418→        total: grandTotal,
+  1419→  1419→        paidAmount: paidAmount,
+  1420→  1420→        remainingAmount: Math.max(0, remainingAmount),
+  1421→  1421→        paymentMethod: paymentMethod,
+  1422→  1422→        status: status,
+  1423→  1423→        items: purchaseForm.items.map((item, idx) => ({
+  1424→  1424→          id: `new-${idx}`,
+  1425→  1425→          name: items.find(i => i.id === item.itemId)?.nameAr || 'منتج',
+  1426→  1426→          quantity: item.quantity,
+  1427→  1427→          price: item.price,
+  1428→  1428→          total: item.quantity * item.price
+  1429→  1429→        }))
+  1430→  1430→      }
+  1431→  1431→      setPurchaseInvoices(prev => [...prev, newPurchase])
+  1432→  1432→      setCurrentPurchaseForPrint(newPurchase)
+  1433→  1433→    }
+  1434→  1434→    
+  1435→  1435→    setPurchaseJustSaved(true)
+  1436→  1436→  }
+  1437→  1437→
+  1438→  1438→  const printPurchaseInvoice = () => {
+  1439→  1439→    const selectedSupplier = parties.find(p => p.id === purchaseForm.supplierId)
+  1440→  1440→    
+  1441→  1441→    const subtotal = purchaseForm.items.reduce((sum, item) => sum + (item.quantity * item.price), 0)
+  1442→  1442→    const discountAmount = (subtotal * purchaseForm.discount) / 100
+  1443→  1443→    const afterDiscount = subtotal - discountAmount
+  1444→  1444→    const taxAmount = (afterDiscount * purchaseForm.taxRate) / 100
+  1445→  1445→    const grandTotal = afterDiscount + taxAmount
+  1446→  1446→    const paidAmount = purchaseForm.paidAmount || 0
+  1447→  1447→    const remainingAmount = Math.max(0, grandTotal - paidAmount)
+  1448→  1448→
+  1449→  1449→    const paymentMethodText = purchaseForm.paymentMethod === 'cash' ? 'نقدى' : 
+  1450→  1450→                             purchaseForm.paymentMethod === 'bank' ? 'تحويل بنكي' :
+  1451→  1451→                             purchaseForm.paymentMethod === 'check' ? 'شيك' : 'جزئي'
+  1452→  1452→
+  1453→  1453→    const printContent = `
+  1454→  1454→      <!DOCTYPE html>
+  1455→  1455→      <html dir="rtl" lang="ar">
+  1456→  1456→        <head>
+  1457→  1457→          <meta charset="UTF-8">
+  1458→  1458→          <title>فاتورة مشتريات</title>
+  1459→  1459→          <style>
+  1460→  1460→            * { margin: 0; padding: 0; box-sizing: border-box; }
+  1461→  1461→            body { font-family: 'Cairo', 'Tahoma', Arial, sans-serif; direction: rtl; padding: 20px; color: #333; }
+  1462→  1462→            .invoice-header { text-align: center; border-bottom: 3px solid #dc2626; padding-bottom: 20px; margin-bottom: 30px; }
+  1463→  1463→            .invoice-title { font-size: 28px; font-weight: bold; color: #dc2626; margin-bottom: 10px; }
+  1464→  1464→            .invoice-info { display: flex; justify-content: space-between; margin-bottom: 30px; background: #fef2f2; padding: 15px; border-radius: 10px; }
+  1465→  1465→            table { width: 100%; border-collapse: collapse; margin-bottom: 30px; }
+  1466→  1466→            th { background: #dc2626; color: white; padding: 12px; text-align: right; }
+  1467→  1467→            td { padding: 12px; border-bottom: 1px solid #ddd; text-align: right; }
+  1468→  1468→            .totals { width: 50%; margin-right: auto; margin-left: 0; }
+  1469→  1469→            .grand-total { background: #dc2626; color: white; font-size: 18px; }
+  1470→  1470→            .payment-info { background: #fff3cd; border: 2px solid #ffc107; padding: 15px; border-radius: 10px; margin-top: 20px; }
+  1471→  1471→            .footer { text-align: center; margin-top: 40px; padding-top: 20px; border-top: 2px solid #ddd; color: #666; }
+  1472→  1472→          </style>
+  1473→  1473→        </head>
+  1474→  1474→        <body>
+  1475→  1475→          <div class="invoice-header">
+  1476→  1476→            <div class="invoice-title">📋 فاتورة مشتريات</div>
+  1477→  1477→            <div>رقم الفاتورة: ${currentPurchaseForPrint?.number || 'NEW'}</div>
+  1478→  1478→            <div>التاريخ: ${purchaseForm.date}</div>
+  1479→  1479→          </div>
+  1480→  1480→
+  1481→  1481→          <div class="invoice-info">
+  1482→  1482→            <div>
+  1483→  1483→              <div><strong>المورد:</strong> ${selectedSupplier?.nameAr || '-'}</div>
+  1484→  1484→              <div><strong>طريقة السداد:</strong> ${paymentMethodText}</div>
+  1485→  1485→            </div>
+  1486→  1486→            <div style="text-align: left;">
+  1487→  1487→              <div><strong>التاريخ:</strong> ${purchaseForm.date}</div>
+  1488→  1488→              <div><strong>الحالة:</strong> ${paidAmount >= grandTotal ? '✅ مدفوع بالكامل' : paidAmount > 0 ? '⏳ دفع جزئي' : '📋 غير مدفوع'}</div>
+  1489→  1489→            </div>
+  1490→  1490→          </div>
+  1491→  1491→
+  1492→  1492→          <table>
+  1493→  1493→            <thead>
+  1494→  1494→              <tr><th>#</th><th>الصنف</th><th>الكمية</th><th>سعر الوحدة</th><th>الإجمالي</th></tr>
+  1495→  1495→            </thead>
+  1496→  1496→            <tbody>
+  1497→  1497→              ${purchaseForm.items.map((item, idx) => {
+  1498→  1498→                const itemName = items.find(i => i.id === item.itemId)?.nameAr || 'منتج'
+  1499→  1499→                return `<tr><td>${idx + 1}</td><td>${itemName}</td><td>${item.quantity}</td><td>${item.price.toLocaleString()} ج.م</td><td>${(item.quantity * item.price).toLocaleString()} ج.م</td></tr>`
+  1500→  1500→              }).join('')}
+  1501→  1501→            </tbody>
+  1502→  1502→          </table>
+  1503→  1503→
+  1504→  1504→          <table class="totals">
+  1505→  1505→            <tr><td>المجموع الفرعي:</td><td>${subtotal.toLocaleString()} ج.م</td></tr>
+  1506→  1506→            ${purchaseForm.discount > 0 ? `<tr><td>الخصم (${purchaseForm.discount}%):</td><td>-${discountAmount.toLocaleString()} ج.م</td></tr>` : ''}
+  1507→  1507→            <tr><td>الضريبة (${purchaseForm.taxRate}%):</td><td>+${taxAmount.toLocaleString()} ج.م</td></tr>
+  1508→  1508→            <tr class="grand-total"><td>الإجمالي الكلي:</td><td>${grandTotal.toLocaleString()} ج.م</td></tr>
+  1509→  1509→          </table>
+  1510→  1510→
+  1511→  1511→          <div class="payment-info">
+  1512→  1512→            <h3>💰 تفاصيل السداد</h3>
+  1513→  1513→            <p><strong>المبلغ المدفوع:</strong> ${paidAmount.toLocaleString()} ج.م</p>
+  1514→  1514→            <p><strong>المتبقي:</strong> ${remainingAmount.toLocaleString()} ج.م</p>
+  1515→  1515→          </div>
+  1516→  1516→
+  1517→  1517→          ${purchaseForm.notes ? `<div style="margin-top: 20px; padding: 15px; background: #e9ecef; border-radius: 10px;"><strong>📝 ملاحظات:</strong><br>${purchaseForm.notes}</div>` : ''}
+  1518→  1518→
+  1519→  1519→          <div class="footer"><p>شكراً لتعاملكم معنا - نظام إنجاز المحاسبي</p></div>
+  1520→  1520→
+  1521→  1521→          <script>window.onload = function() { window.print(); window.onafterprint = function() { window.close(); } }</script>
+  1522→  1522→        </body>
+  1523→  1523→      </html>
+  1524→  1524→    `
+  1525→  1525→
+  1526→  1526→    const printWindow = window.open('', '_blank', 'width=800,height=600')
+  1527→  1527→    if (printWindow) {
+  1528→  1528→      printWindow.document.write(printContent)
+  1529→  1529→      printWindow.document.close()
+  1530→  1530→    } else {
+  1531→  1531→      alert('يرجى السماح بالنوافذ المنبثقة لطباعة الفاتورة')
+  1532→  1532→    }
+  1533→  1533→  }
+  1534→  1534→
+  1535→  1535→  const deletePurchase = (purchaseId: string, purchaseNumber: string) => {
+  1536→  1536→    if (confirm(`هل أنت متأكد من حذف فاتورة المشتريات ${purchaseNumber}؟`)) {
+  1537→  1537→      setPurchaseInvoices(prev => prev.filter(pur => pur.id !== purchaseId))
+  1538→  1538→      alert('تم حذف فاتورة المشتريات بنجاح')
+  1539→  1539→    }
+  1540→  1540→  }
+  1541→  1541→
+  1542→  1542→  const viewPurchaseDetails = (purchase: PurchaseInvoice) => {
+  1543→  1543→    alert(`تفاصيل فاتورة المشتريات:\n\nرقم الفاتورة: ${purchase.number}\nالمورد: ${purchase.supplierName}\nالتاريخ: ${purchase.date}\nالإجمالي: ${purchase.total.toLocaleString()} ج.م\nالمدفوع: ${purchase.paidAmount.toLocaleString()} ج.م\nالمتبقي: ${purchase.remainingAmount.toLocaleString()} ج.م\nالحالة: ${purchase.status === 'draft' ? 'مسودة' : purchase.status === 'posted' ? 'مرحلة' : purchase.status === 'paid' ? 'مدفوعة' : 'ملغاة'}`)
+  1544→  1544→  }
+  1545→  1545→
+  1546→  1546→  const saveNewSupplier = () => {
+  1547→  1547→    if (!newSupplier.nameAr) {
+  1548→  1548→      alert('يرجى إدخال اسم المورد')
+  1549→  1549→      return
+  1550→  1550→    }
+  1551→  1551→    const supplier: Party = {
+  1552→  1552→      id: `supplier-${Date.now()}`,
+  1553→  1553→      nameAr: newSupplier.nameAr,
+  1554→  1554→      type: newSupplier.type,
+  1555→  1555→      phone: newSupplier.phone,
+  1556→  1556→      balance: 0,
+  1557→  1557→      address: ''
+  1558→  1558→    }
+  1559→  1559→    setParties(prev => [...prev, supplier])
+  1560→  1560→    setPurchaseForm(prev => ({ ...prev, supplierId: supplier.id }))
+  1561→  1561→    setShowAddSupplierDialog(false)
+  1562→  1562→    setNewSupplier({ nameAr: '', type: 'supplier', phone: '' })
+  1563→  1563→    alert('تم إضافة المورد بنجاح')
+  1564→  1564→  }
+  1565→  1565→
+  1566→  1566→  // ============ SIDEBAR MENU ITEMS ============
+  1567→  1567→  const menuItems = [
+  1568→  1568→    { id: 'dashboard' as ModuleType, icon: LayoutDashboard, label: 'لوحة التحكم' },
+  1569→  1569→    { id: 'sales' as ModuleType, icon: ShoppingCart, label: 'المبيعات' },
+  1570→  1570→    { id: 'purchases' as ModuleType, icon: Package, label: 'المشتريات' },
+  1571→  1571→    { id: 'inventory' as ModuleType, icon: Package, label: 'المخزون' },
+  1572→  1572→    { id: 'parties' as ModuleType, icon: Users, label: 'الأطراف' },
+  1573→  1573→    { id: 'treasury' as ModuleType, icon: Wallet, label: 'الخزينة' },
+  1574→  1574→    { id: 'journal-entries' as ModuleType, icon: BookOpen, label: 'القيود المحاسبية' },
+  1575→  1575→    { id: 'accounts' as ModuleType, icon: Landmark, label: 'دليل الحسابات' },
+  1576→  1576→    { id: 'banks' as ModuleType, icon: Landmark, label: 'البنوك' },
+  1577→  1577→    { id: 'hr' as ModuleType, icon: Users, label: 'الموارد البشرية' },
+  1578→  1578→    { id: 'expenses' as ModuleType, icon: Receipt, label: 'المصروفات' },
+  1579→  1579→    { id: 'reports' as ModuleType, icon: FileText, label: 'التقارير' },
+  1580→  1580→    { id: 'settings' as ModuleType, icon: Settings, label: 'الإعدادات' }
+  1581→  1581→  ]
+  1582→  1582→
+  1583→  1583→  // ============ LOGIN SCREEN ============
+  1584→  1584→  if (!isLoggedIn) {
+  1585→  1585→    return (
+  1586→  1586→      <div className="min-h-screen bg-gradient-to-br from-[#005f73] via-[#0a9396] to-[#94d2bd] flex items-center justify-center p-4" dir="rtl">
+  1587→  1587→        <Card className="w-full max-w-md shadow-2xl">
+  1588→  1588→          <CardHeader className="text-center pb-2">
+  1589→  1589→            <div className="w-20 h-20 bg-gradient-to-r from-[#005f73] to-[#0a9396] rounded-full flex items-center justify-center mx-auto mb-4">
+  1590→  1590→              <Calculator className="w-10 h-10 text-white" />
+  1591→  1591→            </div>
+  1592→  1592→            <CardTitle className="text-2xl font-bold text-[#005f73]">نظام إنجاز المحاسبي</CardTitle>
+  1593→  1593→            <CardDescription>قم بتسجيل الدخول للمتابعة</CardDescription>
+  1594→  1594→          </CardHeader>
+  1595→  1595→          <CardContent>
+  1596→  1596→            <form onSubmit={handleLogin} className="space-y-4">
+  1597→  1597→              <div>
+  1598→  1598→                <Label htmlFor="username">اسم المستخدم</Label>
+  1599→  1599→                <Input id="username" type="text" placeholder="أدخل اسم المستخدم" className="mt-1" defaultValue="admin" />
+  1600→  1600→              </div>
+  1601→  1601→              <div>
+  1602→  1602→                <Label htmlFor="password">كلمة المرور</Label>
+  1603→  1603→                <Input id="password" type="password" placeholder="أدخل كلمة المرور" className="mt-1" defaultValue="admin123" />
+  1604→  1604→              </div>
+  1605→  1605→              <Button type="submit" className="w-full bg-gradient-to-r from-[#005f73] to-[#0a9396] h-12 text-lg">
+  1606→  1606→                <Lock className="ml-2 h-5 w-5" />تسجيل الدخول
+  1607→  1607→              </Button>
+  1608→  1608→            </form>
+  1609→  1609→            <div className="mt-6 text-center text-sm text-gray-500">
+  1610→  1610→              <p>للاستخدام التجريبي: admin / admin123</p>
+  1611→  1611→            </div>
+  1612→  1612→          </CardContent>
+  1613→  1613→        </Card>
+  1614→  1614→      </div>
+  1615→  1615→    )
+  1616→  1616→  }
+  1617→  1617→
+  1618→  1618→  // ============ MAIN APP LAYOUT ============
+  1619→  1619→  return (
+  1620→  1620→    <div className="min-h-screen bg-[#f8f9fa] flex" dir="rtl">
+  1621→  1621→      {/* Sidebar */}
+  1622→  1622→      <aside className={`${sidebarOpen ? 'w-64' : 'w-20'} bg-gradient-to-b from-[#005f73] to-[#0a9396] text-white transition-all duration-300 flex flex-col fixed h-full z-40`}>
+  1623→  1623→        <div className="p-4 flex items-center justify-between border-b border-white/20">
+  1624→  1624→          {sidebarOpen && <h1 className="text-xl font-bold flex items-center gap-2"><Calculator className="w-6 h-6" />إنجاز</h1>}
+  1625→  1625→          <button onClick={() => setSidebarOpen(!sidebarOpen)} className="p-2 hover:bg-white/10 rounded-lg"><Menu className="w-5 h-5" /></button>
+  1626→  1626→        </div>
+  1627→  1627→        
+  1628→  1628→        <nav className="flex-1 py-4 overflow-y-auto">
+  1629→  1629→          {menuItems.map(item => (
+  1630→  1630→            <button key={item.id} onClick={() => setActiveModule(item.id)} className={`w-full flex items-center gap-3 px-4 py-3 hover:bg-white/10 transition-colors ${activeModule === item.id ? 'bg-white/20 border-r-4 border-white' : ''}`}>
+  1631→  1631→              <item.icon className="w-5 h-5 flex-shrink-0" />
+  1632→  1632→              {sidebarOpen && <span>{item.label}</span>}
+  1633→  1633→            </button>
+  1634→  1634→          ))}
+  1635→  1635→        </nav>
+  1636→  1636→
+  1637→  1637→        <div className="p-4 border-t border-white/20">
+  1638→  1638→          <button onClick={() => setIsLoggedIn(false)} className="w-full flex items-center gap-3 px-4 py-3 hover:bg-red-500/20 rounded-lg text-red-200 transition-colors">
+  1639→  1639→            <LogOut className="w-5 h-5" />
+  1640→  1640→            {sidebarOpen && <span>تسجيل الخروج</span>}
+  1641→  1641→          </button>
+  1642→  1642→        </div>
+  1643→  1643→      </aside>
+  1644→  1644→
+  1645→  1645→      {/* Main Content */}
+  1646→  1646→      <main className={`flex-1 ${sidebarOpen ? 'mr-64' : 'mr-20'} transition-all duration-300`}>
+  1647→  1647→        {/* Header */}
+  1648→  1648→        <header className="bg-white shadow-sm sticky top-0 z-30 px-6 py-4 flex items-center justify-between">
+  1649→  1649→          <div className="flex items-center gap-4">
+  1650→  1650→            <button onClick={() => setSidebarOpen(!sidebarOpen)} className="lg:hidden p-2 hover:bg-gray-100 rounded-lg"><Menu className="w-5 h-5" /></button>
+  1651→  1651→            <div>
+  1652→  1652→              <h2 className="text-xl font-bold text-[#005f73]">{menuItems.find(m => m.id === activeModule)?.label}</h2>
+  1653→  1653→              <p className="text-sm text-gray-500">مرحباً بك في نظام إنجاز المحاسبي</p>
+  1654→  1654→            </div>
+  1655→  1655→          </div>
+  1656→  1656→          
+  1657→  1657→          <div className="flex items-center gap-4">
+  1658→  1658→            {/* Notifications */}
+  1659→  1659→            <Dialog>
+  1660→  1660→              <DialogTrigger asChild>
+  1661→  1661→                <Button variant="outline" size="icon" className="relative">
+  1662→  1662→                  <Bell className="w-5 h-5" />
+  1663→  1663→                  <Badge className="absolute -top-2 -right-2 w-5 h-5 p-0 flex items-center justify-center bg-red-500 text-white">{notifications.length}</Badge>
+  1664→  1664→                </Button>
+  1665→  1665→              </DialogTrigger>
+  1666→  1666→              <DialogContent>
+  1667→  1667→                <DialogHeader><DialogTitle>الإشعارات</DialogTitle></DialogHeader>
+  1668→  1668→                <div className="space-y-3">
+  1669→  1669→                  {notifications.map(notif => (
+  1670→  1670→                    <div key={notif.id} className={`p-3 rounded-lg ${notif.type === 'success' ? 'bg-green-50' : notif.type === 'warning' ? 'bg-yellow-50' : 'bg-blue-50'}`}>
+  1671→  1671→                      <p className="text-sm">{notif.message}</p>
+  1672→  1672→                      <p className="text-xs text-gray-500 mt-1">{notif.time}</p>
+  1673→  1673→                    </div>
+  1674→  1674→                  ))}
+  1675→  1675→                </div>
+  1676→  1676→              </DialogContent>
+  1677→  1677→            </Dialog>
+  1678→  1678→
+  1679→  1679→            {/* Search */}
+  1680→  1680→            <div className="hidden md:flex items-center bg-gray-100 rounded-lg px-3 py-2">
+  1681→  1681→              <Search className="w-4 h-4 text-gray-400 ml-2" />
+  1682→  1682→              <input type="text" placeholder="بحث..." value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)} className="bg-transparent border-none outline-none text-sm w-48" />
+  1683→  1683→            </div>
+  1684→  1684→
+  1685→  1685→            {/* User */}
+  1686→  1686→            <div className="flex items-center gap-2">
+  1687→  1687→              <div className="w-10 h-10 bg-[#005f73] rounded-full flex items-center justify-center text-white font-bold">م</div>
+  1688→  1688→              <span className="hidden md:block font-medium">مدير النظام</span>
+  1689→  1689→            </div>
+  1690→  1690→          </div>
+  1691→  1691→        </header>
+  1692→  1692→
+  1693→  1693→        {/* Content Area */}
+  1694→  1694→        <div className="p-6">
+  1695→  1695→          {/* ============ DASHBOARD MODULE (DYNAMIC) ============ */}
+  1696→  1696→          {activeModule === 'dashboard' && (
+  1697→  1697→            <div className="space-y-6">
+  1698→  1698→              {/* Calculate Dynamic KPI Values */}
+  1699→  1699→              {(() => {
+  1700→  1700→                // Sales calculations
+  1701→  1701→                const totalSales = invoices.reduce((sum, inv) => sum + inv.total, 0)
+  1702→  1702→                const paidInvoices = invoices.filter(i => i.status === 'paid')
+  1703→  1703→                const pendingInvoices = invoices.filter(i => i.status === 'draft' || i.status === 'posted')
+  1704→  1704→                
+  1705→  1705→                // Transaction calculations
+  1706→  1706→                const totalIncome = transactions.filter(t => t.type === 'income').reduce((sum, t) => sum + t.amount, 0)
+  1707→  1707→                const totalExpenses = transactions.filter(t => t.type === 'expense').reduce((sum, t) => sum + t.amount, 0)
+  1708→  1708→                const netProfit = totalSales - totalExpenses
+  1709→  1709→                
+  1710→  1710→                // Parties calculations
+  1711→  1711→                const customersCount = parties.filter(p => p.type === 'customer' || p.type === 'both').length
+  1712→  1712→                const suppliersCount = parties.filter(p => p.type === 'supplier' || p.type === 'both').length
+  1713→  1713→                
+  1714→  1714→                // Treasury balance
+  1715→  1715→                const treasuryBalance = totalIncome - totalExpenses
+  1716→  1716→
+  1717→  1717→                return (
+  1718→  1718→                  <>
+  1719→  1719→                    {/* Main KPI Cards - Row 1 */}
+  1720→  1720→                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+  1721→  1721→                      <Card className="border-r-4 border-r-green-500 hover:shadow-lg transition-shadow">
+  1722→  1722→                        <CardContent className="pt-6">
+  1723→  1723→                          <div className="flex items-center justify-between">
+  1724→  1724→                            <div>
+  1725→  1725→                              <p className="text-sm text-gray-500">إجمالي المبيعات</p>
+  1726→  1726→                              <p className="text-2xl font-bold text-green-600">{totalSales.toLocaleString()} ج.م</p>
+  1727→  1727→                            </div>
+  1728→  1728→                            <div className="w-12 h-12 bg-green-100 rounded-full flex items-center justify-center">
+  1729→  1729→                              <TrendingUp className="w-6 h-6 text-green-600" />
+  1730→  1730→                            </div>
+  1731→  1731→                          </div>
+  1732→  1732→                          <p className="text-xs text-gray-400 mt-2">
+  1733→  1733→                            {invoices.length > 0 ? `${invoices.length} فاتورة` : 'لا توجد فواتير بعد'}
+  1734→  1734→                          </p>
+  1735→  1735→                        </CardContent>
+  1736→  1736→                      </Card>
+  1737→  1737→
+  1738→  1738→                      <Card className="border-r-4 border-r-red-500 hover:shadow-lg transition-shadow">
+  1739→  1739→                        <CardContent className="pt-6">
+  1740→  1740→                          <div className="flex items-center justify-between">
+  1741→  1741→                            <div>
+  1742→  1742→                              <p className="text-sm text-gray-500">إجمالي المشتريات</p>
+  1743→  1743→                              <p className="text-2xl font-bold text-red-600">{totalExpenses.toLocaleString()} ج.م</p>
+  1744→  1744→                            </div>
+  1745→  1745→                            <div className="w-12 h-12 bg-red-100 rounded-full flex items-center justify-center">
+  1746→  1746→                              <TrendingDown className="w-6 h-6 text-red-600" />
+  1747→  1747→                            </div>
+  1748→  1748→                          </div>
+  1749→  1749→                          <p className="text-xs text-gray-400 mt-2">
+  1750→  1750→                            {transactions.filter(t => t.type === 'expense').length > 0 
+  1751→  1751→                              ? `${transactions.filter(t => t.type === 'expense').length} عملية` 
+  1752→  1752→                              : 'لا توجد مشتريات بعد'}
+  1753→  1753→                          </p>
+  1754→  1754→                        </CardContent>
+  1755→  1755→                      </Card>
+  1756→  1756→
+  1757→  1757→                      <Card className="border-r-4 border-r-blue-500 hover:shadow-lg transition-shadow">
+  1758→  1758→                        <CardContent className="pt-6">
+  1759→  1759→                          <div className="flex items-center justify-between">
+  1760→  1760→                            <div>
+  1761→  1761→                              <p className="text-sm text-gray-500">صافي الربح</p>
+  1762→  1762→                              <p className={`text-2xl font-bold ${netProfit >= 0 ? 'text-blue-600' : 'text-red-600'}`}>
+  1763→  1763→                                {netProfit.toLocaleString()} ج.م
+  1764→  1764→                              </p>
+  1765→  1765→                            </div>
+  1766→  1766→                            <div className="w-12 h-12 bg-blue-100 rounded-full flex items-center justify-center">
+  1767→  1767→                              <DollarSign className="w-6 h-6 text-blue-600" />
+  1768→  1768→                            </div>
+  1769→  1769→                          </div>
+  1770→  1770→                          <p className={`text-xs mt-2 ${netProfit >= 0 ? 'text-blue-600' : 'text-red-600'}`}>
+  1771→  1771→                            {netProfit >= 0 ? '↑ ربح' : '↓ خسارة'}
+  1772→  1772→                          </p>
+  1773→  1773→                        </CardContent>
+  1774→  1774→                      </Card>
+  1775→  1775→
+  1776→  1776→                      <Card className="border-r-4 border-r-orange-500 hover:shadow-lg transition-shadow">
+  1777→  1777→                        <CardContent className="pt-6">
+  1778→  1778→                          <div className="flex items-center justify-between">
+  1779→  1779→                            <div>
+  1780→  1780→                              <p className="text-sm text-gray-500">الفواتير المعلقة</p>
+  1781→  1781→                              <p className="text-2xl font-bold text-orange-600">{pendingInvoices.length} فاتورة</p>
+  1782→  1782→                            </div>
+  1783→  1783→                            <div className="w-12 h-12 bg-orange-100 rounded-full flex items-center justify-center">
+  1784→  1784→                              <Clock className="w-6 h-6 text-orange-600" />
+  1785→  1785→                            </div>
+  1786→  1786→                          </div>
+  1787→  1787→                          <p className="text-xs text-orange-600 mt-2">
+  1788→  1788→                            {pendingInvoices.length > 0 ? `${pendingInvoices.length} تحتاج متابعة` : 'جميع الفواتير مكتملة'}
+  1789→  1789→                          </p>
+  1790→  1790→                        </CardContent>
+  1791→  1791→                      </Card>
+  1792→  1792→                    </div>
+  1793→  1793→
+  1794→  1794→                    {/* Additional KPIs - Row 2 */}
+  1795→  1795→                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+  1796→  1796→                      <Card className="border-r-4 border-r-purple-500 hover:shadow-lg transition-shadow">
+  1797→  1797→                        <CardContent className="pt-6">
+  1798→  1798→                          <div className="flex items-center justify-between">
+  1799→  1799→                            <div>
+  1800→  1800→                              <p className="text-sm text-gray-500">العملاء النشطون</p>
+  1801→  1801→                              <p className="text-2xl font-bold text-purple-600">{customersCount} عميل</p>
+  1802→  1802→                            </div>
+  1803→  1803→                            <div className="w-12 h-12 bg-purple-100 rounded-full flex items-center justify-center">
+  1804→  1804→                              <Users className="w-6 h-6 text-purple-600" />
+  1805→  1805→                            </div>
+  1806→  1806→                          </div>
+  1807→  1807→                        </CardContent>
+  1808→  1808→                      </Card>
+  1809→  1809→
+  1810→  1810→                      <Card className="border-r-4 border-r-cyan-500 hover:shadow-lg transition-shadow">
+  1811→  1811→                        <CardContent className="pt-6">
+  1812→  1812→                          <div className="flex items-center justify-between">
+  1813→  1813→                            <div>
+  1814→  1814→                              <p className="text-sm text-gray-500">الموردين</p>
+  1815→  1815→                              <p className="text-2xl font-bold text-cyan-600">{suppliersCount} مورد</p>
+  1816→  1816→                            </div>
+  1817→  1817→                            <div className="w-12 h-12 bg-cyan-100 rounded-full flex items-center justify-center">
+  1818→  1818→                              <Truck className="w-6 h-6 text-cyan-600" />
+  1819→  1819→                            </div>
+  1820→  1820→                          </div>
+  1821→  1821→                        </CardContent>
+  1822→  1822→                      </Card>
+  1823→  1823→
+  1824→  1824→                      <Card className="border-r-4 border-r-pink-500 hover:shadow-lg transition-shadow">
+  1825→  1825→                        <CardContent className="pt-6">
+  1826→  1826→                          <div className="flex items-center justify-between">
+  1827→  1827→                            <div>
+  1828→  1828→                              <p className="text-sm text-gray-500">الأصناف</p>
+  1829→  1829→                              <p className="text-2xl font-bold text-pink-600">{items.length} صنف</p>
+  1830→  1830→                            </div>
+  1831→  1831→                            <div className="w-12 h-12 bg-pink-100 rounded-full flex items-center justify-center">
+  1832→  1832→                              <Package className="w-6 h-6 text-pink-600" />
+  1833→  1833→                            </div>
+  1834→  1834→                          </div>
+  1835→  1835→                        </CardContent>
+  1836→  1836→                      </Card>
+  1837→  1837→
+  1838→  1838→                      <Card className="border-r-4 border-r-indigo-500 hover:shadow-lg transition-shadow">
+  1839→  1839→                        <CardContent className="pt-6">
+  1840→  1840→                          <div className="flex items-center justify-between">
+  1841→  1841→                            <div>
+  1842→  1842→                              <p className="text-sm text-gray-500">رصيد الخزينة</p>
+  1843→  1843→                              <p className="text-2xl font-bold text-indigo-600">{treasuryBalance.toLocaleString()} ج.م</p>
+  1844→  1844→                            </div>
+  1845→  1845→                            <div className="w-12 h-12 bg-indigo-100 rounded-full flex items-center justify-center">
+  1846→  1846→                              <Wallet className="w-6 h-6 text-indigo-600" />
+  1847→  1847→                            </div>
+  1848→  1848→                          </div>
+  1849→  1849→                        </CardContent>
+  1850→  1850→                      </Card>
+  1851→  1851→                    </div>
+  1852→  1852→
+  1853→  1853→                    {/* Charts and Quick Actions */}
+  1854→  1854→                    <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+  1855→  1855→                      <Card className="lg:col-span-2">
+  1856→  1856→                        <CardHeader>
+  1857→  1857→                          <CardTitle>نظرة عامة على الحركات</CardTitle>
+  1858→  1858→                          <CardDescription>إحصائيات مباشرة من بياناتك</CardDescription>
+  1859→  1859→                        </CardHeader>
+  1860→  1860→                        <CardContent>
+  1861→  1861→                          {invoices.length > 0 || transactions.length > 0 ? (
+  1862→  1862→                            <div className="h-64 flex items-end justify-around gap-4 px-4">
+  1863→  1863→                              {/* Dynamic chart based on actual data */}
+  1864→  1864→                              <div className="flex-1 flex flex-col items-center gap-2">
+  1865→  1865→                                <div className="w-full flex gap-1 items-end justify-center h-48">
+  1866→  1866→                                  <div 
+  1867→  1867→                                    className="w-full bg-gradient-to-t from-[#005f73] to-[#0a9396] rounded-t"
+  1868→  1868→                                    style={{height: `${Math.min(100, Math.max(5, (totalSales / Math.max(totalSales + totalExpenses, 1)) * 100))}%`}}
+  1869→  1869→                                  />
+  1870→  1870→                                </div>
+  1871→  1871→                                <span className="text-xs text-gray-500 font-medium">المبيعات</span>
+  1872→  1872→                                <span className="text-xs text-green-600 font-bold">{totalSales.toLocaleString()}</span>
+  1873→  1873→                              </div>
+  1874→  1874→                              <div className="flex-1 flex flex-col items-center gap-2">
+  1875→  1875→                                <div className="w-full flex gap-1 items-end justify-center h-48">
+  1876→  1876→                                  <div 
+  1877→  1877→                                    className="w-full bg-gradient-to-t from-red-400 to-red-500 rounded-t"
+  1878→  1878→                                    style={{height: `${Math.min(100, Math.max(5, (totalExpenses / Math.max(totalSales + totalExpenses, 1)) * 100))}%`}}
+  1879→  1879→                                  />
+  1880→  1880→                                </div>
+  1881→  1881→                                <span className="text-xs text-gray-500 font-medium">المصروفات</span>
+  1882→  1882→                                <span className="text-xs text-red-600 font-bold">{totalExpenses.toLocaleString()}</span>
+  1883→  1883→                              </div>
+  1884→  1884→                              <div className="flex-1 flex flex-col items-center gap-2">
+  1885→  1885→                                <div className="w-full flex gap-1 items-end justify-center h-48">
+  1886→  1886→                                  <div 
+  1887→  1887→                                    className="w-full bg-gradient-to-t from-blue-400 to-blue-500 rounded-t"
+  1888→  1888→                                    style={{height: `${Math.min(100, Math.max(5, (paidInvoices.reduce((s,i) => s+i.total,0) / Math.max(totalSales, 1)) * 100))}%`}}
+  1889→  1889→                                  />
+  1890→  1890→                                </div>
+  1891→  1891→                                <span className="text-xs text-gray-500 font-medium">المدفوعة</span>
+  1892→  1892→                                <span className="text-xs text-blue-600 font-bold">{paidInvoices.reduce((s,i) => s+i.total,0).toLocaleString()}</span>
+  1893→  1893→                              </div>
+  1894→  1894→                            </div>
+  1895→  1895→                          ) : (
+  1896→  1896→                            <div className="h-64 flex flex-col items-center justify-center text-gray-400">
+  1897→  1897→                              <BarChart3 className="w-16 h-16 mb-3 opacity-50" />
+  1898→  1898→                              <p className="text-lg font-medium">لا توجد بيانات بعد</p>
+  1899→  1899→                              <p className="text-sm">ابدأ بإضافة فاتورة أو عملية مالية</p>
+  1900→  1900→                              <Button 
+  1901→  1901→                                onClick={openNewInvoice}
+  1902→  1902→                                className="mt-4 bg-gradient-to-r from-[#005f73] to-[#0a9396]"
+  1903→  1903→                              >
+  1904→  1904→                                <Plus className="ml-2 h-4 w-4" />
+  1905→  1905→                                أول فاتورة
+  1906→  1906→                              </Button>
+  1907→  1907→                            </div>
+  1908→  1908→                          )}
+  1909→  1909→                        </CardContent>
+  1910→  1910→                      </Card>
+  1911→  1911→
+  1912→  1912→                      <Card>
+  1913→  1913→                        <CardHeader><CardTitle>إجراءات سريعة</CardTitle></CardHeader>
+  1914→  1914→                        <CardContent className="space-y-3">
+  1915→  1915→                          <Button onClick={() => setActiveModule('sales')} className="w-full justify-start bg-green-50 text-green-700 hover:bg-green-100" variant="outline"><Plus className="ml-2 h-4 w-4" />فاتورة مبيعات جديدة</Button>
+  1916→  1916→                          <Button onClick={() => setActiveModule('purchases')} className="w-full justify-start bg-blue-50 text-blue-700 hover:bg-blue-100" variant="outline"><Plus className="ml-2 h-4 w-4" />طلب شراء جديد</Button>
+  1917→  1917→                          <Button onClick={() => setActiveModule('treasury')} className="w-full justify-start bg-purple-50 text-purple-700 hover:bg-purple-100" variant="outline"><Wallet className="ml-2 h-4 w-4" />تحصيل جديد</Button>
+  1918→  1918→                          <Button onClick={() => setActiveModule('expenses')} className="w-full justify-start bg-orange-50 text-orange-700 hover:bg-orange-100" variant="outline"><Receipt className="ml-2 h-4 w-4" />مصروف جديد</Button>
+  1919→  1919→                          <Button onClick={() => setActiveModule('parties')} className="w-full justify-start bg-cyan-50 text-cyan-700 hover:bg-cyan-100" variant="outline"><Users className="ml-2 h-4 w-4" />إضافة طرف جديد</Button>
+  1920→  1920→                          <Button onClick={() => setActiveModule('inventory')} className="w-full justify-start bg-pink-50 text-pink-700 hover:bg-pink-100" variant="outline"><Package className="ml-2 h-4 w-4" />إضافة صنف جديد</Button>
+  1921→  1921→                          <Button onClick={() => setActiveModule('reports')} className="w-full justify-start bg-gray-50 text-gray-700 hover:bg-gray-100" variant="outline"><FileText className="ml-2 h-4 w-4" />عرض التقارير</Button>
+  1922→  1922→                        </CardContent>
+  1923→  1923→                      </Card>
+  1924→  1924→                    </div>
+  1925→  1925→
+  1926→  1926→                    {/* Recent Invoices & Transactions */}
+  1927→  1927→                    <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+  1928→  1928→                      <Card>
+  1929→  1929→                        <CardHeader className="flex flex-row items-center justify-between">
+  1930→  1930→                          <CardTitle>آخر الفواتير</CardTitle>
+  1931→  1931→                          <Button variant="ghost" size="sm" onClick={() => setActiveModule('sales')}>
+  1932→  1932→                            عرض الكل ({invoices.length})
+  1933→  1933→                          </Button>
+  1934→  1934→                        </CardHeader>
+  1935→  1935→                        <CardContent>
+  1936→  1936→                          {invoices.length > 0 ? (
+  1937→  1937→                            <div className="space-y-3">
+  1938→  1938→                              {invoices.slice(0, 5).map(inv => (
+  1939→  1939→                                <div key={inv.id} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors">
+  1940→  1940→                                  <div>
+  1941→  1941→                                    <p className="font-medium">{inv.number}</p>
+  1942→  1942→                                    <p className="text-xs text-gray-500">{inv.customerName}</p>
+  1943→  1943→                                  </div>
+  1944→  1944→                                  <div className="text-left">
+  1945→  1945→                                    <p className="font-bold">{inv.total.toLocaleString()} ج.م</p>
+  1946→  1946→                                    <Badge 
+  1947→  1947→                                      variant={inv.status === 'paid' ? 'default' : inv.status === 'posted' ? 'secondary' : 'outline'}
+  1948→  1948→                                      className={
+  1949→  1949→                                        inv.status === 'draft' ? 'bg-gray-100 text-gray-800' :
+  1950→  1950→                                        inv.status === 'posted' ? 'bg-blue-100 text-blue-800' :
+  1951→  1951→                                        inv.status === 'paid' ? 'bg-green-100 text-green-800' :
+  1952→  1952→                                        'bg-red-100 text-red-800'
+  1953→  1953→                                      }
+  1954→  1954→                                    >
+  1955→  1955→                                      {inv.status === 'draft' ? 'مسودة' : inv.status === 'posted' ? 'مرحلة' : inv.status === 'paid' ? 'مدفوعة' : 'ملغاة'}
+  1956→  1956→                                    </Badge>
+  1957→  1957→                                  </div>
+  1958→  1958→                                </div>
+  1959→  1959→                              ))}
+  1960→  1960→                            </div>
+  1961→  1961→                          ) : (
+  1962→  1962→                            <div className="text-center py-8 text-gray-400">
+  1963→  1963→                              <FileText className="w-12 h-12 mx-auto mb-3 opacity-50" />
+  1964→  1964→                              <p>لا توجد فواتير بعد</p>
+  1965→  1965→                              <Button variant="outline" className="mt-3" onClick={openNewInvoice}>
+  1966→  1966→                                <Plus className="ml-2 h-4 w-4" />
+  1967→  1967→                                أضف فاتورة الأولى
+  1968→  1968→                              </Button>
+  1969→  1969→                            </div>
+  1970→  1970→                          )}
+  1971→  1971→                        </CardContent>
+  1972→  1972→                      </Card>
+  1973→  1973→
+  1974→  1974→                      <Card>
+  1975→  1975→                        <CardHeader className="flex flex-row items-center justify-between">
+  1976→  1976→                          <CardTitle>آخر العمليات المالية</CardTitle>
+  1977→  1977→                          <Button variant="ghost" size="sm" onClick={() => setActiveModule('treasury')}>
+  1978→  1978→                            عرض الكل ({transactions.length})
+  1979→  1979→                          </Button>
+  1980→  1980→                        </CardHeader>
+  1981→  1981→                        <CardContent>
+  1982→  1982→                          {transactions.length > 0 ? (
+  1983→  1983→                            <div className="space-y-3">
+  1984→  1984→                              {transactions.slice(0, 5).map(trans => (
+  1985→  1985→                                <div key={trans.id} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors">
+  1986→  1986→                                  <div className="flex items-center gap-3">
+  1987→  1987→                                    <div className={`w-10 h-10 rounded-full flex items-center justify-center ${trans.type === 'income' ? 'bg-green-100' : 'bg-red-100'}`}>
+  1988→  1988→                                      {trans.type === 'income' ? 
+  1989→  1989→                                        <ArrowDownLeft className="w-5 h-5 text-green-600" /> : 
+  1990→  1990→                                        <ArrowUpRight className="w-5 h-5 text-red-600" />
+  1991→  1991→                                      }
+  1992→  1992→                                    </div>
+  1993→  1993→                                    <div>
+  1994→  1994→                                      <p className="font-medium">{trans.description}</p>
+  1995→  1995→                                      <p className="text-xs text-gray-500">{trans.category}</p>
+  1996→  1996→                                    </div>
+  1997→  1997→                                  </div>
+  1998→  1998→                                  <p className={`font-bold ${trans.type === 'income' ? 'text-green-600' : 'text-red-600'}`}>
+  1999→  1999→                                    {trans.type === 'income' ? '+' : '-'}{trans.amount.toLocaleString()} ج.م
+  2000→  2000→                                  </p>
+
+[showing lines 1-2000 of 2002; use offset=2001 with limit to continue reading]
