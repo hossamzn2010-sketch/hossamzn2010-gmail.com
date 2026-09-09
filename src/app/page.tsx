@@ -414,7 +414,7 @@ export default function AccountingApp() {
   }
 
   const viewPartyDetails = (party: Party) => {
-    alert(`تفاصيل الطرف:\n\nالاسم: ${party.nameAr}\nالنوع: ${party.type === 'customer' ? 'عميل' : party.type === 'supplier' ? 'مورد' : 'كلاهما'}\nالهاتف: ${party.phone || 'غير محدد'}\nالرصيد: ${party.balance >= 0 ? '' : '-'}${Math.abs(party.balance).toLocaleString()} ر.س`)
+    alert(`تفاصيل الطرف:\n\nالاسم: ${party.nameAr}\nالنوع: ${party.type === 'customer' ? 'عميل' : party.type === 'supplier' ? 'مورد' : 'كلاهما'}\nالهاتف: ${party.phone || 'غير محدد'}\nالرصيد: ${party.balance >= 0 ? '' : '-'}${Math.abs(party.balance).toLocaleString()} ج.م`)
   }
 
   const printPartyStatement = (party: Party) => {
@@ -437,7 +437,7 @@ export default function AccountingApp() {
           <div class="info">
             <p><strong>الاسم:</strong> ${party.nameAr}</p>
             <p><strong>الهاتف:</strong> ${party.phone || '-'}</p>
-            <p><strong>الرصيد الحالي:</strong> ${party.balance >= 0 ? '' : '-'}${Math.abs(party.balance).toLocaleString()} ر.س</p>
+            <p><strong>الرصيد الحالي:</strong> ${party.balance >= 0 ? '' : '-'}${Math.abs(party.balance).toLocaleString()} ج.م</p>
           </div>
           <table>
             <thead>
@@ -562,7 +562,7 @@ export default function AccountingApp() {
             <div class="row"><span>الوصف:</span><span>${transaction.description}</span></div>
             <div class="row"><span>الفئة:</span><span>${transaction.category}</span></div>
           </div>
-          <div class="total">${transaction.type === 'income' ? '+' : '-'}${transaction.amount.toLocaleString()} ر.س</div>
+          <div class="total">${transaction.type === 'income' ? '+' : '-'}${transaction.amount.toLocaleString()} ج.م</div>
           <div class="date">تاريخ الطباعة: ${new Date().toLocaleDateString('ar-SA')}</div>
         </body>
         </html>
@@ -891,8 +891,8 @@ export default function AccountingApp() {
                     <td>${idx + 1}</td>
                     <td>${itemName}</td>
                     <td>${item.quantity}</td>
-                    <td>${item.price.toLocaleString()} ر.س</td>
-                    <td>${(item.quantity * item.price).toLocaleString()} ر.س</td>
+                    <td>${item.price.toLocaleString()} ج.م</td>
+                    <td>${(item.quantity * item.price).toLocaleString()} ج.م</td>
                   </tr>
                 `
               }).join('')}
@@ -902,28 +902,28 @@ export default function AccountingApp() {
           <table class="totals">
             <tr>
               <td>المجموع الفرعي:</td>
-              <td>${subtotal.toLocaleString()} ر.س</td>
+              <td>${subtotal.toLocaleString()} ج.م</td>
             </tr>
             ${invoiceForm.discount > 0 ? `
             <tr>
               <td>الخصم (${invoiceForm.discount}%):</td>
-              <td>-${discountAmount.toLocaleString()} ر.س</td>
+              <td>-${discountAmount.toLocaleString()} ج.م</td>
             </tr>
             ` : ''}
             <tr>
               <td>الضريبة (${invoiceForm.taxRate}%):</td>
-              <td>+${taxAmount.toLocaleString()} ر.س</td>
+              <td>+${taxAmount.toLocaleString()} ج.م</td>
             </tr>
             <tr class="grand-total">
               <td>الإجمالي الكلي:</td>
-              <td>${grandTotal.toLocaleString()} ر.س</td>
+              <td>${grandTotal.toLocaleString()} ج.م</td>
             </tr>
           </table>
 
           <div class="payment-info">
             <h3>💰 تفاصيل السداد</h3>
-            <p><strong>المبلغ المدفوع:</strong> ${paidAmount.toLocaleString()} ر.س</p>
-            <p><strong>المتبقي:</strong> ${remainingAmount.toLocaleString()} ر.س</p>
+            <p><strong>المبلغ المدفوع:</strong> ${paidAmount.toLocaleString()} ج.م</p>
+            <p><strong>المتبقي:</strong> ${remainingAmount.toLocaleString()} ج.م</p>
           </div>
 
           ${invoiceForm.notes ? `
@@ -1211,22 +1211,22 @@ export default function AccountingApp() {
             <tbody>
               ${purchaseForm.items.map((item, idx) => {
                 const itemName = items.find(i => i.id === item.itemId)?.nameAr || 'منتج'
-                return `<tr><td>${idx + 1}</td><td>${itemName}</td><td>${item.quantity}</td><td>${item.price.toLocaleString()} ر.س</td><td>${(item.quantity * item.price).toLocaleString()} ر.س</td></tr>`
+                return `<tr><td>${idx + 1}</td><td>${itemName}</td><td>${item.quantity}</td><td>${item.price.toLocaleString()} ج.م</td><td>${(item.quantity * item.price).toLocaleString()} ج.م</td></tr>`
               }).join('')}
             </tbody>
           </table>
 
           <table class="totals">
-            <tr><td>المجموع الفرعي:</td><td>${subtotal.toLocaleString()} ر.س</td></tr>
-            ${purchaseForm.discount > 0 ? `<tr><td>الخصم (${purchaseForm.discount}%):</td><td>-${discountAmount.toLocaleString()} ر.س</td></tr>` : ''}
-            <tr><td>الضريبة (${purchaseForm.taxRate}%):</td><td>+${taxAmount.toLocaleString()} ر.س</td></tr>
-            <tr class="grand-total"><td>الإجمالي الكلي:</td><td>${grandTotal.toLocaleString()} ر.س</td></tr>
+            <tr><td>المجموع الفرعي:</td><td>${subtotal.toLocaleString()} ج.م</td></tr>
+            ${purchaseForm.discount > 0 ? `<tr><td>الخصم (${purchaseForm.discount}%):</td><td>-${discountAmount.toLocaleString()} ج.م</td></tr>` : ''}
+            <tr><td>الضريبة (${purchaseForm.taxRate}%):</td><td>+${taxAmount.toLocaleString()} ج.م</td></tr>
+            <tr class="grand-total"><td>الإجمالي الكلي:</td><td>${grandTotal.toLocaleString()} ج.م</td></tr>
           </table>
 
           <div class="payment-info">
             <h3>💰 تفاصيل السداد</h3>
-            <p><strong>المبلغ المدفوع:</strong> ${paidAmount.toLocaleString()} ر.س</p>
-            <p><strong>المتبقي:</strong> ${remainingAmount.toLocaleString()} ر.س</p>
+            <p><strong>المبلغ المدفوع:</strong> ${paidAmount.toLocaleString()} ج.م</p>
+            <p><strong>المتبقي:</strong> ${remainingAmount.toLocaleString()} ج.م</p>
           </div>
 
           ${purchaseForm.notes ? `<div style="margin-top: 20px; padding: 15px; background: #e9ecef; border-radius: 10px;"><strong>📝 ملاحظات:</strong><br>${purchaseForm.notes}</div>` : ''}
@@ -1255,7 +1255,7 @@ export default function AccountingApp() {
   }
 
   const viewPurchaseDetails = (purchase: PurchaseInvoice) => {
-    alert(`تفاصيل فاتورة المشتريات:\n\nرقم الفاتورة: ${purchase.number}\nالمورد: ${purchase.supplierName}\nالتاريخ: ${purchase.date}\nالإجمالي: ${purchase.total.toLocaleString()} ر.س\nالمدفوع: ${purchase.paidAmount.toLocaleString()} ر.س\nالمتبقي: ${purchase.remainingAmount.toLocaleString()} ر.س\nالحالة: ${purchase.status === 'draft' ? 'مسودة' : purchase.status === 'posted' ? 'مرحلة' : purchase.status === 'paid' ? 'مدفوعة' : 'ملغاة'}`)
+    alert(`تفاصيل فاتورة المشتريات:\n\nرقم الفاتورة: ${purchase.number}\nالمورد: ${purchase.supplierName}\nالتاريخ: ${purchase.date}\nالإجمالي: ${purchase.total.toLocaleString()} ج.م\nالمدفوع: ${purchase.paidAmount.toLocaleString()} ج.م\nالمتبقي: ${purchase.remainingAmount.toLocaleString()} ج.م\nالحالة: ${purchase.status === 'draft' ? 'مسودة' : purchase.status === 'posted' ? 'مرحلة' : purchase.status === 'paid' ? 'مدفوعة' : 'ملغاة'}`)
   }
 
   const saveNewSupplier = () => {
@@ -1437,7 +1437,7 @@ export default function AccountingApp() {
                           <div className="flex items-center justify-between">
                             <div>
                               <p className="text-sm text-gray-500">إجمالي المبيعات</p>
-                              <p className="text-2xl font-bold text-green-600">{totalSales.toLocaleString()} ر.س</p>
+                              <p className="text-2xl font-bold text-green-600">{totalSales.toLocaleString()} ج.م</p>
                             </div>
                             <div className="w-12 h-12 bg-green-100 rounded-full flex items-center justify-center">
                               <TrendingUp className="w-6 h-6 text-green-600" />
@@ -1454,7 +1454,7 @@ export default function AccountingApp() {
                           <div className="flex items-center justify-between">
                             <div>
                               <p className="text-sm text-gray-500">إجمالي المشتريات</p>
-                              <p className="text-2xl font-bold text-red-600">{totalExpenses.toLocaleString()} ر.س</p>
+                              <p className="text-2xl font-bold text-red-600">{totalExpenses.toLocaleString()} ج.م</p>
                             </div>
                             <div className="w-12 h-12 bg-red-100 rounded-full flex items-center justify-center">
                               <TrendingDown className="w-6 h-6 text-red-600" />
@@ -1474,7 +1474,7 @@ export default function AccountingApp() {
                             <div>
                               <p className="text-sm text-gray-500">صافي الربح</p>
                               <p className={`text-2xl font-bold ${netProfit >= 0 ? 'text-blue-600' : 'text-red-600'}`}>
-                                {netProfit.toLocaleString()} ر.س
+                                {netProfit.toLocaleString()} ج.م
                               </p>
                             </div>
                             <div className="w-12 h-12 bg-blue-100 rounded-full flex items-center justify-center">
@@ -1554,7 +1554,7 @@ export default function AccountingApp() {
                           <div className="flex items-center justify-between">
                             <div>
                               <p className="text-sm text-gray-500">رصيد الخزينة</p>
-                              <p className="text-2xl font-bold text-indigo-600">{treasuryBalance.toLocaleString()} ر.س</p>
+                              <p className="text-2xl font-bold text-indigo-600">{treasuryBalance.toLocaleString()} ج.م</p>
                             </div>
                             <div className="w-12 h-12 bg-indigo-100 rounded-full flex items-center justify-center">
                               <Wallet className="w-6 h-6 text-indigo-600" />
@@ -1656,7 +1656,7 @@ export default function AccountingApp() {
                                     <p className="text-xs text-gray-500">{inv.customerName}</p>
                                   </div>
                                   <div className="text-left">
-                                    <p className="font-bold">{inv.total.toLocaleString()} ر.س</p>
+                                    <p className="font-bold">{inv.total.toLocaleString()} ج.م</p>
                                     <Badge 
                                       variant={inv.status === 'paid' ? 'default' : inv.status === 'posted' ? 'secondary' : 'outline'}
                                       className={
@@ -1710,7 +1710,7 @@ export default function AccountingApp() {
                                     </div>
                                   </div>
                                   <p className={`font-bold ${trans.type === 'income' ? 'text-green-600' : 'text-red-600'}`}>
-                                    {trans.type === 'income' ? '+' : '-'}{trans.amount.toLocaleString()} ر.س
+                                    {trans.type === 'income' ? '+' : '-'}{trans.amount.toLocaleString()} ج.م
                                   </p>
                                 </div>
                               ))}
@@ -1739,7 +1739,7 @@ export default function AccountingApp() {
             <div className="space-y-6">
               {/* Sales Summary Cards */}
               <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-                <Card><CardContent className="pt-6"><div className="flex items-center gap-3"><div className="w-12 h-12 bg-green-100 rounded-full flex items-center justify-center"><DollarSign className="w-6 h-6 text-green-600" /></div><div><p className="text-sm text-gray-500">مبيعات اليوم</p><p className="text-xl font-bold text-green-600">5,200 ر.س</p></div></div></CardContent></Card>
+                <Card><CardContent className="pt-6"><div className="flex items-center gap-3"><div className="w-12 h-12 bg-green-100 rounded-full flex items-center justify-center"><DollarSign className="w-6 h-6 text-green-600" /></div><div><p className="text-sm text-gray-500">مبيعات اليوم</p><p className="text-xl font-bold text-green-600">5,200 ج.م</p></div></div></CardContent></Card>
                 <Card><CardContent className="pt-6"><div className="flex items-center gap-3"><div className="w-12 h-12 bg-blue-100 rounded-full flex items-center justify-center"><FileText className="w-6 h-6 text-blue-600" /></div><div><p className="text-sm text-gray-500">الفواتير</p><p className="text-xl font-bold text-blue-600">{invoices.length}</p></div></div></CardContent></Card>
                 <Card><CardContent className="pt-6"><div className="flex items-center gap-3"><div className="w-12 h-12 bg-yellow-100 rounded-full flex items-center justify-center"><Clock className="w-6 h-6 text-yellow-600" /></div><div><p className="text-sm text-gray-500">غير المدفوعة</p><p className="text-xl font-bold text-yellow-600">{invoices.filter(i => i.status !== 'paid').length}</p></div></div></CardContent></Card>
                 <Card><CardContent className="pt-6"><div className="flex items-center gap-3"><div className="w-12 h-12 bg-purple-100 rounded-full flex items-center justify-center"><Eye className="w-6 h-6 text-purple-600" /></div><div><p className="text-sm text-gray-500">عروض الأسعار</p><p className="text-xl font-bold text-purple-600">{mockQuotations.length}</p></div></div></CardContent></Card>
@@ -1802,10 +1802,10 @@ export default function AccountingApp() {
                                 <td className="p-3 font-medium">{invoice.number}</td>
                                 <td className="p-3">{invoice.date}</td>
                                 <td className="p-3">{invoice.customerName}</td>
-                                <td className="p-3 font-bold">{invoice.total.toLocaleString()} ر.س</td>
-                                <td className="p-3 font-bold text-green-600">{(invoice.paidAmount || 0).toLocaleString()} ر.س</td>
+                                <td className="p-3 font-bold">{invoice.total.toLocaleString()} ج.م</td>
+                                <td className="p-3 font-bold text-green-600">{(invoice.paidAmount || 0).toLocaleString()} ج.م</td>
                                 <td className={`p-3 font-bold ${(invoice.remainingAmount || invoice.total - (invoice.paidAmount || 0)) > 0 ? 'text-orange-600' : 'text-green-600'}`}>
-                                  {(invoice.remainingAmount || (invoice.total - (invoice.paidAmount || 0))).toLocaleString()} ر.س
+                                  {(invoice.remainingAmount || (invoice.total - (invoice.paidAmount || 0))).toLocaleString()} ج.م
                                 </td>
                                 <td className="p-3">
                                   <Badge className={
@@ -1877,7 +1877,7 @@ export default function AccountingApp() {
                                 <td className="p-3 font-medium">{quote.number}</td>
                                 <td className="p-3">{quote.date}</td>
                                 <td className="p-3">{quote.customerName}</td>
-                                <td className="p-3 font-bold">{quote.total.toLocaleString()} ر.س</td>
+                                <td className="p-3 font-bold">{quote.total.toLocaleString()} ج.م</td>
                                 <td className="p-3">
                                   <Badge className={
                                     quote.status === 'accepted' ? 'bg-green-100 text-green-800' :
@@ -1932,7 +1932,7 @@ export default function AccountingApp() {
                                 <td className="p-3">{ret.date}</td>
                                 <td className="p-3">{ret.customerName}</td>
                                 <td className="p-3">{ret.invoiceNumber}</td>
-                                <td className="p-3 font-bold text-red-600">{ret.total.toLocaleString()} ر.س</td>
+                                <td className="p-3 font-bold text-red-600">{ret.total.toLocaleString()} ج.م</td>
                                 <td className="p-3">{ret.reason}</td>
                                 <td className="p-3">
                                   <Badge className={ret.status === 'approved' ? 'bg-green-100 text-green-800' : 'bg-yellow-100 text-yellow-800'}>
@@ -1962,7 +1962,7 @@ export default function AccountingApp() {
           {activeModule === 'purchases' && (
             <div className="space-y-6">
               <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-                <Card><CardContent className="pt-6"><div className="flex items-center gap-3"><div className="w-12 h-12 bg-red-100 rounded-full flex items-center justify-center"><TrendingDown className="w-6 h-6 text-red-600" /></div><div><p className="text-sm text-gray-500">إجمالي المشتريات</p><p className="text-xl font-bold text-red-600">{purchaseInvoices.reduce((sum, p) => sum + p.total, 0).toLocaleString()} ر.س</p></div></div></CardContent></Card>
+                <Card><CardContent className="pt-6"><div className="flex items-center gap-3"><div className="w-12 h-12 bg-red-100 rounded-full flex items-center justify-center"><TrendingDown className="w-6 h-6 text-red-600" /></div><div><p className="text-sm text-gray-500">إجمالي المشتريات</p><p className="text-xl font-bold text-red-600">{purchaseInvoices.reduce((sum, p) => sum + p.total, 0).toLocaleString()} ج.م</p></div></div></CardContent></Card>
                 <Card><CardContent className="pt-6"><div className="flex items-center gap-3"><div className="w-12 h-12 bg-blue-100 rounded-full flex items-center justify-center"><ClipboardList className="w-6 h-6 text-blue-600" /></div><div><p className="text-sm text-gray-500">فواتير الشراء</p><p className="text-xl font-bold text-blue-600">{purchaseInvoices.length}</p></div></div></CardContent></Card>
                 <Card><CardContent className="pt-6"><div className="flex items-center gap-3"><div className="w-12 h-12 bg-yellow-100 rounded-full flex items-center justify-center"><Clock className="w-6 h-6 text-yellow-600" /></div><div><p className="text-sm text-gray-500">قيد الانتظار</p><p className="text-xl font-bold text-yellow-600">{purchaseInvoices.filter(p => p.status === 'draft').length}</p></div></div></CardContent></Card>
                 <Card><CardContent className="pt-6"><div className="flex items-center gap-3"><div className="w-12 h-12 bg-purple-100 rounded-full flex items-center justify-center"><Truck className="w-6 h-6 text-purple-600" /></div><div><p className="text-sm text-gray-500">تم الاستلام</p><p className="text-xl font-bold text-purple-600">{purchaseInvoices.filter(p => p.status === 'paid' || p.status === 'posted').length}</p></div></div></CardContent></Card>
@@ -2024,9 +2024,9 @@ export default function AccountingApp() {
                               <td className="p-3 font-bold font-mono text-red-700">{purchase.number}</td>
                               <td className="p-3 font-medium">{purchase.supplierName}</td>
                               <td className="p-3">{purchase.date}</td>
-                              <td className="p-3 font-bold text-red-600">{purchase.total.toLocaleString()} ر.س</td>
-                              <td className="p-3 font-bold text-green-600">{purchase.paidAmount.toLocaleString()} ر.س</td>
-                              <td className="p-3 font-bold text-orange-600">{purchase.remainingAmount.toLocaleString()} ر.س</td>
+                              <td className="p-3 font-bold text-red-600">{purchase.total.toLocaleString()} ج.م</td>
+                              <td className="p-3 font-bold text-green-600">{purchase.paidAmount.toLocaleString()} ج.م</td>
+                              <td className="p-3 font-bold text-orange-600">{purchase.remainingAmount.toLocaleString()} ج.م</td>
                               <td className="p-3">
                                 <Badge className={
                                   purchase.paymentMethod === 'cash' ? 'bg-green-100 text-green-800' :
@@ -2116,7 +2116,7 @@ export default function AccountingApp() {
                             <td className="p-3 font-mono">{item.code}</td>
                             <td className="p-3 font-medium">{item.nameAr}</td>
                             <td className="p-3">{item.category}</td>
-                            <td className="p-3">{item.price.toLocaleString()} ر.س</td>
+                            <td className="p-3">{item.price.toLocaleString()} ج.م</td>
                             <td className="p-3">
                               <span className={item.stock <= 10 ? 'text-red-600 font-bold' : item.stock <= 30 ? 'text-yellow-600' : ''}>{item.stock}</span>
                             </td>
@@ -2131,7 +2131,7 @@ export default function AccountingApp() {
                             </td>
                             <td className="p-3">
                               <div className="flex items-center gap-1">
-                                <Button variant="ghost" size="icon" onClick={() => alert(`تفاصيل الصنف:\n\nالاسم: ${item.nameAr}\nالكود: ${item.code}\nالفئة: ${item.category}\nالسعر: ${item.price.toLocaleString()} ر.س\nالكمية: ${item.stock}`)} title="عرض"><Eye className="w-4 h-4 text-blue-600" /></Button>
+                                <Button variant="ghost" size="icon" onClick={() => alert(`تفاصيل الصنف:\n\nالاسم: ${item.nameAr}\nالكود: ${item.code}\nالفئة: ${item.category}\nالسعر: ${item.price.toLocaleString()} ج.م\nالكمية: ${item.stock}`)} title="عرض"><Eye className="w-4 h-4 text-blue-600" /></Button>
                                 <Button variant="ghost" size="icon" onClick={() => openEditInventoryItem(item)} title="تعديل"><Edit2 className="w-4 h-4 text-purple-600" /></Button>
                                 <Button variant="ghost" size="icon" onClick={() => {
                                   const printWindow = window.open('', '_blank')
@@ -2150,7 +2150,7 @@ export default function AccountingApp() {
                                         <div class="name">${item.nameAr}</div>
                                         <div class="barcode">|||${item.code}|||</div>
                                         <div class="code">${item.code}</div>
-                                        <div class="price">${item.price.toLocaleString()} ر.س</div>
+                                        <div class="price">${item.price.toLocaleString()} ج.م</div>
                                       </body>
                                       </html>
                                     `)
@@ -2212,7 +2212,7 @@ export default function AccountingApp() {
                               <div className="flex items-center justify-between pt-3 border-t">
                                 <span className="text-sm text-gray-500">الرصيد</span>
                                 <span className={`font-bold ${party.balance >= 0 ? 'text-green-600' : 'text-red-600'}`}>
-                                  {party.balance >= 0 ? '' : '-'}{Math.abs(party.balance).toLocaleString()} ر.س
+                                  {party.balance >= 0 ? '' : '-'}{Math.abs(party.balance).toLocaleString()} ج.م
                                 </span>
                               </div>
                               <div className="flex items-center gap-1 mt-3">
@@ -2236,9 +2236,9 @@ export default function AccountingApp() {
           {activeModule === 'treasury' && (
             <div className="space-y-6">
               <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                <Card className="border-r-4 border-r-green-500"><CardContent className="pt-6"><div className="flex items-center gap-3"><div className="w-12 h-12 bg-green-100 rounded-full flex items-center justify-center"><TrendingUp className="w-6 h-6 text-green-600" /></div><div><p className="text-sm text-gray-500">الإيرادات</p><p className="text-xl font-bold text-green-600">{transactions.filter(t => t.type === 'income').reduce((sum, t) => sum + t.amount, 0).toLocaleString()} ر.س</p></div></div></CardContent></Card>
-                <Card className="border-r-4 border-r-red-500"><CardContent className="pt-6"><div className="flex items-center gap-3"><div className="w-12 h-12 bg-red-100 rounded-full flex items-center justify-center"><TrendingDown className="w-6 h-6 text-red-600" /></div><div><p className="text-sm text-gray-500">المصروفات</p><p className="text-xl font-bold text-red-600">{transactions.filter(t => t.type === 'expense').reduce((sum, t) => sum + t.amount, 0).toLocaleString()} ر.س</p></div></div></CardContent></Card>
-                <Card className="border-r-4 border-r-blue-500"><CardContent className="pt-6"><div className="flex items-center gap-3"><div className="w-12 h-12 bg-blue-100 rounded-full flex items-center justify-center"><Wallet className="w-6 h-6 text-blue-600" /></div><div><p className="text-sm text-gray-500">الرصيد</p><p className="text-xl font-bold text-blue-600">{(transactions.filter(t => t.type === 'income').reduce((sum, t) => sum + t.amount, 0) - transactions.filter(t => t.type === 'expense').reduce((sum, t) => sum + t.amount, 0)).toLocaleString()} ر.س</p></div></div></CardContent></Card>
+                <Card className="border-r-4 border-r-green-500"><CardContent className="pt-6"><div className="flex items-center gap-3"><div className="w-12 h-12 bg-green-100 rounded-full flex items-center justify-center"><TrendingUp className="w-6 h-6 text-green-600" /></div><div><p className="text-sm text-gray-500">الإيرادات</p><p className="text-xl font-bold text-green-600">{transactions.filter(t => t.type === 'income').reduce((sum, t) => sum + t.amount, 0).toLocaleString()} ج.م</p></div></div></CardContent></Card>
+                <Card className="border-r-4 border-r-red-500"><CardContent className="pt-6"><div className="flex items-center gap-3"><div className="w-12 h-12 bg-red-100 rounded-full flex items-center justify-center"><TrendingDown className="w-6 h-6 text-red-600" /></div><div><p className="text-sm text-gray-500">المصروفات</p><p className="text-xl font-bold text-red-600">{transactions.filter(t => t.type === 'expense').reduce((sum, t) => sum + t.amount, 0).toLocaleString()} ج.م</p></div></div></CardContent></Card>
+                <Card className="border-r-4 border-r-blue-500"><CardContent className="pt-6"><div className="flex items-center gap-3"><div className="w-12 h-12 bg-blue-100 rounded-full flex items-center justify-center"><Wallet className="w-6 h-6 text-blue-600" /></div><div><p className="text-sm text-gray-500">الرصيد</p><p className="text-xl font-bold text-blue-600">{(transactions.filter(t => t.type === 'income').reduce((sum, t) => sum + t.amount, 0) - transactions.filter(t => t.type === 'expense').reduce((sum, t) => sum + t.amount, 0)).toLocaleString()} ج.م</p></div></div></CardContent></Card>
               </div>
 
               <Card>
@@ -2276,7 +2276,7 @@ export default function AccountingApp() {
                             <td className="p-3">{trans.description}</td>
                             <td className="p-3">{trans.category}</td>
                             <td className={`p-3 font-bold ${trans.type === 'income' ? 'text-green-600' : 'text-red-600'}`}>
-                              {trans.type === 'income' ? '+' : '-'}{trans.amount.toLocaleString()} ر.س
+                              {trans.type === 'income' ? '+' : '-'}{trans.amount.toLocaleString()} ج.م
                             </td>
                             <td className="p-3">
                               <Badge className={trans.type === 'income' ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'}>
@@ -2446,7 +2446,7 @@ export default function AccountingApp() {
           {activeModule === 'banks' && (
             <div className="space-y-6">
               <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                <Card><CardContent className="pt-6"><div className="flex items-center gap-3"><div className="w-12 h-12 bg-blue-100 rounded-full flex items-center justify-center"><Landmark className="w-6 h-6 text-blue-600" /></div><div><p className="text-sm text-gray-500">إجمالي الحسابات البنكية</p><p className="text-xl font-bold text-blue-600">125,000 ر.س</p></div></div></CardContent></Card>
+                <Card><CardContent className="pt-6"><div className="flex items-center gap-3"><div className="w-12 h-12 bg-blue-100 rounded-full flex items-center justify-center"><Landmark className="w-6 h-6 text-blue-600" /></div><div><p className="text-sm text-gray-500">إجمالي الحسابات البنكية</p><p className="text-xl font-bold text-blue-600">125,000 ج.م</p></div></div></CardContent></Card>
                 <Card><CardContent className="pt-6"><div className="flex items-center gap-3"><div className="w-12 h-12 bg-green-100 rounded-full flex items-center justify-center"><CreditCard className="w-6 h-6 text-green-600" /></div><div><p className="text-sm text-gray-500">الشيكات المعلقة</p><p className="text-xl font-bold text-green-600">{mockChecks.filter(c => c.status === 'pending').length}</p></div></div></CardContent></Card>
                 <Card><CardContent className="pt-6"><div className="flex items-center gap-3"><div className="w-12 h-12 bg-yellow-100 rounded-full flex items-center justify-center"><Clock className="w-6 h-6 text-yellow-600" /></div><div><p className="text-sm text-gray-500">شيكات مستحقة قريباً</p><p className="text-xl font-bold text-yellow-600">2</p></div></div></CardContent></Card>
               </div>
@@ -2532,7 +2532,7 @@ export default function AccountingApp() {
                                 <td className="p-3">{idx + 1}</td>
                                 <td className="p-3 font-medium font-mono">{check.checkNumber}</td>
                                 <td className="p-3">{check.bankName}</td>
-                                <td className="p-3 font-bold">{check.amount.toLocaleString()} ر.س</td>
+                                <td className="p-3 font-bold">{check.amount.toLocaleString()} ج.م</td>
                                 <td className="p-3">{check.dueDate}</td>
                                 <td className="p-3">{check.beneficiary}</td>
                                 <td className="p-3">
@@ -2589,7 +2589,7 @@ export default function AccountingApp() {
               <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
                 <Card><CardContent className="pt-6"><div className="flex items-center gap-3"><div className="w-12 h-12 bg-blue-100 rounded-full flex items-center justify-center"><Users className="w-6 h-6 text-blue-600" /></div><div><p className="text-sm text-gray-500">إجمالي الموظفين</p><p className="text-xl font-bold text-blue-600">{mockEmployees.length}</p></div></div></CardContent></Card>
                 <Card><CardContent className="pt-6"><div className="flex items-center gap-3"><div className="w-12 h-12 bg-green-100 rounded-full flex items-center justify-center"><UserCheck className="w-6 h-6 text-green-600" /></div><div><p className="text-sm text-gray-500">نشطون</p><p className="text-xl font-bold text-green-600">{mockEmployees.filter(e => e.status === 'active').length}</p></div></div></CardContent></Card>
-                <Card><CardContent className="pt-6"><div className="flex items-center gap-3"><div className="w-12 h-12 bg-yellow-100 rounded-full flex items-center justify-center"><HandCoins className="w-6 h-6 text-yellow-600" /></div><div><p className="text-sm text-gray-500">إجمالي الرواتب</p><p className="text-xl font-bold text-yellow-600">{mockEmployees.reduce((sum, e) => sum + e.salary, 0).toLocaleString()} ر.س</p></div></div></CardContent></Card>
+                <Card><CardContent className="pt-6"><div className="flex items-center gap-3"><div className="w-12 h-12 bg-yellow-100 rounded-full flex items-center justify-center"><HandCoins className="w-6 h-6 text-yellow-600" /></div><div><p className="text-sm text-gray-500">إجمالي الرواتب</p><p className="text-xl font-bold text-yellow-600">{mockEmployees.reduce((sum, e) => sum + e.salary, 0).toLocaleString()} ج.م</p></div></div></CardContent></Card>
                 <Card><CardContent className="pt-6"><div className="flex items-center gap-3"><div className="w-12 h-12 bg-purple-100 rounded-full flex items-center justify-center"><Plane className="w-6 h-6 text-purple-600" /></div><div><p className="text-sm text-gray-500">إجازات معتمدة</p><p className="text-xl font-bold text-purple-600">3</p></div></div></CardContent></Card>
               </div>
 
@@ -2630,7 +2630,7 @@ export default function AccountingApp() {
                                 <td className="p-3 font-medium">{emp.name}</td>
                                 <td className="p-3">{emp.position}</td>
                                 <td className="p-3">{emp.department}</td>
-                                <td className="p-3 font-bold">{emp.salary.toLocaleString()} ر.س</td>
+                                <td className="p-3 font-bold">{emp.salary.toLocaleString()} ج.م</td>
                                 <td className="p-3">{emp.joinDate}</td>
                                 <td className="p-3">
                                   <Badge className={emp.status === 'active' ? 'bg-green-100 text-green-800' : 'bg-gray-100 text-gray-800'}>
@@ -2753,9 +2753,9 @@ export default function AccountingApp() {
           {activeModule === 'expenses' && (
             <div className="space-y-6">
               <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-                <Card><CardContent className="pt-6"><div className="flex items-center gap-3"><div className="w-12 h-12 bg-red-100 rounded-full flex items-center justify-center"><Receipt className="w-6 h-6 text-red-600" /></div><div><p className="text-sm text-gray-500">إجمالي المصروفات</p><p className="text-xl font-bold text-red-600">26,000 ر.س</p></div></div></CardContent></Card>
-                <Card><CardContent className="pt-6"><div className="flex items-center gap-3"><div className="w-12 h-12 bg-orange-100 rounded-full flex items-center justify-center"><Repeat className="w-6 h-6 text-orange-600" /></div><div><p className="text-sm text-gray-500">مصروفات ثابتة</p><p className="text-xl font-bold text-orange-600">24,000 ر.س</p></div></div></CardContent></Card>
-                <Card><CardContent className="pt-6"><div className="flex items-center gap-3"><div className="w-12 h-12 bg-blue-100 rounded-full flex items-center justify-center"><Activity className="w-6 h-6 text-blue-600" /></div><div><p className="text-sm text-gray-500">مصروفات متغيرة</p><p className="text-xl font-bold text-blue-600">2,000 ر.س</p></div></div></CardContent></Card>
+                <Card><CardContent className="pt-6"><div className="flex items-center gap-3"><div className="w-12 h-12 bg-red-100 rounded-full flex items-center justify-center"><Receipt className="w-6 h-6 text-red-600" /></div><div><p className="text-sm text-gray-500">إجمالي المصروفات</p><p className="text-xl font-bold text-red-600">26,000 ج.م</p></div></div></CardContent></Card>
+                <Card><CardContent className="pt-6"><div className="flex items-center gap-3"><div className="w-12 h-12 bg-orange-100 rounded-full flex items-center justify-center"><Repeat className="w-6 h-6 text-orange-600" /></div><div><p className="text-sm text-gray-500">مصروفات ثابتة</p><p className="text-xl font-bold text-orange-600">24,000 ج.م</p></div></div></CardContent></Card>
+                <Card><CardContent className="pt-6"><div className="flex items-center gap-3"><div className="w-12 h-12 bg-blue-100 rounded-full flex items-center justify-center"><Activity className="w-6 h-6 text-blue-600" /></div><div><p className="text-sm text-gray-500">مصروفات متغيرة</p><p className="text-xl font-bold text-blue-600">2,000 ج.م</p></div></div></CardContent></Card>
                 <Card><CardContent className="pt-6"><div className="flex items-center gap-3"><div className="w-12 h-12 bg-yellow-100 rounded-full flex items-center justify-center"><Clock className="w-6 h-6 text-yellow-600" /></div><div><p className="text-sm text-gray-500">معلقة</p><p className="text-xl font-bold text-yellow-600">{mockExpenses.filter(e => e.status === 'pending').length}</p></div></div></CardContent></Card>
               </div>
 
@@ -2790,7 +2790,7 @@ export default function AccountingApp() {
                             <td className="p-3">{exp.date}</td>
                             <td className="p-3">{exp.category}</td>
                             <td className="p-3">{exp.description}</td>
-                            <td className="p-3 font-bold text-red-600">{exp.amount.toLocaleString()} ر.س</td>
+                            <td className="p-3 font-bold text-red-600">{exp.amount.toLocaleString()} ج.م</td>
                             <td className="p-3">
                               <Badge className="bg-red-100 text-red-800">مصروف</Badge>
                             </td>
@@ -2889,7 +2889,7 @@ export default function AccountingApp() {
                     <CardContent className="space-y-4">
                       <div className="grid grid-cols-2 gap-4">
                         <div><Label>اللغة</Label><Select><SelectTrigger className="mt-1"><SelectValue /></SelectTrigger><SelectContent><SelectItem value="ar">العربية</SelectItem><SelectItem value="en">English</SelectItem></SelectContent></Select></div>
-                        <div><Label>العملة</Label><Select><SelectTrigger className="mt-1"><SelectValue /></SelectTrigger><SelectContent><SelectItem value="sar">ريال سعودي</SelectItem><SelectItem value="aed">درهم إماراتي</SelectItem><SelectItem value="egp">جنيه مصري</SelectItem></SelectContent></Select></div>
+                        <div><Label>العملة</Label><Select defaultValue="egp"><SelectTrigger className="mt-1"><SelectValue /></SelectTrigger><SelectContent><SelectItem value="egp">جنيه مصري (ج.م)</SelectItem><SelectItem value="sar">ريال سعودي</SelectItem><SelectItem value="aed">درهم إماراتي</SelectItem><SelectItem value="usd">دولار أمريكي</SelectItem></SelectContent></Select></div>
                         <div><Label>السنة المالية</Label><Input type="number" className="mt-1" defaultValue="2024" /></div>
                         <div><Label>بداية السنة</Label><Input type="month" className="mt-1" defaultValue="2024-01" /></div>
                       </div>
@@ -3226,7 +3226,7 @@ export default function AccountingApp() {
                 <div className="space-y-6 text-xl">
                   <div className="flex justify-between items-center p-4 bg-white rounded-2xl shadow-md">
                     <span className="text-gray-800 font-bold text-xl">المجموع الفرعي:</span>
-                    <span className="font-bold text-2xl text-gray-900">{getInvoiceTotal().toLocaleString()} ر.س</span>
+                    <span className="font-bold text-2xl text-gray-900">{getInvoiceTotal().toLocaleString()} ج.م</span>
                   </div>
 
                   <div className="flex justify-between items-center p-4 bg-white rounded-2xl shadow-md">
@@ -3242,7 +3242,7 @@ export default function AccountingApp() {
                         placeholder="0"
                       />
                       <span className="font-bold text-red-600 text-xl">
-                        -{((getInvoiceTotal() * invoiceForm.discount) / 100).toLocaleString()} ر.س
+                        -{((getInvoiceTotal() * invoiceForm.discount) / 100).toLocaleString()} ج.م
                       </span>
                     </div>
                   </div>
@@ -3250,7 +3250,7 @@ export default function AccountingApp() {
                   <div className="flex justify-between items-center p-4 bg-white rounded-2xl shadow-md">
                     <span className="text-gray-800 font-bold text-xl">الضريبة ({invoiceForm.taxRate}%):</span>
                     <span className="font-bold text-purple-700 text-xl">
-                      +{(((getInvoiceTotal() * (100 - invoiceForm.discount)) / 100) * invoiceForm.taxRate / 100).toLocaleString()} ر.س
+                      +{(((getInvoiceTotal() * (100 - invoiceForm.discount)) / 100) * invoiceForm.taxRate / 100).toLocaleString()} ج.م
                     </span>
                   </div>
                   
@@ -3262,7 +3262,7 @@ export default function AccountingApp() {
                       {(
                         ((getInvoiceTotal() * (100 - invoiceForm.discount)) / 100) + 
                         (((getInvoiceTotal() * (100 - invoiceForm.discount)) / 100) * invoiceForm.taxRate / 100)
-                      ).toLocaleString()} ر.س
+                      ).toLocaleString()} ج.م
                     </span>
                   </div>
 
@@ -3298,7 +3298,7 @@ export default function AccountingApp() {
                         {Math.max(0, (
                           ((getInvoiceTotal() * (100 - invoiceForm.discount)) / 100) + 
                           (((getInvoiceTotal() * (100 - invoiceForm.discount)) / 100) * invoiceForm.taxRate / 100)
-                        ) - (invoiceForm.paidAmount || 0)).toLocaleString()} ر.س
+                        ) - (invoiceForm.paidAmount || 0)).toLocaleString()} ج.م
                       </span>
                     </div>
 
@@ -3607,7 +3607,7 @@ export default function AccountingApp() {
                 <div className="space-y-6 text-xl">
                   <div className="flex justify-between items-center p-4 bg-white rounded-2xl shadow-md">
                     <span className="text-gray-800 font-bold text-xl">المجموع الفرعي:</span>
-                    <span className="font-bold text-2xl text-gray-900">{getPurchaseTotal().toLocaleString()} ر.س</span>
+                    <span className="font-bold text-2xl text-gray-900">{getPurchaseTotal().toLocaleString()} ج.م</span>
                   </div>
 
                   <div className="flex justify-between items-center p-4 bg-white rounded-2xl shadow-md">
@@ -3623,7 +3623,7 @@ export default function AccountingApp() {
                         placeholder="0"
                       />
                       <span className="font-bold text-red-600 text-xl">
-                        -{((getPurchaseTotal() * purchaseForm.discount) / 100).toLocaleString()} ر.س
+                        -{((getPurchaseTotal() * purchaseForm.discount) / 100).toLocaleString()} ج.م
                       </span>
                     </div>
                   </div>
@@ -3631,7 +3631,7 @@ export default function AccountingApp() {
                   <div className="flex justify-between items-center p-4 bg-white rounded-2xl shadow-md">
                     <span className="text-gray-800 font-bold text-xl">الضريبة ({purchaseForm.taxRate}%):</span>
                     <span className="font-bold text-purple-700 text-xl">
-                      +{(((getPurchaseTotal() * (100 - purchaseForm.discount)) / 100) * purchaseForm.taxRate / 100).toLocaleString()} ر.س
+                      +{(((getPurchaseTotal() * (100 - purchaseForm.discount)) / 100) * purchaseForm.taxRate / 100).toLocaleString()} ج.م
                     </span>
                   </div>
                   
@@ -3643,7 +3643,7 @@ export default function AccountingApp() {
                       {(
                         ((getPurchaseTotal() * (100 - purchaseForm.discount)) / 100) + 
                         (((getPurchaseTotal() * (100 - purchaseForm.discount)) / 100) * purchaseForm.taxRate / 100)
-                      ).toLocaleString()} ر.س
+                      ).toLocaleString()} ج.م
                     </span>
                   </div>
 
@@ -3679,7 +3679,7 @@ export default function AccountingApp() {
                         {Math.max(0, (
                           ((getPurchaseTotal() * (100 - purchaseForm.discount)) / 100) + 
                           (((getPurchaseTotal() * (100 - purchaseForm.discount)) / 100) * purchaseForm.taxRate / 100)
-                        ) - (purchaseForm.paidAmount || 0)).toLocaleString()} ر.س
+                        ) - (purchaseForm.paidAmount || 0)).toLocaleString()} ج.م
                       </span>
                     </div>
 
@@ -3929,7 +3929,7 @@ export default function AccountingApp() {
             
             <div className="grid grid-cols-2 gap-6">
               <div>
-                <Label className="text-xl font-semibold text-gray-700 mb-3 block">السعر (ر.س)</Label>
+                <Label className="text-xl font-semibold text-gray-700 mb-3 block">السعر (ج.م)</Label>
                 <Input 
                   type="number"
                   min="0"
@@ -4015,7 +4015,7 @@ export default function AccountingApp() {
             </div>
 
             <div>
-              <Label className="text-xl font-semibold text-gray-700 mb-3 block">الرصيد الافتتاحي (ر.س)</Label>
+              <Label className="text-xl font-semibold text-gray-700 mb-3 block">الرصيد الافتتاحي (ج.م)</Label>
               <Input 
                 type="number"
                 min="0"
@@ -4088,7 +4088,7 @@ export default function AccountingApp() {
             
             <div className="grid grid-cols-2 gap-6">
               <div>
-                <Label className="text-xl font-semibold text-gray-700 mb-3 block">المبلغ (ر.س)</Label>
+                <Label className="text-xl font-semibold text-gray-700 mb-3 block">المبلغ (ج.م)</Label>
                 <Input 
                   type="number"
                   min="0"
@@ -4182,7 +4182,7 @@ export default function AccountingApp() {
                 <div className={`p-6 rounded-2xl border-3 shadow-lg ${viewingTransaction.type === 'income' ? 'bg-gradient-to-br from-green-50 to-emerald-100 border-green-300' : 'bg-gradient-to-br from-orange-50 to-red-100 border-orange-300'}`}>
                   <p className="text-lg text-gray-500 mb-2">المبلغ</p>
                   <p className={`font-bold text-4xl ${viewingTransaction.type === 'income' ? 'text-green-700' : 'text-orange-700'}`}>
-                    {viewingTransaction.type === 'income' ? '+' : '-'}{viewingTransaction.amount.toLocaleString()} ر.س
+                    {viewingTransaction.type === 'income' ? '+' : '-'}{viewingTransaction.amount.toLocaleString()} ج.م
                   </p>
                 </div>
               </div>
@@ -4254,7 +4254,7 @@ export default function AccountingApp() {
             
             <div className="grid grid-cols-2 gap-6">
               <div>
-                <Label className="text-xl font-semibold text-gray-700 mb-3 block">السعر (ر.س)</Label>
+                <Label className="text-xl font-semibold text-gray-700 mb-3 block">السعر (ج.م)</Label>
                 <Input 
                   type="number"
                   min="0"
