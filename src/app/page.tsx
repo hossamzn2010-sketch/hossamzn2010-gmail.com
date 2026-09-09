@@ -961,11 +961,13 @@ function AccountingApp() {
     
     journalEntries.forEach(entry => {
       entry.lines.forEach(line => {
-        if (!balances[line.accountCode]) {
-          balances[line.accountCode] = { debit: 0, credit: 0, name: line.accountName }
+        // التأكد من أن accountCode هو string
+        const code = String(line.accountCode || '')
+        if (!balances[code]) {
+          balances[code] = { debit: 0, credit: 0, name: String(line.accountName || '') }
         }
-        balances[line.accountCode].debit += line.debit
-        balances[line.accountCode].credit += line.credit
+        balances[code].debit += Number(line.debit) || 0
+        balances[code].credit += Number(line.credit) || 0
       })
     })
     
@@ -981,8 +983,9 @@ function AccountingApp() {
     const expenseItems: { name: string; amount: number }[] = []
 
     Object.entries(balances).forEach(([code, data]) => {
+      const codeStr = String(code || '')
       // الإيرادات (تبدأ بـ 4)
-      if (code.startsWith('4') || code.startsWith('400')) {
+      if (codeStr.startsWith('4') || codeStr.startsWith('400')) {
         const net = data.credit - data.debit
         if (net !== 0) {
           revenueItems.push({ name: data.name, amount: net })
@@ -990,7 +993,7 @@ function AccountingApp() {
         }
       }
       // المصروفات (تبدأ بـ 5)
-      if (code.startsWith('5') || code.startsWith('500')) {
+      if (codeStr.startsWith('5') || codeStr.startsWith('500')) {
         const net = data.debit - data.credit
         if (net !== 0) {
           expenseItems.push({ name: data.name, amount: net })
@@ -1014,23 +1017,24 @@ function AccountingApp() {
 
     Object.entries(balances).forEach(([code, data]) => {
       const net = data.debit - data.credit
+      const codeStr = String(code || '')
       
       // الأصول (تبدأ بـ 1)
-      if (code.startsWith('1') || code.startsWith('100') || code.startsWith('11') || code.startsWith('12') || code.startsWith('13') || code.startsWith('14')) {
+      if (codeStr.startsWith('1') || codeStr.startsWith('100') || codeStr.startsWith('11') || codeStr.startsWith('12') || codeStr.startsWith('13') || codeStr.startsWith('14')) {
         if (net !== 0) {
           assets.push({ name: data.name, amount: Math.abs(net) })
           totalAssets += Math.abs(net)
         }
       }
       // الالتزامات (تبدأ بـ 2)
-      if (code.startsWith('2') || code.startswith('200') || code.startsWith('22')) {
+      if (codeStr.startsWith('2') || code.startswith('200') || codeStr.startsWith('22')) {
         if (net !== 0) {
           liabilities.push({ name: data.name, amount: Math.abs(net) })
           totalLiabilities += Math.abs(net)
         }
       }
       // حقوق الملكية (تبدأ بـ 3)
-      if (code.startsWith('3') || code.startsWith('300')) {
+      if (codeStr.startsWith('3') || codeStr.startsWith('300')) {
         if (net !== 0) {
           equity.push({ name: data.name, amount: Math.abs(net) })
           totalEquity += Math.abs(net)
@@ -1061,11 +1065,11 @@ function AccountingApp() {
       const net = data.debit - data.credit
       if (net !== 0) {
         let type = 'أخرى'
-        if (code.startsWith('1') || code.startsWith('100') || code.startsWith('11') || code.startsWith('12') || code.startsWith('13') || code.startsWith('14')) type = 'أصل'
-        else if (code.startsWith('2') || code.startsWith('200') || code.startsWith('22')) type = 'التزام'
-        else if (code.startsWith('3') || code.startsWith('300')) type = 'حقوق ملكية'
-        else if (code.startsWith('4') || code.startsWith('400')) type = 'إيراد'
-        else if (code.startsWith('5') || code.startsWith('500')) type = 'مصروف'
+        if (codeStr.startsWith('1') || codeStr.startsWith('100') || codeStr.startsWith('11') || codeStr.startsWith('12') || codeStr.startsWith('13') || codeStr.startsWith('14')) type = 'أصل'
+        else if (codeStr.startsWith('2') || codeStr.startsWith('200') || codeStr.startsWith('22')) type = 'التزام'
+        else if (codeStr.startsWith('3') || codeStr.startsWith('300')) type = 'حقوق ملكية'
+        else if (codeStr.startsWith('4') || codeStr.startsWith('400')) type = 'إيراد'
+        else if (codeStr.startsWith('5') || codeStr.startsWith('500')) type = 'مصروف'
 
         accounts.push({
           code,
