@@ -324,6 +324,35 @@ function AccountingApp() {
   const [expandedAccounts, setExpandedAccounts] = useState<Set<string>>(new Set(['acc-1000', 'acc-2000', 'acc-3000', 'acc-4000', 'acc-5000']))
   const [searchTerm, setSearchTerm] = useState('')
 
+  // إعدادات الشركة
+  const [companySettings, setCompanySettings] = useState({
+    nameAr: 'بلانك وود للمطابخ',
+    nameEn: 'Blank Wood Kitchens',
+    commercialRegister: '',
+    taxNumber: '',
+    address: '',
+    phone: '',
+    email: '',
+    fiscalYear: '2026',
+    fiscalYearStart: '2026-01',
+    currency: 'egp',
+    language: 'ar'
+  })
+  const [settingsSaved, setSettingsSaved] = useState(false)
+
+  // تحميل إعدادات الشركة من localStorage
+  useEffect(() => {
+    const saved = localStorage.getItem('companySettings')
+    if (saved) {
+      try {
+        const parsed = JSON.parse(saved)
+        setCompanySettings(parsed)
+      } catch (e) {
+        console.error('خطأ في تحميل إعدادات الشركة:', e)
+      }
+    }
+  }, [])
+
   // تحميل بيانات القيود المحاسبية من ملف JSON
   useEffect(() => {
     let mounted = true
@@ -4193,12 +4222,23 @@ function AccountingApp() {
                     <CardHeader><CardTitle>الإعدادات العامة</CardTitle></CardHeader>
                     <CardContent className="space-y-4">
                       <div className="grid grid-cols-2 gap-4">
-                        <div><Label>اللغة</Label><Select><SelectTrigger className="mt-1"><SelectValue /></SelectTrigger><SelectContent><SelectItem value="ar">العربية</SelectItem><SelectItem value="en">English</SelectItem></SelectContent></Select></div>
-                        <div><Label>العملة</Label><Select defaultValue="egp"><SelectTrigger className="mt-1"><SelectValue /></SelectTrigger><SelectContent><SelectItem value="egp">جنيه مصري (ج.م)</SelectItem><SelectItem value="sar">ريال سعودي</SelectItem><SelectItem value="aed">درهم إماراتي</SelectItem><SelectItem value="usd">دولار أمريكي</SelectItem></SelectContent></Select></div>
-                        <div><Label>السنة المالية</Label><Input type="number" className="mt-1" defaultValue="2024" /></div>
-                        <div><Label>بداية السنة</Label><Input type="month" className="mt-1" defaultValue="2024-01" /></div>
+                        <div><Label>اللغة</Label><Select value={companySettings.language} onValueChange={(v) => setCompanySettings(prev => ({...prev, language: v}))}><SelectTrigger className="mt-1"><SelectValue /></SelectTrigger><SelectContent><SelectItem value="ar">العربية</SelectItem><SelectItem value="en">English</SelectItem></SelectContent></Select></div>
+                        <div><Label>العملة</Label><Select value={companySettings.currency} onValueChange={(v) => setCompanySettings(prev => ({...prev, currency: v}))}><SelectTrigger className="mt-1"><SelectValue /></SelectTrigger><SelectContent><SelectItem value="egp">جنيه مصري (ج.م)</SelectItem><SelectItem value="sar">ريال سعودي</SelectItem><SelectItem value="aed">درهم إماراتي</SelectItem><SelectItem value="usd">دولار أمريكي</SelectItem></SelectContent></Select></div>
+                        <div><Label>السنة المالية</Label><Input type="number" className="mt-1" value={companySettings.fiscalYear} onChange={(e) => setCompanySettings(prev => ({...prev, fiscalYear: e.target.value}))} /></div>
+                        <div><Label>بداية السنة</Label><Input type="month" className="mt-1" value={companySettings.fiscalYearStart} onChange={(e) => setCompanySettings(prev => ({...prev, fiscalYearStart: e.target.value}))} /></div>
                       </div>
-                      <Button className="bg-gradient-to-r from-[#005f73] to-[#0a9396]"><Save className="ml-2 h-4 w-4" />حفظ الإعدادات</Button>
+                      <Button 
+                        className="bg-gradient-to-r from-[#005f73] to-[#0a9396]"
+                        onClick={() => {
+                          localStorage.setItem('companySettings', JSON.stringify(companySettings))
+                          setSettingsSaved(true)
+                          setTimeout(() => setSettingsSaved(false), 3000)
+                          addLogEntry('حفظ الإعدادات', 'تم حفظ الإعدادات العامة')
+                        }}
+                      >
+                        <Save className="ml-2 h-4 w-4" />حفظ الإعدادات
+                      </Button>
+                      {settingsSaved && <Badge className="bg-green-500 text-white mr-3">✓ تم الحفظ بنجاح</Badge>}
                     </CardContent>
                   </Card>
                 </TabsContent>
@@ -4208,15 +4248,26 @@ function AccountingApp() {
                     <CardHeader><CardTitle>بيانات الشركة</CardTitle></CardHeader>
                     <CardContent className="space-y-4">
                       <div className="grid grid-cols-2 gap-4">
-                        <div><Label>اسم الشركة</Label><Input className="mt-1" defaultValue="شركة إنجاز للحلول المحاسبية" /></div>
-                        <div><Label>الاسم بالإنجليزية</Label><Input className="mt-1" defaultValue="Injaz Accounting Solutions" dir="ltr" /></div>
-                        <div><Label>السجل التجاري</Label><Input className="mt-1" defaultValue="1010123456" /></div>
-                        <div><Label>الضريبة</Label><Input className="mt-1" defaultValue="300123456789003" /></div>
-                        <div className="col-span-2"><Label>العنوان</Label><Textarea className="mt-1" defaultValue="الرياض، المملكة العربية السعودية" /></div>
-                        <div><Label>الهاتف</Label><Input className="mt-1" defaultValue="+966501234567" /></div>
-                        <div><Label>البريد الإلكتروني</Label><Input className="mt-1" defaultValue="info@injaz-sa.com" /></div>
+                        <div><Label>اسم الشركة</Label><Input className="mt-1" value={companySettings.nameAr} onChange={(e) => setCompanySettings(prev => ({...prev, nameAr: e.target.value}))} /></div>
+                        <div><Label>الاسم بالإنجليزية</Label><Input className="mt-1" value={companySettings.nameEn} dir="ltr" onChange={(e) => setCompanySettings(prev => ({...prev, nameEn: e.target.value}))} /></div>
+                        <div><Label>السجل التجاري</Label><Input className="mt-1" value={companySettings.commercialRegister} onChange={(e) => setCompanySettings(prev => ({...prev, commercialRegister: e.target.value}))} /></div>
+                        <div><Label>الضريبة</Label><Input className="mt-1" value={companySettings.taxNumber} onChange={(e) => setCompanySettings(prev => ({...prev, taxNumber: e.target.value}))} /></div>
+                        <div className="col-span-2"><Label>العنوان</Label><Textarea className="mt-1" value={companySettings.address} onChange={(e) => setCompanySettings(prev => ({...prev, address: e.target.value}))} /></div>
+                        <div><Label>الهاتف</Label><Input className="mt-1" value={companySettings.phone} onChange={(e) => setCompanySettings(prev => ({...prev, phone: e.target.value}))} /></div>
+                        <div><Label>البريد الإلكتروني</Label><Input className="mt-1" value={companySettings.email} dir="ltr" onChange={(e) => setCompanySettings(prev => ({...prev, email: e.target.value}))} /></div>
                       </div>
-                      <Button className="bg-gradient-to-r from-[#005f73] to-[#0a9396]"><Save className="ml-2 h-4 w-4" />حفظ البيانات</Button>
+                      <Button 
+                        className="bg-gradient-to-r from-[#005f73] to-[#0a9396]"
+                        onClick={() => {
+                          localStorage.setItem('companySettings', JSON.stringify(companySettings))
+                          setSettingsSaved(true)
+                          setTimeout(() => setSettingsSaved(false), 3000)
+                          addLogEntry('حفظ بيانات الشركة', `تم تحديث بيانات: ${companySettings.nameAr}`)
+                        }}
+                      >
+                        <Save className="ml-2 h-4 w-4" />حفظ البيانات
+                      </Button>
+                      {settingsSaved && <Badge className="bg-green-500 text-white mr-3">✓ تم الحفظ بنجاح</Badge>}
                     </CardContent>
                   </Card>
                 </TabsContent>
