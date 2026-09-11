@@ -340,6 +340,17 @@ function AccountingApp() {
   })
   const [settingsSaved, setSettingsSaved] = useState(false)
 
+  // حالة نافذة إضافة حساب جديد
+  const [showAddAccountDialog, setShowAddAccountDialog] = useState(false)
+  const [newAccountForm, setNewAccountForm] = useState({
+    code: '',
+    name: '',
+    type: 'asset' as 'asset' | 'liability' | 'equity' | 'revenue' | 'expense',
+    parentId: '',
+    balance: 0,
+    level: 2
+  })
+
   // تحميل إعدادات الشركة من localStorage
   useEffect(() => {
     const saved = localStorage.getItem('companySettings')
@@ -2919,7 +2930,7 @@ function AccountingApp() {
                         onChange={(e) => setSearchTerm(e.target.value)}
                       />
                     </div>
-                    <Button className="bg-gradient-to-r from-[#005f73] to-[#0a9396]"><Plus className="ml-2 h-4 w-4" />حساب جديد</Button>
+                    <Button className="bg-gradient-to-r from-[#005f73] to-[#0a9396]" onClick={() => setShowAddAccountDialog(true)}><Plus className="ml-2 h-4 w-4" />حساب جديد</Button>
                     <Button variant="outline" onClick={() => window.print()}><Printer className="ml-2 h-4 w-4" />طباعة الدليل</Button>
                   </div>
                 </CardHeader>
@@ -3032,6 +3043,137 @@ function AccountingApp() {
                   )}
                 </CardContent>
               </Card>
+
+              {/* ============ DIALOG: إضافة حساب جديد ============ */}
+              <Dialog open={showAddAccountDialog} onOpenChange={setShowAddAccountDialog}>
+                <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+                  <DialogHeader>
+                    <DialogTitle className="flex items-center gap-2 text-[#005f73]">
+                      <Plus className="w-5 h-5" />
+                      إضافة حساب جديد
+                    </DialogTitle>
+                    <DialogDescription>أدخل بيانات الحساب الجديد في النموذج أدناه</DialogDescription>
+                  </DialogHeader>
+                  
+                  <div className="grid grid-cols-2 gap-4 mt-4">
+                    <div>
+                      <Label>رقم الحساب <span className="text-red-500">*</span></Label>
+                      <Input 
+                        className="mt-1" 
+                        placeholder="مثال: 1101"
+                        value={newAccountForm.code}
+                        onChange={(e) => setNewAccountForm(prev => ({...prev, code: e.target.value}))}
+                      />
+                    </div>
+                    <div>
+                      <Label>اسم الحساب <span className="text-red-500">*</span></Label>
+                      <Input 
+                        className="mt-1" 
+                        placeholder="مثال: الصندوق"
+                        value={newAccountForm.name}
+                        onChange={(e) => setNewAccountForm(prev => ({...prev, name: e.target.value}))}
+                      />
+                    </div>
+                    <div>
+                      <Label>نوع الحساب</Label>
+                      <Select value={newAccountForm.type} onValueChange={(v) => setNewAccountForm(prev => ({...prev, type: v as any}))}>
+                        <SelectTrigger className="mt-1"><SelectValue /></SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="asset">أصل</SelectItem>
+                          <SelectItem value="liability">خصم</SelectItem>
+                          <SelectItem value="equity">ملكية</SelectItem>
+                          <SelectItem value="revenue">إيراد</SelectItem>
+                          <SelectItem value="expense">مصروف</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
+                    <div>
+                      <Label>الحساب الأب (اختياري)</Label>
+                      <Select value={newAccountForm.parentId} onValueChange={(v) => {
+                        const parent = mockAccounts.find(a => a.id === v)
+                        setNewAccountForm(prev => ({
+                          ...prev, 
+                          parentId: v,
+                          level: parent ? parent.level + 1 : 1
+                        }))
+                      }}>
+                        <SelectTrigger className="mt-1"><SelectValue placeholder="اختر الحساب الأب" /></SelectTrigger>
+                        <SelectContent>
+                          {mockAccounts.filter(a => a.level < 3).map(acc => (
+                            <SelectItem key={acc.id} value={acc.id}>{acc.code} - {acc.name}</SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    </div>
+                    <div>
+                      <Label>الرصيد الافتتاحي</Label>
+                      <Input 
+                        type="number" 
+                        className="mt-1" 
+                        placeholder="0"
+                        value={newAccountForm.balance || ''}
+                        onChange={(e) => setNewAccountForm(prev => ({...prev, balance: parseFloat(e.target.value) || 0}))}
+                      />
+                    </div>
+                    <div>
+                      <Label>المستوى</Label>
+                      <Input 
+                        className="mt-1 bg-gray-50" 
+                        value={newAccountForm.level}
+                        disabled
+                      />
+                    </div>
+                  </div>
+
+                  <div className="flex justify-end gap-3 mt-6">
+                    <Button variant="outline" onClick={() => setShowAddAccountDialog(false)}>
+                      إلغاء
+                    </Button>
+                    <Button 
+                      className="bg-gradient-to-r from-[#005f73] to-[#0a9396]"
+                      onClick={() => {
+                        if (!newAccountForm.code || !newAccountForm.name) {
+                          alert('يرجى إدخال رقم الحساب واسمه')
+                          return
+                        }
+                        // التحقق من عدم تكرار الكود
+                        if (mockAccounts.some(a => a.code === newAccountForm.code)) {
+                          alert('رقم الحساب موجود مسبقاً')
+                          return
+                        }
+                        
+                        const newAccount = {
+                          id: `acc-${Date.now()}`,
+                          code: newAccountForm.code,
+                          name: newAccountForm.name,
+                          type: newAccountForm.type,
+                          level: newAccountForm.level,
+                          parentId: newAccountForm.parentId || null,
+                          balance: newAccountForm.balance
+                        }
+                        
+                        mockAccounts.push(newAccount)
+                        addLogEntry('إضافة حساب', `تم إضافة حساب: ${newAccountForm.code} - ${newAccountForm.name}`)
+                        
+                        // إعادة تعيين النموذج وإغلاق النافذة
+                        setNewAccountForm({
+                          code: '',
+                          name: '',
+                          type: 'asset',
+                          parentId: '',
+                          balance: 0,
+                          level: 2
+                        })
+                        setShowAddAccountDialog(false)
+                        alert('✓ تم إضافة الحساب بنجاح')
+                      }}
+                    >
+                      <Save className="ml-2 h-4 w-4" />
+                      حفظ الحساب
+                    </Button>
+                  </div>
+                </DialogContent>
+              </Dialog>
             </div>
           )}
 
