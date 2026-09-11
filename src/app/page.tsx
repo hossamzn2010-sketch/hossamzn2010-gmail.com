@@ -4102,7 +4102,7 @@ function AccountingApp() {
                                     <SelectValue placeholder="اختر الحساب" />
                                   </SelectTrigger>
                                   <SelectContent>
-                                    {mockAccounts.filter(acc => acc.level >= 3).map((account) => (
+                                    {mockAccounts.filter(acc => acc.level >= 2).map((account) => (
                                       <SelectItem key={account.id} value={account.code}>
                                         {account.code} - {account.name}
                                       </SelectItem>
