@@ -365,7 +365,7 @@ function AccountingApp() {
     setActivityLogs(prev => {
       const updated = [logEntry, ...prev].slice(0, 100)
       // مزامنة فورية مع الخادم
-      syncDataToServer({ activityLogs: updated })
+      setTimeout(() => syncDataToServer({ activityLogs: updated }), 100)
       return updated
     })
   }, [])
@@ -382,36 +382,84 @@ function AccountingApp() {
       if (data?.activityLogs) payload.activityLogs = data.activityLogs
       if (data?.companySettings) payload.companySettings = data.companySettings
       
-      await fetch('/api/data', {
+      const response = await fetch('/api/data', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(payload)
       })
+      const result = await response.json()
+      if (result.success) {
+        console.log('✓ تمت المزامنة بنجاح')
+      }
     } catch (error) {
       console.error('خطأ في المزامنة:', error)
     }
   }, [])
 
+  // دالة مزامنة جميع البيانات الحالية
+  const syncAllDataToServer = useCallback(() => {
+    syncDataToServer({ 
+      activityLogs, 
+      companySettings,
+      journalEntries 
+    })
+  }, [activityLogs, companySettings, journalEntries, syncDataToServer])
+
   // تحميل البيانات المشتركة من الخادم عند فتح الصفحة
   useEffect(() => {
     let mounted = true
-    fetch('/api/data')
-      .then(res => res.json())
-      .then((data: any) => {
+    
+    const loadSharedData = async () => {
+      try {
+        const response = await fetch('/api/data')
+        const data = await response.json()
+        
         if (!mounted) return
+        
         // تحميل سجل العمليات المشترك
         if (data.activityLogs && data.activityLogs.length > 0) {
           setActivityLogs(data.activityLogs)
+          console.log(`✓ تم تحميل ${data.activityLogs.length} عملية من الخادم`)
         }
         // تحميل إعدادات الشركة إذا كانت محفوظة
         if (data.companySettings) {
           setCompanySettings(data.companySettings)
         }
-      })
-      .catch(err => console.error('خطأ في تحميل البيانات المشتركة:', err))
-    
-    return () => { mounted = false }
-  }, [])
+      } catch (err) {
+        console.error('خطأ في تحميل البيانات المشتركة:', err)
+      }
+    }
+
+    loadSharedData()
+
+    // المزامنة التلقائية كل 15 ثانية
+    const syncInterval = setInterval(() => {
+      console.log('🔄 جاري المزامنة الدورية...')
+      syncAllDataToServer()
+    }, 15000)
+
+    // حفظ البيانات عند إغلاق الصفحة
+    const handleBeforeUnload = () => {
+      // استخدام sendBeacon للحفظ السريع قبل الإغلاق
+      const data = new Blob([JSON.stringify({
+        activityLogs,
+        companySettings,
+        journalEntries
+      })], { type: 'application/json' })
+      navigator.sendBeacon('/api/data', data)
+      console.log('💾 تم حفظ البيانات قبل الإغلاق')
+    }
+
+    window.addEventListener('beforeunload', handleBeforeUnload)
+
+    return () => { 
+      mounted = false 
+      clearInterval(syncInterval)
+      window.removeEventListener('beforeunload', handleBeforeUnload)
+      // حفظ نهائي عند إلغاء المكون
+      syncAllDataToServer()
+    }
+  }, [syncAllDataToServer])
 
   // تحميل إعدادات الشركة من localStorage
   useEffect(() => {
@@ -1831,7 +1879,27 @@ function AccountingApp() {
         </nav>
 
         <div className="p-4 border-t border-white/20">
-          <button onClick={() => setIsLoggedIn(false)} className="w-full flex items-center gap-3 px-4 py-3 hover:bg-red-500/20 rounded-lg text-red-200 transition-colors">
+          <button 
+            onClick={async () => {
+              // حفظ جميع البيانات قبل الخروج
+              addLogEntry('تسجيل الخروج', 'جارٍ حفظ البيانات...')
+              await syncAllDataToServer()
+              // أيضاً حفظ في localStorage كنسخة احتياطية
+              const backup = { 
+                companySettings, 
+                journalEntries, 
+                activityLogs,
+                lastLogout: new Date().toISOString() 
+              }
+              localStorage.setItem('appBackup', JSON.stringify(backup))
+              
+              setTimeout(() => {
+                setIsLoggedIn(false)
+                alert('✓ تم حفظ جميع البيانات وتسجيل الخروج بنجاح')
+              }, 500)
+            }} 
+            className="w-full flex items-center gap-3 px-4 py-3 hover:bg-red-500/20 rounded-lg text-red-200 transition-colors"
+          >
             <LogOut className="w-5 h-5" />
             {sidebarOpen && <span>تسجيل الخروج</span>}
           </button>
