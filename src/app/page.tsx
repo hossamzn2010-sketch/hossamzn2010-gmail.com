@@ -351,6 +351,68 @@ function AccountingApp() {
     level: 2
   })
 
+  // سجل العمليات (يتم مشاركته بين جميع الأجهزة)
+  const [activityLogs, setActivityLogs] = useState<{id: string; time: string; action: string; details: string}[]>([])
+
+  // دالة إضافة عملية جديدة ومزامنتها فوراً
+  const addLogEntry = useCallback((action: string, details: string) => {
+    const logEntry = { 
+      id: Date.now().toString(), 
+      time: new Date().toLocaleString('ar-EG'), 
+      action, 
+      details 
+    }
+    setActivityLogs(prev => {
+      const updated = [logEntry, ...prev].slice(0, 100)
+      // مزامنة فورية مع الخادم
+      syncDataToServer({ activityLogs: updated })
+      return updated
+    })
+  }, [])
+
+  // دالة مزامنة البيانات مع الخادم
+  const syncDataToServer = useCallback(async (data?: { 
+    journalEntries?: any[], 
+    activityLogs?: any[], 
+    companySettings?: any 
+  }) => {
+    try {
+      const payload: any = {}
+      if (data?.journalEntries) payload.journalEntries = data.journalEntries
+      if (data?.activityLogs) payload.activityLogs = data.activityLogs
+      if (data?.companySettings) payload.companySettings = data.companySettings
+      
+      await fetch('/api/data', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload)
+      })
+    } catch (error) {
+      console.error('خطأ في المزامنة:', error)
+    }
+  }, [])
+
+  // تحميل البيانات المشتركة من الخادم عند فتح الصفحة
+  useEffect(() => {
+    let mounted = true
+    fetch('/api/data')
+      .then(res => res.json())
+      .then((data: any) => {
+        if (!mounted) return
+        // تحميل سجل العمليات المشترك
+        if (data.activityLogs && data.activityLogs.length > 0) {
+          setActivityLogs(data.activityLogs)
+        }
+        // تحميل إعدادات الشركة إذا كانت محفوظة
+        if (data.companySettings) {
+          setCompanySettings(data.companySettings)
+        }
+      })
+      .catch(err => console.error('خطأ في تحميل البيانات المشتركة:', err))
+    
+    return () => { mounted = false }
+  }, [])
+
   // تحميل إعدادات الشركة من localStorage
   useEffect(() => {
     const saved = localStorage.getItem('companySettings')
@@ -4373,6 +4435,7 @@ function AccountingApp() {
                         className="bg-gradient-to-r from-[#005f73] to-[#0a9396]"
                         onClick={() => {
                           localStorage.setItem('companySettings', JSON.stringify(companySettings))
+                          syncDataToServer({ companySettings })
                           setSettingsSaved(true)
                           setTimeout(() => setSettingsSaved(false), 3000)
                           addLogEntry('حفظ الإعدادات', 'تم حفظ الإعدادات العامة')
@@ -4402,6 +4465,7 @@ function AccountingApp() {
                         className="bg-gradient-to-r from-[#005f73] to-[#0a9396]"
                         onClick={() => {
                           localStorage.setItem('companySettings', JSON.stringify(companySettings))
+                          syncDataToServer({ companySettings })
                           setSettingsSaved(true)
                           setTimeout(() => setSettingsSaved(false), 3000)
                           addLogEntry('حفظ بيانات الشركة', `تم تحديث بيانات: ${companySettings.nameAr}`)
