@@ -30,7 +30,7 @@ import { ScrollArea } from '@/components/ui/scroll-area'
 import { IncomeStatementReport, BalanceSheetReport, TrialBalanceReport } from '@/components/Reports'
 
 // ============ TYPES ============
-type ModuleType = 'dashboard' | 'sales' | 'purchases' | 'inventory' | 'parties' | 'treasury' | 'reports' | 'settings' | 'accounts' | 'banks' | 'hr' | 'expenses' | 'chart-of-accounts' | 'journal-entries'
+type ModuleType = 'dashboard' | 'sales' | 'purchases' | 'inventory' | 'parties' | 'treasury' | 'reports' | 'settings' | 'accounts' | 'banks' | 'hr' | 'expenses' | 'chart-of-accounts' | 'journal-entries' | 'general-ledger'
 
 interface Invoice {
   id: string
@@ -351,6 +351,18 @@ function AccountingApp() {
     level: 2
   })
 
+  // حالات الاستاذ العام
+  const [selectedGLAccount, setSelectedGLAccount] = useState<string>('')
+  const [glDateFrom, setGlDateFrom] = useState('')
+  const [glDateTo, setGlDateTo] = useState(new Date().toISOString().split('T')[0])
+  const [showGLStatement, setShowGLStatement] = useState(false)
+  
+  // حالات عرض/تعديل الحساب في دليل الحسابات
+  const [viewingAccount, setViewingAccount] = useState<any>(null)
+  const [showAccountDialog, setShowAccountDialog] = useState(false)
+  const [editingAccount, setEditingAccount] = useState<any>(null)
+  const [showEditAccountDialog, setShowEditAccountDialog] = useState(false)
+
   // سجل العمليات (يتم مشاركته بين جميع الأجهزة)
   const [activityLogs, setActivityLogs] = useState<{id: string; time: string; action: string; details: string}[]>([])
 
@@ -404,6 +416,155 @@ function AccountingApp() {
       journalEntries 
     })
   }, [activityLogs, companySettings, journalEntries, syncDataToServer])
+
+  // دالة حساب كشف الحساب من القيود المحاسبية
+  const getAccountStatement = useCallback((accountCode: string) => {
+    const account = mockAccounts.find(a => a.code === accountCode)
+    if (!account) return { account: null, entries: [], openingBalance: 0, totalDebit: 0, totalCredit: 0, closingBalance: 0 }
+    
+    // تصفية القيود للحساب المحدد وفي التاريخ المحدد
+    let filteredEntries = journalEntries.filter(entry => {
+      if (entry.status !== 'posted') return false
+      if (glDateFrom && entry.date < glDateFrom) return false
+      if (glDateTo && entry.date > glDateTo) return false
+      return entry.lines.some(line => line.accountCode === accountCode)
+    })
+
+    // حساب الرصيد الافتتاحي (قبل تاريخ البداية)
+    let openingBalance = account.balance || 0
+    if (glDateFrom) {
+      const earlierEntries = journalEntries.filter(entry => {
+        if (entry.status !== 'posted') return false
+        if (entry.date >= glDateFrom) return false
+        return entry.lines.some(line => line.accountCode === accountCode)
+      })
+      
+      earlierEntries.forEach(entry => {
+        entry.lines.forEach(line => {
+          if (line.accountCode === accountCode) {
+            // للأصول والمصروفات: المدين يزيد، الدائن ينقص
+            // للخصوم والإيرادات والدائن يزيد، المدين ينقص
+            if (['asset', 'expense'].includes(account.type)) {
+              openingBalance += (line.debit - line.credit)
+            } else {
+              openingBalance += (line.credit - line.debit)
+            }
+          }
+        })
+      })
+    }
+
+    // حساب إجمالي المدين والدائن
+    let totalDebit = 0
+    let totalCredit = 0
+
+    filteredEntries.forEach(entry => {
+      entry.lines.forEach(line => {
+        if (line.accountCode === accountCode) {
+          totalDebit += line.debit || 0
+          totalCredit += line.credit || 0
+        }
+      })
+    })
+
+    // حساب الرصيد الختامي
+    let closingBalance = openingBalance
+    if (['asset', 'expense'].includes(account.type)) {
+      closingBalance = openingBalance + totalDebit - totalCredit
+    } else {
+      closingBalance = openingBalance + totalCredit - totalDebit
+    }
+
+    return {
+      account,
+      entries: filteredEntries,
+      openingBalance,
+      totalDebit,
+      totalCredit,
+      closingBalance
+    }
+  }, [journalEntries, glDateFrom, glDateTo])
+
+  // دالة تصدير Excel لكشف الحساب
+  const exportAccountToExcel = () => {
+    if (!selectedGLAccount) return
+    
+    const statement = getAccountStatement(selectedGLAccount)
+    if (!statement.account) return
+
+    const csvContent = '\uFEFF' + `كشف حساب: ${statement.account.name} (${statement.account.code})\n` +
+      `التاريخ من: ${glDateFrom || 'بداية الفترة'} إلى: ${glDateTo || 'ت اليوم'}\n` +
+      `الشركة: ${companySettings.nameAr}\n\n` +
+      `التاريخ,رقم القيد,البيان,مدين,دائن,الرصيد\n`
+
+    let runningBalance = statement.openingBalance
+    const rows = [`رصيد افتتاحي,,,,,${runningBalance}`]
+    
+    statement.entries.forEach(entry => {
+      const line = entry.lines.find(l => l.accountCode === selectedGLAccount)
+      if (line) {
+        if (['asset', 'expense'].includes(statement.account.type)) {
+          runningBalance += (line.debit - line.credit)
+        } else {
+          runningBalance += (line.credit - line.debit)
+        }
+        rows.push(`${entry.date},${entry.entryNumber},${entry.description},${line.debit || ''},${line.credit || ''},${runningBalance}`)
+      }
+    })
+
+    const fullContent = csvContent + rows.join('\n') + `\n\nالإجمالي,,,$${statement.totalDebit},$${statement.totalCredit},$${statement.closingBalance}`
+    
+    const blob = new Blob([fullContent], { type: 'text/csv;charset=utf-8;' })
+    const link = document.createElement('a')
+    link.href = URL.createObjectURL(blob)
+    link.download = `كشف_حساب_${statement.account.code}_${new Date().toISOString().split('T')[0]}.csv`
+    link.click()
+    
+    addLogEntry('تصدير Excel', `تم تصدير كشف حساب: ${statement.account.name}`)
+  }
+
+  // دالة طباعة كشف الحساب
+  const printAccountStatement = () => {
+    if (!selectedGLAccount) return
+    window.print()
+    addLogEntry('طباعة', `تم طباعة كشف حساب`)
+  }
+
+  // دالة عرض تفاصيل الحساب
+  const viewAccountDetails = (account: any) => {
+    setViewingAccount(account)
+    setShowAccountDialog(true)
+  }
+
+  // دالة تعديل الحساب
+  const editAccount = (account: any) => {
+    setEditingAccount({...account})
+    setShowEditAccountDialog(true)
+  }
+
+  // دالة حذف الحساب
+  const deleteAccount = (accountId: string, accountName: string) => {
+    if (confirm(`هل أنت متأكد من حذف الحساب "${accountName}"؟`)) {
+      const index = mockAccounts.findIndex(a => a.id === accountId)
+      if (index > -1) {
+        mockAccounts.splice(index, 1)
+        addLogEntry('حذف حساب', `تم حذف حساب: ${accountName}`)
+        alert('✓ تم حذف الحساب بنجاح')
+      }
+    }
+  }
+
+  // دالة حفظ تعديلات الحساب
+  const saveAccountEdit = () => {
+    if (!editingAccount) return
+    const index = mockAccounts.findIndex(a => a.id === editingAccount.id)
+    if (index > -1) {
+      mockAccounts[index] = editingAccount
+      addLogEntry('تعديل حساب', `تم تعديل حساب: ${editingAccount.name}`)
+      setShowEditAccountDialog(false)
+      alert('✓ تم تحديث الحساب بنجاح')
+    }
+  }
 
   // تحميل البيانات المشتركة من الخادم عند فتح الصفحة
   useEffect(() => {
@@ -1816,6 +1977,7 @@ function AccountingApp() {
     { id: 'parties' as ModuleType, icon: Users, label: 'الأطراف' },
     { id: 'treasury' as ModuleType, icon: Wallet, label: 'الخزينة' },
     { id: 'journal-entries' as ModuleType, icon: BookOpen, label: 'القيود المحاسبية' },
+    { id: 'general-ledger' as ModuleType, icon: Landmark, label: 'الاستاذ العام' },
     { id: 'accounts' as ModuleType, icon: Landmark, label: 'دليل الحسابات' },
     { id: 'banks' as ModuleType, icon: Landmark, label: 'البنوك' },
     { id: 'hr' as ModuleType, icon: Users, label: 'الموارد البشرية' },
@@ -3035,6 +3197,163 @@ function AccountingApp() {
             </div>
           )}
 
+          {/* ============ GENERAL LEDGER MODULE ============ */}
+          {activeModule === 'general-ledger' && (
+            <div className="space-y-6">
+              <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+                <Card><CardContent className="pt-6"><div className="flex items-center gap-3"><div className="w-12 h-12 bg-blue-100 rounded-full flex items-center justify-center"><Landmark className="w-6 h-6 text-blue-600" /></div><div><p className="text-sm text-gray-500">إجمالي الحسابات</p><p className="text-xl font-bold text-blue-600">{mockAccounts.filter(a => a.level >= 2).length}</p></div></div></CardContent></Card>
+                <Card><CardContent className="pt-6"><div className="flex items-center gap-3"><div className="w-12 h-12 bg-green-100 rounded-full flex items-center justify-center"><FileText className="w-6 h-6 text-green-600" /></div><div><p className="text-sm text-gray-500">القيود المرحلة</p><p className="text-xl font-bold text-green-600">{journalEntries.filter(e => e.status === 'posted').length}</p></div></div></CardContent></Card>
+                <Card><CardContent className="pt-6"><div className="flex items-center gap-3"><div className="w-12 h-12 bg-purple-100 rounded-full flex items-center justify-center"><Calculator className="w-6 h-6 text-purple-600" /></div><div><p className="text-sm text-gray-500">إجمالي المدين</p><p className="text-xl font-bold text-purple-600">{journalEntries.filter(e => e.status === 'posted').reduce((sum, e) => sum + e.totalDebit, 0).toLocaleString()}</p></div></div></CardContent></Card>
+                <Card><CardContent className="pt-6"><div className="flex items-center gap-3"><div className="w-12 h-12 bg-orange-100 rounded-full flex items-center justify-center"><DollarSign className="w-6 h-6 text-orange-600" /></div><div><p className="text-sm text-gray-500">إجمالي الدائن</p><p className="text-xl font-bold text-orange-600">{journalEntries.filter(e => e.status === 'posted').reduce((sum, e) => sum + e.totalCredit, 0).toLocaleString()}</p></div></div></CardContent></Card>
+              </div>
+
+              <Card>
+                <CardHeader className="flex flex-row items-center justify-between">
+                  <CardTitle>📒 الاستاذ العام - كشف الحساب</CardTitle>
+                  <div className="flex items-center gap-2">
+                    <Button variant="outline" onClick={printAccountStatement} disabled={!showGLStatement}><Printer className="ml-2 h-4 w-4" />طباعة</Button>
+                    <Button variant="outline" onClick={exportAccountToExcel} disabled={!showGLStatement}><Download className="ml-2 h-4 w-4" />تصدير Excel</Button>
+                  </div>
+                </CardHeader>
+                <CardContent>
+                  <div className="grid grid-cols-1 md:grid-cols-5 gap-4 mb-6 p-4 bg-gray-50 rounded-lg">
+                    <div>
+                      <Label>الحساب</Label>
+                      <Select value={selectedGLAccount} onValueChange={(v) => { setSelectedGLAccount(v); setShowGLStatement(true); addLogEntry('استعلام استاذ عام', `تم اختيار حساب: ${v}`) }}>
+                        <SelectTrigger className="mt-1"><SelectValue placeholder="اختر الحساب" /></SelectTrigger>
+                        <SelectContent>
+                          {mockAccounts.filter(a => a.level >= 2).map(acc => (
+                            <SelectItem key={acc.id} value={acc.code}>{acc.code} - {acc.name}</SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    </div>
+                    <div>
+                      <Label>من تاريخ</Label>
+                      <Input type="date" className="mt-1" value={glDateFrom} onChange={(e) => setGlDateFrom(e.target.value)} />
+                    </div>
+                    <div>
+                      <Label>إلى تاريخ</Label>
+                      <Input type="date" className="mt-1" value={glDateTo} onChange={(e) => setGlDateTo(e.target.value)} />
+                    </div>
+                    <div className="flex items-end">
+                      <Button 
+                        className="bg-gradient-to-r from-[#005f73] to-[#0a9396] w-full"
+                        onClick={() => setShowGLStatement(true)}
+                        disabled={!selectedGLAccount}
+                      >
+                        <Search className="ml-2 h-4 w-4" />
+                        عرض كشف الحساب
+                      </Button>
+                    </div>
+                  </div>
+
+                  {showGLStatement && selectedGLAccount && (() => {
+                    const statement = getAccountStatement(selectedGLAccount)
+                    if (!statement.account) return null
+                    
+                    let runningBalance = statement.openingBalance
+
+                    return (
+                      <div className="border rounded-lg overflow-hidden" id="account-statement-print">
+                        {/* Header */}
+                        <div className="bg-[#005f73] text-white p-4 text-center">
+                          <h2 className="text-xl font-bold">{companySettings.nameAr}</h2>
+                          <h3 className="text-lg">كشف حساب: {statement.account.name} ({statement.account.code})</h3>
+                          <p className="text-sm opacity-90">الفترة من: {glDateFrom || 'بداية الفترة'} إلى: {glDateTo || 'ت اليوم'}</p>
+                        </div>
+
+                        {/* Summary Cards */}
+                        <div className="grid grid-cols-4 gap-4 p-4 bg-gray-50 border-b">
+                          <div className="text-center">
+                            <p className="text-xs text-gray-500">رصيد افتتاحي</p>
+                            <p className="font-bold text-blue-600">{statement.openingBalance.toLocaleString()}</p>
+                          </div>
+                          <div className="text-center">
+                            <p className="text-xs text-gray-500">إجمالي مدين</p>
+                            <p className="font-bold text-red-600">{statement.totalDebit.toLocaleString()}</p>
+                          </div>
+                          <div className="text-center">
+                            <p className="text-xs text-gray-500">إجمالي دائن</p>
+                            <p className="font-bold text-green-600">{statement.totalCredit.toLocaleString()}</p>
+                          </div>
+                          <div className="text-center">
+                            <p className="text-xs text-gray-500">رصيد ختامي</p>
+                            <p className="font-bold text-purple-600">{statement.closingBalance.toLocaleString()}</p>
+                          </div>
+                        </div>
+
+                        {/* Table */}
+                        <div className="overflow-x-auto">
+                          <table className="w-full text-sm">
+                            <thead className="bg-gray-100">
+                              <tr>
+                                <th className="p-3 text-right">التاريخ</th>
+                                <th className="p-3 text-right">رقم القيد</th>
+                                <th className="p-3 text-right">البيان</th>
+                                <th className="p-3 text-left">مدين</th>
+                                <th className="p-3 text-left">دائن</th>
+                                <th className="p-3 text-left">الرصيد</th>
+                              </tr>
+                            </thead>
+                            <tbody>
+                              {/* Opening Balance Row */}
+                              <tr className="bg-blue-50 font-bold">
+                                <td colSpan={3} className="p-3 text-right">رصيد افتتاحي</td>
+                                <td className="p-3 text-left"></td>
+                                <td className="p-3 text-left"></td>
+                                <td className="p-3 text-left font-bold">{runningBalance.toLocaleString()}</td>
+                              </tr>
+                              
+                              {/* Entry Rows */}
+                              {statement.entries.length > 0 ? (
+                                statement.entries.map((entry: any) => {
+                                  const line = entry.lines.find((l: any) => l.accountCode === selectedGLAccount)
+                                  if (!line) return null
+                                  
+                                  if (['asset', 'expense'].includes(statement.account.type)) {
+                                    runningBalance += (line.debit - line.credit)
+                                  } else {
+                                    runningBalance += (line.credit - line.debit)
+                                  }
+
+                                  return (
+                                    <tr key={entry.id} className="border-b hover:bg-gray-50">
+                                      <td className="p-3">{entry.date}</td>
+                                      <td className="p-3 font-mono">{entry.entryNumber}</td>
+                                      <td className="p-3">{entry.description}</td>
+                                      <td className="p-3 text-left font-medium text-red-600">{line.debit ? line.debit.toLocaleString() : ''}</td>
+                                      <td className="p-3 text-left font-medium text-green-600">{line.credit ? line.credit.toLocaleString() : ''}</td>
+                                      <td className="p-3 text-left font-bold">{runningBalance.toLocaleString()}</td>
+                                    </tr>
+                                  )
+                                })
+                              ) : (
+                                <tr>
+                                  <td colSpan={6} className="p-8 text-center text-gray-500">
+                                    لا توجد قيود لهذا الحساب في الفترة المحددة
+                                  </td>
+                                </tr>
+                              )}
+
+                              {/* Total Row */}
+                              <tr className="bg-gray-100 font-bold">
+                                <td colSpan={3} className="p-3 text-right">الإجمالي / الرصيد الختامي</td>
+                                <td className="p-3 text-left text-red-600">{statement.totalDebit.toLocaleString()}</td>
+                                <td className="p-3 text-left text-green-600">{statement.totalCredit.toLocaleString()}</td>
+                                <td className="p-3 text-left text-purple-600">{statement.closingBalance.toLocaleString()}</td>
+                              </tr>
+                            </tbody>
+                          </table>
+                        </div>
+                      </div>
+                    )
+                  })()}
+                </CardContent>
+              </Card>
+            </div>
+          )}
+
           {/* ============ CHART OF ACCOUNTS MODULE ============ */}
           {activeModule === 'accounts' && (
             <div className="space-y-6">
@@ -3147,10 +3466,10 @@ function AccountingApp() {
                                   <td className="p-3 font-bold">{account.balance.toLocaleString()}</td>
                                   <td className="p-3">
                                     <div className="flex items-center gap-1">
-                                      <Button variant="ghost" size="icon" title="عرض التفاصيل"><Eye className="w-4 h-4 text-blue-600" /></Button>
-                                      <Button variant="ghost" size="icon" title="تعديل"><Edit2 className="w-4 h-4 text-purple-600" /></Button>
+                                      <Button variant="ghost" size="icon" title="عرض التفاصيل" onClick={() => viewAccountDetails(account)}><Eye className="w-4 h-4 text-blue-600" /></Button>
+                                      <Button variant="ghost" size="icon" title="تعديل" onClick={() => editAccount(account)}><Edit2 className="w-4 h-4 text-purple-600" /></Button>
                                       {account.level > 2 && (
-                                        <Button variant="ghost" size="icon" title="حذف"><Trash2 className="w-4 h-4 text-red-600" /></Button>
+                                        <Button variant="ghost" size="icon" title="حذف" onClick={() => deleteAccount(account.id, account.name)}><Trash2 className="w-4 h-4 text-red-600" /></Button>
                                       )}
                                     </div>
                                   </td>
@@ -3300,6 +3619,106 @@ function AccountingApp() {
                     >
                       <Save className="ml-2 h-4 w-4" />
                       حفظ الحساب
+                    </Button>
+                  </div>
+                </DialogContent>
+              </Dialog>
+
+              {/* ============ DIALOG: عرض تفاصيل الحساب ============ */}
+              <Dialog open={showAccountDialog} onOpenChange={setShowAccountDialog}>
+                <DialogContent className="max-w-lg">
+                  <DialogHeader>
+                    <DialogTitle className="flex items-center gap-2 text-[#005f73]">
+                      <Eye className="w-5 h-5" />
+                      تفاصيل الحساب
+                    </DialogTitle>
+                  </DialogHeader>
+                  {viewingAccount && (
+                    <div className="space-y-4 mt-4">
+                      <div className="grid grid-cols-2 gap-4">
+                        <div><Label>رقم الحساب</Label><Input className="mt-1 bg-gray-50" value={viewingAccount.code} readOnly /></div>
+                        <div><Label>اسم الحساب</Label><Input className="mt-1 bg-gray-50" value={viewingAccount.name} readOnly /></div>
+                        <div><Label>نوع الحساب</Label><Input className="mt-1 bg-gray-50" value={
+                          viewingAccount.type === 'asset' ? 'أصل' : 
+                          viewingAccount.type === 'liability' ? 'خصم' : 
+                          viewingAccount.type === 'equity' ? 'ملكية' : 
+                          viewingAccount.type === 'revenue' ? 'إيراد' : 'مصروف'
+                        } readOnly /></div>
+                        <div><Label>المستوى</Label><Input className="mt-1 bg-gray-50" value={viewingAccount.level} readOnly /></div>
+                        <div><Label>الحساب الأب</Label><Input className="mt-1 bg-gray-50" value={viewingAccount.parentId ? mockAccounts.find(a => a.id === viewingAccount.parentId)?.name || '-' : '-'} readOnly /></div>
+                        <div><Label>الرصيد</Label><Input className="mt-1 bg-gray-50 font-bold text-green-600" value={viewingAccount.balance.toLocaleString()} readOnly /></div>
+                      </div>
+                      <div className="flex justify-end">
+                        <Button variant="outline" onClick={() => setShowAccountDialog(false)}>إغلاق</Button>
+                      </div>
+                    </div>
+                  )}
+                </DialogContent>
+              </Dialog>
+
+              {/* ============ DIALOG: تعديل حساب ============ */}
+              <Dialog open={showEditAccountDialog} onOpenChange={setShowEditAccountDialog}>
+                <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+                  <DialogHeader>
+                    <DialogTitle className="flex items-center gap-2 text-[#005f73]">
+                      <Edit2 className="w-5 h-5" />
+                      تعديل الحساب
+                    </DialogTitle>
+                    <DialogDescription>قم بتعديل بيانات الحساب أدناه</DialogDescription>
+                  </DialogHeader>
+                  
+                  {editingAccount && (
+                    <div className="grid grid-cols-2 gap-4 mt-4">
+                      <div>
+                        <Label>رقم الحساب</Label>
+                        <Input className="mt-1 bg-gray-50" value={editingAccount.code} disabled />
+                      </div>
+                      <div>
+                        <Label>اسم الحساب</Label>
+                        <Input 
+                          className="mt-1" 
+                          value={editingAccount.name}
+                          onChange={(e) => setEditingAccount({...editingAccount, name: e.target.value})}
+                        />
+                      </div>
+                      <div>
+                        <Label>نوع الحساب</Label>
+                        <Select 
+                          value={editingAccount.type} 
+                          onValueChange={(v) => setEditingAccount({...editingAccount, type: v as any})}
+                        >
+                          <SelectTrigger className="mt-1"><SelectValue /></SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="asset">أصل</SelectItem>
+                            <SelectItem value="liability">خصم</SelectItem>
+                            <SelectItem value="equity">ملكية</SelectItem>
+                            <SelectItem value="revenue">إيراد</SelectItem>
+                            <SelectItem value="expense">مصروف</SelectItem>
+                          </SelectContent>
+                        </Select>
+                      </div>
+                      <div>
+                        <Label>الرصيد</Label>
+                        <Input 
+                          type="number"
+                          className="mt-1" 
+                          value={editingAccount.balance || ''}
+                          onChange={(e) => setEditingAccount({...editingAccount, balance: parseFloat(e.target.value) || 0})}
+                        />
+                      </div>
+                    </div>
+                  )}
+
+                  <div className="flex justify-end gap-3 mt-6">
+                    <Button variant="outline" onClick={() => setShowEditAccountDialog(false)}>
+                      إلغاء
+                    </Button>
+                    <Button 
+                      className="bg-gradient-to-r from-[#005f73] to-[#0a9396]"
+                      onClick={saveAccountEdit}
+                    >
+                      <Save className="ml-2 h-4 w-4" />
+                      حفظ التعديلات
                     </Button>
                   </div>
                 </DialogContent>
