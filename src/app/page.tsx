@@ -413,9 +413,26 @@ function AccountingApp() {
     syncDataToServer({ 
       activityLogs, 
       companySettings,
-      journalEntries 
+      journalEntries,
+      accounts: mockAccounts
     })
   }, [activityLogs, companySettings, journalEntries, syncDataToServer])
+
+  // ⭐ مهم: مزامنة فورية للقيود عند أي تغيير
+  useEffect(() => {
+    // تأخير المزامنة قليلاً لتجنب الطلبات المتكررة
+    const timeoutId = setTimeout(() => {
+      if (journalEntries.length > 0) {
+        console.log('🔄 جاري مزامنة القيود...', journalEntries.length, 'قيد')
+        syncDataToServer({ 
+          journalEntries,
+          accounts: mockAccounts
+        })
+      }
+    }, 500)
+    
+    return () => clearTimeout(timeoutId)
+  }, [journalEntries, syncDataToServer])
 
   // دالة حساب كشف الحساب من القيود المحاسبية
   const getAccountStatement = useCallback((accountCode: string) => {
@@ -577,14 +594,43 @@ function AccountingApp() {
         
         if (!mounted) return
         
+        console.log('📥 البيانات المحملة من الخادم:', {
+          journalEntries: data.journalEntries?.length || 0,
+          activityLogs: data.activityLogs?.length || 0,
+          hasCompanySettings: !!data.companySettings,
+          accounts: data.accounts?.length || 0
+        })
+        
+        // ⭐ تحميل القيود المحاسبية (الأهم!)
+        if (data.journalEntries && Array.isArray(data.journalEntries) && data.journalEntries.length > 0) {
+          setJournalEntries(data.journalEntries)
+          console.log(`✓ تم تحميل ${data.journalEntries.length} قيد محاسبي من الخادم`)
+        }
+        
+        // تحميل الحسابات المحدثة
+        if (data.accounts && Array.isArray(data.accounts) && data.accounts.length > 0) {
+          // دمج الحسابات مع الحسابات الموجودة
+          data.accounts.forEach((newAcc: any) => {
+            const existingIdx = mockAccounts.findIndex(a => a.id === newAcc.id)
+            if (existingIdx >= 0) {
+              mockAccounts[existingIdx] = newAcc
+            } else {
+              mockAccounts.push(newAcc)
+            }
+          })
+          console.log(`✓ تم تحديث ${data.accounts.length} حساب`)
+        }
+        
         // تحميل سجل العمليات المشترك
         if (data.activityLogs && data.activityLogs.length > 0) {
           setActivityLogs(data.activityLogs)
           console.log(`✓ تم تحميل ${data.activityLogs.length} عملية من الخادم`)
         }
+        
         // تحميل إعدادات الشركة إذا كانت محفوظة
         if (data.companySettings) {
           setCompanySettings(data.companySettings)
+          console.log('✓ تم تحميل إعدادات الشركة')
         }
       } catch (err) {
         console.error('خطأ في تحميل البيانات المشتركة:', err)

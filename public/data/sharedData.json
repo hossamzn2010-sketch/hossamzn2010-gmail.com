@@ -2830,6 +2830,29 @@
       "status": "posted"
     },
     {
+      "id": "je-150",
+      "entryNumber": 150,
+      "date": "2026-07-16",
+      "description": "ف مبيعات االرحيمى ؤقم 3",
+      "lines": [
+        {
+          "accountCode": "1211",
+          "accountName": "عميل 1 معرض الرحيمى",
+          "debit": 2400,
+          "credit": 0
+        },
+        {
+          "accountCode": "4001",
+          "accountName": "إيرادات المبيعات",
+          "debit": 0,
+          "credit": 2400
+        }
+      ],
+      "totalDebit": 2400,
+      "totalCredit": 2400,
+      "status": "posted"
+    },
+    {
       "id": "je-124",
       "entryNumber": 124,
       "date": "2026-07-17",
@@ -3428,30 +3451,36 @@
       "status": "posted"
     },
     {
-      "id": "je-150",
-      "entryNumber": 150,
-      "date": "2026-07-16",
-      "description": "ف مبيعات االرحيمى ؤقم 3",
+      "id": "test-multi-1",
+      "entryNumber": 999,
+      "date": "2026-09-12",
+      "description": "قيد اختبار متعدد الأجهزة",
       "lines": [
         {
-          "accountCode": "1211",
-          "accountName": "عميل 1 معرض الرحيمى",
-          "debit": 2400,
+          "accountCode": "1111",
+          "accountName": "الصندوق",
+          "debit": 1000,
           "credit": 0
         },
         {
-          "accountCode": "4001",
-          "accountName": "إيرادات المبيعات",
+          "accountCode": "3001",
+          "accountName": "رأس المال",
           "debit": 0,
-          "credit": 2400
+          "credit": 1000
         }
       ],
-      "totalDebit": 2400,
-      "totalCredit": 2400,
+      "totalDebit": 1000,
+      "totalCredit": 1000,
       "status": "posted"
     }
   ],
   "activityLogs": [
+    {
+      "id": "log-test-2",
+      "time": "12/09/2026, 15:00:00",
+      "action": "اختبار متعدد الأجهزة",
+      "details": "تم إضافة قيد من جهاز آخر"
+    },
     {
       "id": "test-123",
       "time": "12/09/2026, 14:30:00",
@@ -3472,5 +3501,5 @@
     "currency": "egp",
     "language": "ar"
   },
-  "lastUpdated": "2026-09-12T13:01:27.755Z"
+  "lastUpdated": "2026-09-12T16:07:21.221Z"
 }

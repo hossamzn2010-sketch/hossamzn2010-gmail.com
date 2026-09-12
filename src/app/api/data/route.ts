@@ -11,14 +11,27 @@ function ensureDataFile() {
     fs.mkdirSync(dir, { recursive: true })
   }
   if (!fs.existsSync(DATA_FILE)) {
+    // تحميل البيانات الأولية من ملف القيود إذا كان موجوداً
+    let initialEntries: any[] = []
+    try {
+      const journalFile = path.join(process.cwd(), 'public', 'data', 'journalEntriesData.json')
+      if (fs.existsSync(journalFile)) {
+        const content = fs.readFileSync(journalFile, 'utf-8')
+        initialEntries = JSON.parse(content)
+      }
+    } catch (e) {
+      console.error('خطأ في تحميل القيود الأولية:', e)
+    }
+    
     fs.writeFileSync(DATA_FILE, JSON.stringify({
-      journalEntries: [],
+      journalEntries: initialEntries,
       activityLogs: [],
       companySettings: null,
+      accounts: null,
       lastUpdated: null,
-      version: '1.0'
+      version: '2.0'
     }, null, 2))
-    console.log('✓ تم إنشاء ملف البيانات المشتركة:', DATA_FILE)
+    console.log('✓ تم إنشاء ملف البيانات المشتركة مع', initialEntries.length, 'قيد')
   }
 }
 
@@ -34,8 +47,9 @@ function readData(): any {
       journalEntries: [],
       activityLogs: [],
       companySettings: null,
+      accounts: null,
       lastUpdated: null,
-      version: '1.0'
+      version: '2.0'
     }
   }
 }
@@ -46,7 +60,7 @@ function writeData(data: any): boolean {
     ensureDataFile()
     data.lastUpdated = new Date().toISOString()
     fs.writeFileSync(DATA_FILE, JSON.stringify(data, null, 2))
-    console.log('✓ تم حفظ البيانات في:', data.lastUpdated)
+    console.log('✓ تم حفظ البيانات في:', data.lastUpdated, '- عدد القيود:', data.journalEntries?.length || 0)
     return true
   } catch (error) {
     console.error('خطأ في كتابة البيانات:', error)
@@ -54,13 +68,33 @@ function writeData(data: any): boolean {
   }
 }
 
+// دمج القيود المحاسبية (إضافة جديدة أو تحديث موجودة)
+function mergeJournalEntries(existing: any[], newData: any[]): any[] {
+  const mergedMap = new Map<string, any>()
+  
+  // أضف القيود الموجودة
+  existing.forEach(entry => mergedMap.set(entry.id, entry))
+  
+  // دمج/تحديث بالقيود الجديدة
+  newData.forEach(entry => {
+    if (entry.id) {
+      mergedMap.set(entry.id, entry)
+    }
+  })
+  
+  // ترتيب حسب التاريخ ورقم القيد
+  return Array.from(mergedMap.values()).sort((a, b) => {
+    if (a.date !== b.date) return a.date.localeCompare(b.date)
+    return (a.entryNumber || 0) - (b.entryNumber || 0)
+  })
+}
+
 // GET: استرجاع البيانات المشتركة
 export async function GET(request: NextRequest) {
   try {
     const data = readData()
     
-    // تسجيل الطلب في السجل
-    console.log(`📥 طلب بيانات في ${new Date().toLocaleString('ar-EG')}`)
+    console.log(`📥 طلب بيانات في ${new Date().toLocaleString('ar-EG')} - القيود: ${data.journalEntries?.length || 0}`)
     
     return NextResponse.json(data)
   } catch (error) {
@@ -69,8 +103,9 @@ export async function GET(request: NextRequest) {
       journalEntries: [], 
       activityLogs: [], 
       companySettings: null,
+      accounts: null,
       lastUpdated: null,
-      version: '1.0',
+      version: '2.0',
       error: 'فشل في تحميل البيانات'
     })
   }
@@ -82,35 +117,58 @@ export async function POST(request: NextRequest) {
     const newData = await request.json()
     const currentData = readData()
 
-    // دمج البيانات الجديدة مع القديمة (لمنع فقدان البيانات)
-    
-    // دمج سجل العمليات - إضافة جديدة فقط وليس استبدال
-    if (newData.activityLogs && Array.isArray(newData.activityLogs)) {
-      const existingIds = new Set(currentData.activityLogs.map((l: any) => l.id))
-      const newLogs = newData.activityLogs.filter((l: any) => !existingIds.has(l.id))
-      currentData.activityLogs = [...newLogs, ...currentData.activityLogs].slice(0, 200)
+    console.log(`📤接收数据:`, {
+      hasJournalEntries: !!newData.journalEntries,
+      journalCount: newData.journalEntries?.length || 0,
+      hasActivityLogs: !!newData.activityLogs,
+      activityCount: newData.activityLogs?.length || 0,
+      hasCompanySettings: !!newData.companySettings,
+      hasAccounts: !!newData.accounts
+    })
+
+    // دمج القيود المحاسبية (ذكية - تحديث أو إضافة)
+    if (newData.journalEntries && Array.isArray(newData.journalEntries)) {
+      currentData.journalEntries = mergeJournalEntries(
+        currentData.journalEntries || [], 
+        newData.journalEntries
+      )
+      console.log(`✓ تم دمج ${newData.journalEntries.length} قيد - الإجمالي: ${currentData.journalEntries.length}`)
     }
 
-    // تحديث القيود المحاسبية
-    if (newData.journalEntries) {
-      currentData.journalEntries = newData.journalEntries
+    // دمج سجل العمليات - إضافة جديدة فقط
+    if (newData.activityLogs && Array.isArray(newData.activityLogs)) {
+      const existingIds = new Set((currentData.activityLogs || []).map((l: any) => l.id))
+      const newLogs = newData.activityLogs.filter((l: any) => !existingIds.has(l.id))
+      currentData.activityLogs = [...newLogs, ...(currentData.activityLogs || [])].slice(0, 200)
+      console.log(`✓ تم إضافة ${newLogs.length} عملية جديدة`)
     }
 
     // تحديث إعدادات الشركة
     if (newData.companySettings) {
       currentData.companySettings = newData.companySettings
+      console.log('✓ تم تحديث إعدادات الشركة')
+    }
+
+    // تحديث/دمج الحسابات
+    if (newData.accounts && Array.isArray(newData.accounts)) {
+      const existingMap = new Map((currentData.accounts || []).map((a: any) => [a.id, a]))
+      newData.accounts.forEach((acc: any) => {
+        existingMap.set(acc.id, acc)
+      })
+      currentData.accounts = Array.from(existingMap.values())
+      console.log(`✓ تم تحديث الحسابات - الإجمالي: ${currentData.accounts.length}`)
     }
 
     // حفظ البيانات المدمجة
     const success = writeData(currentData)
 
     if (success) {
-      console.log(`💾 تم حفظ ${newData.activityLogs?.length || 0} عملية جديدة`)
       return NextResponse.json({ 
         success: true, 
         message: 'تم حفظ البيانات بنجاح', 
         lastUpdated: currentData.lastUpdated,
-        totalLogs: currentData.activityLogs.length
+        totalJournalEntries: currentData.journalEntries?.length || 0,
+        totalActivityLogs: currentData.activityLogs?.length || 0
       })
     } else {
       throw new Error('فشل في كتابة الملف')
@@ -119,7 +177,7 @@ export async function POST(request: NextRequest) {
     console.error('Error in POST:', error)
     return NextResponse.json({ 
       success: false, 
-      message: 'خطأ في حفظ البيانات' 
+      message: 'خطأ في حفظ البيانات: ' + (error as Error).message
     }, { status: 500 })
   }
 }
@@ -131,8 +189,9 @@ export async function DELETE() {
       journalEntries: [],
       activityLogs: [],
       companySettings: null,
+      accounts: null,
       lastUpdated: new Date().toISOString(),
-      version: '1.0'
+      version: '2.0'
     }
     writeData(emptyData)
     return NextResponse.json({ success: true, message: 'تم مسح جميع البيانات' })
