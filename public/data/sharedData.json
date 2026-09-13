@@ -3449,45 +3449,9 @@
       "totalDebit": 29000,
       "totalCredit": 29000,
       "status": "posted"
-    },
-    {
-      "id": "test-multi-1",
-      "entryNumber": 999,
-      "date": "2026-09-12",
-      "description": "قيد اختبار متعدد الأجهزة",
-      "lines": [
-        {
-          "accountCode": "1111",
-          "accountName": "الصندوق",
-          "debit": 1000,
-          "credit": 0
-        },
-        {
-          "accountCode": "3001",
-          "accountName": "رأس المال",
-          "debit": 0,
-          "credit": 1000
-        }
-      ],
-      "totalDebit": 1000,
-      "totalCredit": 1000,
-      "status": "posted"
     }
   ],
-  "activityLogs": [
-    {
-      "id": "log-test-2",
-      "time": "12/09/2026, 15:00:00",
-      "action": "اختبار متعدد الأجهزة",
-      "details": "تم إضافة قيد من جهاز آخر"
-    },
-    {
-      "id": "test-123",
-      "time": "12/09/2026, 14:30:00",
-      "action": "اختبار",
-      "details": "هذا اختبار لحفظ البيانات"
-    }
-  ],
+  "activityLogs": [],
   "companySettings": {
     "nameAr": "بلانك وود للمطابخ",
     "nameEn": "Blank Wood Kitchens",
@@ -3501,5 +3465,5 @@
     "currency": "egp",
     "language": "ar"
   },
-  "lastUpdated": "2026-09-12T16:07:21.221Z"
+  "lastUpdated": "2026-09-14T12:51:18.525Z"
 }
