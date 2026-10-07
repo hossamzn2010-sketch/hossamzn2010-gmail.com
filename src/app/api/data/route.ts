@@ -1,71 +1,14 @@
 import { NextRequest, NextResponse } from 'next/server'
-import fs from 'fs'
-import path from 'path'
 
-const DATA_FILE = path.join(process.cwd(), 'public', 'data', 'sharedData.json')
-
-// التأكد من وجود الملف وإنشائه إذا لم يكن موجوداً
-function ensureDataFile() {
-  const dir = path.dirname(DATA_FILE)
-  if (!fs.existsSync(dir)) {
-    fs.mkdirSync(dir, { recursive: true })
-  }
-  if (!fs.existsSync(DATA_FILE)) {
-    // تحميل البيانات الأولية من ملف القيود إذا كان موجوداً
-    let initialEntries: any[] = []
-    try {
-      const journalFile = path.join(process.cwd(), 'public', 'data', 'journalEntriesData.json')
-      if (fs.existsSync(journalFile)) {
-        const content = fs.readFileSync(journalFile, 'utf-8')
-        initialEntries = JSON.parse(content)
-      }
-    } catch (e) {
-      console.error('خطأ في تحميل القيود الأولية:', e)
-    }
-    
-    fs.writeFileSync(DATA_FILE, JSON.stringify({
-      journalEntries: initialEntries,
-      activityLogs: [],
-      companySettings: null,
-      accounts: null,
-      lastUpdated: null,
-      version: '2.0'
-    }, null, 2))
-    console.log('✓ تم إنشاء ملف البيانات المشتركة مع', initialEntries.length, 'قيد')
-  }
-}
-
-// قراءة البيانات الحالية
-function readData(): any {
-  try {
-    ensureDataFile()
-    const content = fs.readFileSync(DATA_FILE, 'utf-8')
-    return JSON.parse(content)
-  } catch (error) {
-    console.error('خطأ في قراءة البيانات:', error)
-    return {
-      journalEntries: [],
-      activityLogs: [],
-      companySettings: null,
-      accounts: null,
-      lastUpdated: null,
-      version: '2.0'
-    }
-  }
-}
-
-// كتابة البيانات
-function writeData(data: any): boolean {
-  try {
-    ensureDataFile()
-    data.lastUpdated = new Date().toISOString()
-    fs.writeFileSync(DATA_FILE, JSON.stringify(data, null, 2))
-    console.log('✓ تم حفظ البيانات في:', data.lastUpdated, '- عدد القيود:', data.journalEntries?.length || 0)
-    return true
-  } catch (error) {
-    console.error('خطأ في كتابة البيانات:', error)
-    return false
-  }
+// تخزين البيانات في الذاكرة (لبيئة Serverless مثل Vercel)
+// ملاحظة: في الإنتاج، يُفضل استخدام قاعدة بيانات خارجية مثل Vercel Postgres أو Supabase
+let inMemoryData: any = {
+  journalEntries: [],
+  activityLogs: [],
+  companySettings: null,
+  accounts: null,
+  lastUpdated: null,
+  version: '3.0'
 }
 
 // دمج القيود المحاسبية (إضافة جديدة أو تحديث موجودة)
@@ -92,11 +35,9 @@ function mergeJournalEntries(existing: any[], newData: any[]): any[] {
 // GET: استرجاع البيانات المشتركة
 export async function GET(request: NextRequest) {
   try {
-    const data = readData()
+    console.log(`📥 طلب بيانات في ${new Date().toLocaleString('ar-EG')} - القيود: ${inMemoryData.journalEntries?.length || 0}`)
     
-    console.log(`📥 طلب بيانات في ${new Date().toLocaleString('ar-EG')} - القيود: ${data.journalEntries?.length || 0}`)
-    
-    return NextResponse.json(data)
+    return NextResponse.json(inMemoryData)
   } catch (error) {
     console.error('Error in GET:', error)
     return NextResponse.json({ 
@@ -105,7 +46,7 @@ export async function GET(request: NextRequest) {
       companySettings: null,
       accounts: null,
       lastUpdated: null,
-      version: '2.0',
+      version: '3.0',
       error: 'فشل في تحميل البيانات'
     })
   }
@@ -115,9 +56,8 @@ export async function GET(request: NextRequest) {
 export async function POST(request: NextRequest) {
   try {
     const newData = await request.json()
-    const currentData = readData()
 
-    console.log(`📤接收数据:`, {
+    console.log(`📤 استلام بيانات:`, {
       hasJournalEntries: !!newData.journalEntries,
       journalCount: newData.journalEntries?.length || 0,
       hasActivityLogs: !!newData.activityLogs,
@@ -128,51 +68,46 @@ export async function POST(request: NextRequest) {
 
     // دمج القيود المحاسبية (ذكية - تحديث أو إضافة)
     if (newData.journalEntries && Array.isArray(newData.journalEntries)) {
-      currentData.journalEntries = mergeJournalEntries(
-        currentData.journalEntries || [], 
+      inMemoryData.journalEntries = mergeJournalEntries(
+        inMemoryData.journalEntries || [], 
         newData.journalEntries
       )
-      console.log(`✓ تم دمج ${newData.journalEntries.length} قيد - الإجمالي: ${currentData.journalEntries.length}`)
+      console.log(`✓ تم دمج ${newData.journalEntries.length} قيد - الإجمالي: ${inMemoryData.journalEntries.length}`)
     }
 
     // دمج سجل العمليات - إضافة جديدة فقط
     if (newData.activityLogs && Array.isArray(newData.activityLogs)) {
-      const existingIds = new Set((currentData.activityLogs || []).map((l: any) => l.id))
+      const existingIds = new Set((inMemoryData.activityLogs || []).map((l: any) => l.id))
       const newLogs = newData.activityLogs.filter((l: any) => !existingIds.has(l.id))
-      currentData.activityLogs = [...newLogs, ...(currentData.activityLogs || [])].slice(0, 200)
+      inMemoryData.activityLogs = [...newLogs, ...(inMemoryData.activityLogs || [])].slice(0, 200)
       console.log(`✓ تم إضافة ${newLogs.length} عملية جديدة`)
     }
 
     // تحديث إعدادات الشركة
     if (newData.companySettings) {
-      currentData.companySettings = newData.companySettings
+      inMemoryData.companySettings = newData.companySettings
       console.log('✓ تم تحديث إعدادات الشركة')
     }
 
     // تحديث/دمج الحسابات
     if (newData.accounts && Array.isArray(newData.accounts)) {
-      const existingMap = new Map((currentData.accounts || []).map((a: any) => [a.id, a]))
+      const existingMap = new Map((inMemoryData.accounts || []).map((a: any) => [a.id, a]))
       newData.accounts.forEach((acc: any) => {
         existingMap.set(acc.id, acc)
       })
-      currentData.accounts = Array.from(existingMap.values())
-      console.log(`✓ تم تحديث الحسابات - الإجمالي: ${currentData.accounts.length}`)
+      inMemoryData.accounts = Array.from(existingMap.values())
+      console.log(`✓ تم تحديث الحسابات - الإجمالي: ${inMemoryData.accounts.length}`)
     }
 
-    // حفظ البيانات المدمجة
-    const success = writeData(currentData)
+    inMemoryData.lastUpdated = new Date().toISOString()
 
-    if (success) {
-      return NextResponse.json({ 
-        success: true, 
-        message: 'تم حفظ البيانات بنجاح', 
-        lastUpdated: currentData.lastUpdated,
-        totalJournalEntries: currentData.journalEntries?.length || 0,
-        totalActivityLogs: currentData.activityLogs?.length || 0
-      })
-    } else {
-      throw new Error('فشل في كتابة الملف')
-    }
+    return NextResponse.json({ 
+      success: true, 
+      message: 'تم حفظ البيانات بنجاح', 
+      lastUpdated: inMemoryData.lastUpdated,
+      totalJournalEntries: inMemoryData.journalEntries?.length || 0,
+      totalActivityLogs: inMemoryData.activityLogs?.length || 0
+    })
   } catch (error) {
     console.error('Error in POST:', error)
     return NextResponse.json({ 
@@ -185,15 +120,14 @@ export async function POST(request: NextRequest) {
 // DELETE: مسح جميع البيانات (للاختبار أو إعادة التعيين)
 export async function DELETE() {
   try {
-    const emptyData = {
+    inMemoryData = {
       journalEntries: [],
       activityLogs: [],
       companySettings: null,
       accounts: null,
       lastUpdated: new Date().toISOString(),
-      version: '2.0'
+      version: '3.0'
     }
-    writeData(emptyData)
     return NextResponse.json({ success: true, message: 'تم مسح جميع البيانات' })
   } catch (error) {
     return NextResponse.json({ success: false, message: 'خطأ في مسح البيانات' }, { status: 500 })
