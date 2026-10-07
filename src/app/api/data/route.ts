@@ -1,61 +1,33 @@
-import { NextRequest, NextResponse } from 'next/server'
-
-// تخزين البيانات في الذاكرة (لبيئة Serverless مثل Vercel)
-// ملاحظة: في الإنتاج، يُفضل استخدام قاعدة بيانات خارجية مثل Vercel Postgres أو Supabase
-let inMemoryData: any = {
-  journalEntries: [],
-  activityLogs: [],
-  companySettings: null,
-  accounts: null,
-  lastUpdated: null,
-  version: '3.0'
-}
-
-// دمج القيود المحاسبية (إضافة جديدة أو تحديث موجودة)
-function mergeJournalEntries(existing: any[], newData: any[]): any[] {
-  const mergedMap = new Map<string, any>()
-  
-  // أضف القيود الموجودة
-  existing.forEach(entry => mergedMap.set(entry.id, entry))
-  
-  // دمج/تحديث بالقيود الجديدة
-  newData.forEach(entry => {
-    if (entry.id) {
-      mergedMap.set(entry.id, entry)
-    }
-  })
-  
-  // ترتيب حسب التاريخ ورقم القيد
-  return Array.from(mergedMap.values()).sort((a, b) => {
-    if (a.date !== b.date) return a.date.localeCompare(b.date)
-    return (a.entryNumber || 0) - (b.entryNumber || 0)
-  })
-}
+import { NextRequest, NextResponse } from 'next/server';
+import { getData, updateData, resetData } from '@/lib/db';
 
 // GET: استرجاع البيانات المشتركة
 export async function GET(request: NextRequest) {
   try {
-    console.log(`📥 طلب بيانات في ${new Date().toLocaleString('ar-EG')} - القيود: ${inMemoryData.journalEntries?.length || 0}`)
+    const data = await getData();
     
-    return NextResponse.json(inMemoryData)
+    console.log(`📥 طلب بيانات - القيود: ${data.journalEntries?.length || 0}`);
+    
+    return NextResponse.json(data);
   } catch (error) {
-    console.error('Error in GET:', error)
+    console.error('Error in GET:', error);
     return NextResponse.json({ 
       journalEntries: [], 
       activityLogs: [], 
       companySettings: null,
-      accounts: null,
+      accounts: [],
+      users: [],
       lastUpdated: null,
-      version: '3.0',
+      version: '4.0',
       error: 'فشل في تحميل البيانات'
-    })
+    });
   }
 }
 
 // POST: حفظ/تحديث البيانات المشتركة
 export async function POST(request: NextRequest) {
   try {
-    const newData = await request.json()
+    const newData = await request.json();
 
     console.log(`📤 استلام بيانات:`, {
       hasJournalEntries: !!newData.journalEntries,
@@ -63,73 +35,37 @@ export async function POST(request: NextRequest) {
       hasActivityLogs: !!newData.activityLogs,
       activityCount: newData.activityLogs?.length || 0,
       hasCompanySettings: !!newData.companySettings,
-      hasAccounts: !!newData.accounts
-    })
+      hasAccounts: !!newData.accounts,
+      hasUsers: !!newData.users
+    });
 
-    // دمج القيود المحاسبية (ذكية - تحديث أو إضافة)
-    if (newData.journalEntries && Array.isArray(newData.journalEntries)) {
-      inMemoryData.journalEntries = mergeJournalEntries(
-        inMemoryData.journalEntries || [], 
-        newData.journalEntries
-      )
-      console.log(`✓ تم دمج ${newData.journalEntries.length} قيد - الإجمالي: ${inMemoryData.journalEntries.length}`)
-    }
+    const result = await updateData(newData);
 
-    // دمج سجل العمليات - إضافة جديدة فقط
-    if (newData.activityLogs && Array.isArray(newData.activityLogs)) {
-      const existingIds = new Set((inMemoryData.activityLogs || []).map((l: any) => l.id))
-      const newLogs = newData.activityLogs.filter((l: any) => !existingIds.has(l.id))
-      inMemoryData.activityLogs = [...newLogs, ...(inMemoryData.activityLogs || [])].slice(0, 200)
-      console.log(`✓ تم إضافة ${newLogs.length} عملية جديدة`)
-    }
-
-    // تحديث إعدادات الشركة
-    if (newData.companySettings) {
-      inMemoryData.companySettings = newData.companySettings
-      console.log('✓ تم تحديث إعدادات الشركة')
-    }
-
-    // تحديث/دمج الحسابات
-    if (newData.accounts && Array.isArray(newData.accounts)) {
-      const existingMap = new Map((inMemoryData.accounts || []).map((a: any) => [a.id, a]))
-      newData.accounts.forEach((acc: any) => {
-        existingMap.set(acc.id, acc)
-      })
-      inMemoryData.accounts = Array.from(existingMap.values())
-      console.log(`✓ تم تحديث الحسابات - الإجمالي: ${inMemoryData.accounts.length}`)
-    }
-
-    inMemoryData.lastUpdated = new Date().toISOString()
-
-    return NextResponse.json({ 
-      success: true, 
-      message: 'تم حفظ البيانات بنجاح', 
-      lastUpdated: inMemoryData.lastUpdated,
-      totalJournalEntries: inMemoryData.journalEntries?.length || 0,
-      totalActivityLogs: inMemoryData.activityLogs?.length || 0
-    })
+    return NextResponse.json({
+      success: result.success,
+      message: result.message,
+      lastUpdated: result.data?.lastUpdated,
+      totalJournalEntries: result.data?.journalEntries?.length || 0,
+      totalActivityLogs: result.data?.activityLogs?.length || 0
+    }, { status: result.success ? 200 : 500 });
   } catch (error) {
-    console.error('Error in POST:', error)
+    console.error('Error in POST:', error);
     return NextResponse.json({ 
       success: false, 
       message: 'خطأ في حفظ البيانات: ' + (error as Error).message
-    }, { status: 500 })
+    }, { status: 500 });
   }
 }
 
-// DELETE: مسح جميع البيانات (للاختبار أو إعادة التعيين)
+// DELETE: مسح جميع البيانات
 export async function DELETE() {
   try {
-    inMemoryData = {
-      journalEntries: [],
-      activityLogs: [],
-      companySettings: null,
-      accounts: null,
-      lastUpdated: new Date().toISOString(),
-      version: '3.0'
-    }
-    return NextResponse.json({ success: true, message: 'تم مسح جميع البيانات' })
+    const result = await resetData();
+    return NextResponse.json(result, { status: result.success ? 200 : 500 });
   } catch (error) {
-    return NextResponse.json({ success: false, message: 'خطأ في مسح البيانات' }, { status: 500 })
+    return NextResponse.json({ 
+      success: false, 
+      message: 'خطأ في مسح البيانات' 
+    }, { status: 500 });
   }
 }
