@@ -3998,216 +3998,6 @@ function AccountingApp() {
                   </div>
                 </DialogContent>
               </Dialog>
-
-              {/* ============ DIALOG إضافة مستخدم جديد ============ */}
-              <Dialog open={showAddUserDialog} onOpenChange={setShowAddUserDialog}>
-                <DialogContent className="max-w-md" dir="rtl">
-                  <DialogHeader>
-                    <DialogTitle className="flex items-center gap-2 text-xl">
-                      <UserCircle className="w-6 h-6 text-[#005f73]" />
-                      إضافة مستخدم جديد
-                    </DialogTitle>
-                    <DialogDescription>أدخل بيانات المستخدم الجديد</DialogDescription>
-                  </DialogHeader>
-                  
-                  <div className="space-y-4 mt-4">
-                    <div>
-                      <Label>اسم المستخدم *</Label>
-                      <Input 
-                        className="mt-1" 
-                        placeholder="أدخل الاسم الكامل"
-                        value={newUserForm.name}
-                        onChange={(e) => setNewUserForm(prev => ({...prev, name: e.target.value}))}
-                      />
-                    </div>
-                    <div>
-                      <Label>البريد الإلكتروني *</Label>
-                      <Input 
-                        type="email"
-                        className="mt-1" 
-                        placeholder="example@email.com"
-                        value={newUserForm.email}
-                        onChange={(e) => setNewUserForm(prev => ({...prev, email: e.target.value}))}
-                      />
-                    </div>
-                    <div>
-                      <Label>دور المستخدم *</Label>
-                      <Select value={newUserForm.role} onValueChange={(value: any) => setNewUserForm(prev => ({...prev, role: value}))}>
-                        <SelectTrigger className="mt-1">
-                          <SelectValue placeholder="اختر الدور" />
-                        </SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="admin">مدير - صلاحيات كاملة</SelectItem>
-                          <SelectItem value="accountant">محاسب - إدارة محاسبية</SelectItem>
-                          <SelectItem value="sales">مندوب مبيعات - المبيعات فقط</SelectItem>
-                          <SelectItem value="viewer">مشاهد - قراءة فقط</SelectItem>
-                        </SelectContent>
-                      </Select>
-                    </div>
-                    <div>
-                      <Label>كلمة المرور *</Label>
-                      <Input 
-                        type="password"
-                        className="mt-1" 
-                        placeholder="أدخل كلمة المرور"
-                        value={newUserForm.password}
-                        onChange={(e) => setNewUserForm(prev => ({...prev, password: e.target.value}))}
-                      />
-                    </div>
-                    <div>
-                      <Label>تأكيد كلمة المرور *</Label>
-                      <Input 
-                        type="password"
-                        className="mt-1" 
-                        placeholder="أعد إدخال كلمة المرور"
-                        value={newUserForm.confirmPassword}
-                        onChange={(e) => setNewUserForm(prev => ({...prev, confirmPassword: e.target.value}))}
-                      />
-                    </div>
-                  </div>
-
-                  <div className="flex justify-end gap-3 mt-6">
-                    <Button variant="outline" onClick={() => setShowAddUserDialog(false)}>
-                      إلغاء
-                    </Button>
-                    <Button 
-                      className="bg-gradient-to-r from-[#005f73] to-[#0a9396]"
-                      onClick={addNewUser}
-                    >
-                      <Plus className="ml-2 h-4 w-4" />
-                      إضافة المستخدم
-                    </Button>
-                  </div>
-                </DialogContent>
-              </Dialog>
-
-              {/* ============ DIALOG تعديل مستخدم ============ */}
-              <Dialog open={showEditUserDialog} onOpenChange={setShowEditUserDialog}>
-                <DialogContent className="max-w-md" dir="rtl">
-                  <DialogHeader>
-                    <DialogTitle className="flex items-center gap-2 text-xl">
-                      <Edit2 className="w-6 h-6 text-blue-600" />
-                      تعديل بيانات المستخدم
-                    </DialogTitle>
-                    <DialogDescription>تعديل بيانات المستخدم: {editingUser?.name}</DialogDescription>
-                  </DialogHeader>
-                  
-                  {editingUser && (
-                    <div className="space-y-4 mt-4">
-                      <div>
-                        <Label>اسم المستخدم</Label>
-                        <Input 
-                          className="mt-1" 
-                          value={editingUser.name}
-                          onChange={(e) => setEditingUser({...editingUser, name: e.target.value})}
-                        />
-                      </div>
-                      <div>
-                        <Label>البريد الإلكتروني</Label>
-                        <Input 
-                          type="email"
-                          className="mt-1" 
-                          value={editingUser.email}
-                          onChange={(e) => setEditingUser({...editingUser, email: e.target.value})}
-                        />
-                      </div>
-                      <div>
-                        <Label>دور المستخدم</Label>
-                        <Select value={editingUser.role} onValueChange={(value: any) => setEditingUser({...editingUser, role: value})}>
-                          <SelectTrigger className="mt-1">
-                            <SelectValue />
-                          </SelectTrigger>
-                          <SelectContent>
-                            <SelectItem value="admin">مدير - صلاحيات كاملة</SelectItem>
-                            <SelectItem value="accountant">محاسب - إدارة محاسبية</SelectItem>
-                            <SelectItem value="sales">مندوب مبيعات - المبيعات فقط</SelectItem>
-                            <SelectItem value="viewer">مشاهد - قراءة فقط</SelectItem>
-                          </SelectContent>
-                        </Select>
-                      </div>
-                      <div>
-                        <Label>الحالة</Label>
-                        <Select value={editingUser.status} onValueChange={(value: any) => setEditingUser({...editingUser, status: value})}>
-                          <SelectTrigger className="mt-1">
-                            <SelectValue />
-                          </SelectTrigger>
-                          <SelectContent>
-                            <SelectItem value="active">نشط</SelectItem>
-                            <SelectItem value="inactive">معطل</SelectItem>
-                          </SelectContent>
-                        </Select>
-                      </div>
-                      <div>
-                        <Label>كلمة المرور الجديدة (اترك فارغاً للإبقاء)</Label>
-                        <Input 
-                          type="password"
-                          className="mt-1" 
-                          placeholder="كلمة مرور جديدة (اختياري)"
-                          onChange={(e) => setEditingUser({...editingUser, password: e.target.value || editingUser.password})}
-                        />
-                      </div>
-                    </div>
-                  )}
-
-                  <div className="flex justify-end gap-3 mt-6">
-                    <Button variant="outline" onClick={() => setShowEditUserDialog(false)}>
-                      إلغاء
-                    </Button>
-                    <Button 
-                      className="bg-gradient-to-r from-[#005f73] to-[#0a9396]"
-                      onClick={saveUserEdit}
-                    >
-                      <Save className="ml-2 h-4 w-4" />
-                      حفظ التعديلات
-                    </Button>
-                  </div>
-                </DialogContent>
-              </Dialog>
-
-              {/* ============ DIALOG استعادة نسخة احتياطية ============ */}
-              <Dialog open={showRestoreDialog} onOpenChange={setShowRestoreDialog}>
-                <DialogContent className="max-w-md" dir="rtl">
-                  <DialogHeader>
-                    <DialogTitle className="flex items-center gap-2 text-xl text-orange-600">
-                      <AlertTriangle className="w-6 h-6" />
-                      تأكيد استعادة النسخة الاحتياطية
-                    </DialogTitle>
-                    <DialogDescription>هذا الإجراء سيستبدل جميع البيانات الحالية</DialogDescription>
-                  </DialogHeader>
-                  
-                  {selectedBackup && (
-                    <div className="space-y-4 mt-4">
-                      <div className="bg-orange-50 border border-orange-200 rounded-lg p-4">
-                        <p className="font-medium text-orange-800">⚠️ تحذير مهم:</p>
-                        <ul className="text-sm text-orange-700 mt-2 list-disc list-inside space-y-1">
-                          <li>سيتم حذف جميع البيانات الحالية</li>
-                          <li>سيتم استبدالها ببيانات النسخة الاحتياطية</li>
-                          <li>هذا الإجراء لا يمكن التراجع عنه</li>
-                        </ul>
-                      </div>
-                      
-                      <div className="bg-gray-50 rounded-lg p-4 space-y-2">
-                        <p><strong>اسم الملف:</strong> {selectedBackup.fileName}</p>
-                        <p><strong>تاريخ الإنشاء:</strong> {selectedBackup.date}</p>
-                        <p><strong>الحجم:</strong> {selectedBackup.size}</p>
-                      </div>
-                    </div>
-                  )}
-
-                  <div className="flex justify-end gap-3 mt-6">
-                    <Button variant="outline" onClick={() => setShowRestoreDialog(false)}>
-                      إلغاء
-                    </Button>
-                    <Button 
-                      className="bg-gradient-to-r from-orange-600 to-red-600 hover:from-orange-700 hover:to-red-700"
-                      onClick={restoreBackup}
-                    >
-                      <Upload className="ml-2 h-4 w-4" />
-                      تأكيد الاستعادة
-                    </Button>
-                  </div>
-                </DialogContent>
-              </Dialog>
             </div>
           )}
 
@@ -5682,6 +5472,218 @@ function AccountingApp() {
           )}
         </div>
       </main>
+
+      {/* ============ DIALOGS الإعدادات (المستخدمين والنسخ الاحتياطية) ============ */}
+      
+      {/* DIALOG إضافة مستخدم جديد */}
+      <Dialog open={showAddUserDialog} onOpenChange={setShowAddUserDialog}>
+        <DialogContent className="max-w-md" dir="rtl">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2 text-xl">
+              <UserCircle className="w-6 h-6 text-[#005f73]" />
+              إضافة مستخدم جديد
+            </DialogTitle>
+            <DialogDescription>أدخل بيانات المستخدم الجديد</DialogDescription>
+          </DialogHeader>
+          
+          <div className="space-y-4 mt-4">
+            <div>
+              <Label>اسم المستخدم *</Label>
+              <Input 
+                className="mt-1" 
+                placeholder="أدخل الاسم الكامل"
+                value={newUserForm.name}
+                onChange={(e) => setNewUserForm(prev => ({...prev, name: e.target.value}))}
+              />
+            </div>
+            <div>
+              <Label>البريد الإلكتروني *</Label>
+              <Input 
+                type="email"
+                className="mt-1" 
+                placeholder="example@email.com"
+                value={newUserForm.email}
+                onChange={(e) => setNewUserForm(prev => ({...prev, email: e.target.value}))}
+              />
+            </div>
+            <div>
+              <Label>دور المستخدم *</Label>
+              <Select value={newUserForm.role} onValueChange={(value: any) => setNewUserForm(prev => ({...prev, role: value}))}>
+                <SelectTrigger className="mt-1">
+                  <SelectValue placeholder="اختر الدور" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="admin">مدير - صلاحيات كاملة</SelectItem>
+                  <SelectItem value="accountant">محاسب - إدارة محاسبية</SelectItem>
+                  <SelectItem value="sales">مندوب مبيعات - المبيعات فقط</SelectItem>
+                  <SelectItem value="viewer">مشاهد - قراءة فقط</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            <div>
+              <Label>كلمة المرور *</Label>
+              <Input 
+                type="password"
+                className="mt-1" 
+                placeholder="أدخل كلمة المرور"
+                value={newUserForm.password}
+                onChange={(e) => setNewUserForm(prev => ({...prev, password: e.target.value}))}
+              />
+            </div>
+            <div>
+              <Label>تأكيد كلمة المرور *</Label>
+              <Input 
+                type="password"
+                className="mt-1" 
+                placeholder="أعد إدخال كلمة المرور"
+                value={newUserForm.confirmPassword}
+                onChange={(e) => setNewUserForm(prev => ({...prev, confirmPassword: e.target.value}))}
+              />
+            </div>
+          </div>
+
+          <div className="flex justify-end gap-3 mt-6">
+            <Button variant="outline" onClick={() => setShowAddUserDialog(false)}>
+              إلغاء
+            </Button>
+            <Button 
+              className="bg-gradient-to-r from-[#005f73] to-[#0a9396]"
+              onClick={addNewUser}
+            >
+              <Plus className="ml-2 h-4 w-4" />
+              إضافة المستخدم
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* DIALOG تعديل مستخدم */}
+      <Dialog open={showEditUserDialog} onOpenChange={setShowEditUserDialog}>
+        <DialogContent className="max-w-md" dir="rtl">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2 text-xl">
+              <Edit2 className="w-6 h-6 text-blue-600" />
+              تعديل بيانات المستخدم
+            </DialogTitle>
+            <DialogDescription>تعديل بيانات المستخدم: {editingUser?.name}</DialogDescription>
+          </DialogHeader>
+          
+          {editingUser && (
+            <div className="space-y-4 mt-4">
+              <div>
+                <Label>اسم المستخدم</Label>
+                <Input 
+                  className="mt-1" 
+                  value={editingUser.name}
+                  onChange={(e) => setEditingUser({...editingUser, name: e.target.value})}
+                />
+              </div>
+              <div>
+                <Label>البريد الإلكتروني</Label>
+                <Input 
+                  type="email"
+                  className="mt-1" 
+                  value={editingUser.email}
+                  onChange={(e) => setEditingUser({...editingUser, email: e.target.value})}
+                />
+              </div>
+              <div>
+                <Label>دور المستخدم</Label>
+                <Select value={editingUser.role} onValueChange={(value: any) => setEditingUser({...editingUser, role: value})}>
+                  <SelectTrigger className="mt-1">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="admin">مدير - صلاحيات كاملة</SelectItem>
+                    <SelectItem value="accountant">محاسب - إدارة محاسبية</SelectItem>
+                    <SelectItem value="sales">مندوب مبيعات - المبيعات فقط</SelectItem>
+                    <SelectItem value="viewer">مشاهد - قراءة فقط</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+              <div>
+                <Label>الحالة</Label>
+                <Select value={editingUser.status} onValueChange={(value: any) => setEditingUser({...editingUser, status: value})}>
+                  <SelectTrigger className="mt-1">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="active">نشط</SelectItem>
+                    <SelectItem value="inactive">معطل</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+              <div>
+                <Label>كلمة المرور الجديدة (اترك فارغاً للإبقاء)</Label>
+                <Input 
+                  type="password"
+                  className="mt-1" 
+                  placeholder="كلمة مرور جديدة (اختياري)"
+                  onChange={(e) => setEditingUser({...editingUser, password: e.target.value || editingUser.password})}
+                />
+              </div>
+            </div>
+          )}
+
+          <div className="flex justify-end gap-3 mt-6">
+            <Button variant="outline" onClick={() => setShowEditUserDialog(false)}>
+              إلغاء
+            </Button>
+            <Button 
+              className="bg-gradient-to-r from-[#005f73] to-[#0a9396]"
+              onClick={saveUserEdit}
+            >
+              <Save className="ml-2 h-4 w-4" />
+              حفظ التعديلات
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* DIALOG استعادة نسخة احتياطية */}
+      <Dialog open={showRestoreDialog} onOpenChange={setShowRestoreDialog}>
+        <DialogContent className="max-w-md" dir="rtl">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2 text-xl text-orange-600">
+              <AlertTriangle className="w-6 h-6" />
+              تأكيد استعادة النسخة الاحتياطية
+            </DialogTitle>
+            <DialogDescription>هذا الإجراء سيستبدل جميع البيانات الحالية</DialogDescription>
+          </DialogHeader>
+          
+          {selectedBackup && (
+            <div className="space-y-4 mt-4">
+              <div className="bg-orange-50 border border-orange-200 rounded-lg p-4">
+                <p className="font-medium text-orange-800">⚠️ تحذير مهم:</p>
+                <ul className="text-sm text-orange-700 mt-2 list-disc list-inside space-y-1">
+                  <li>سيتم حذف جميع البيانات الحالية</li>
+                  <li>سيتم استبدالها ببيانات النسخة الاحتياطية</li>
+                  <li>هذا الإجراء لا يمكن التراجع عنه</li>
+                </ul>
+              </div>
+              
+              <div className="bg-gray-50 rounded-lg p-4 space-y-2">
+                <p><strong>اسم الملف:</strong> {selectedBackup.fileName}</p>
+                <p><strong>تاريخ الإنشاء:</strong> {selectedBackup.date}</p>
+                <p><strong>الحجم:</strong> {selectedBackup.size}</p>
+              </div>
+            </div>
+          )}
+
+          <div className="flex justify-end gap-3 mt-6">
+            <Button variant="outline" onClick={() => setShowRestoreDialog(false)}>
+              إلغاء
+            </Button>
+            <Button 
+              className="bg-gradient-to-r from-orange-600 to-red-600 hover:from-orange-700 hover:to-red-700"
+              onClick={restoreBackup}
+            >
+              <Upload className="ml-2 h-4 w-4" />
+              تأكيد الاستعادة
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
 
       {/* ============ INVOICE DIALOG (MATCHING SCREENSHOT DESIGN) ============ */}
       <Dialog open={showInvoiceDialog} onOpenChange={setShowInvoiceDialog}>
