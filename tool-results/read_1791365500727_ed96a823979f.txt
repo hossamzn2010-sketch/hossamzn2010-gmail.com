@@ -1,0 +1,602 @@
+  4950→                  <TabsTrigger value="general">عام</TabsTrigger>
+  4951→                  <TabsTrigger value="company">الشركة</TabsTrigger>
+  4952→                  <TabsTrigger value="invoice">الفواتير</TabsTrigger>
+  4953→                  <TabsTrigger value="users">المستخدمون</TabsTrigger>
+  4954→                  <TabsTrigger value="backup">النسخ الاحتياطي</TabsTrigger>
+  4955→                </TabsList>
+  4956→
+  4957→                <TabsContent value="general">
+  4958→                  <Card>
+  4959→                    <CardHeader><CardTitle>الإعدادات العامة</CardTitle></CardHeader>
+  4960→                    <CardContent className="space-y-4">
+  4961→                      <div className="grid grid-cols-2 gap-4">
+  4962→                        <div><Label>اللغة</Label><Select value={companySettings.language} onValueChange={(v) => setCompanySettings(prev => ({...prev, language: v}))}><SelectTrigger className="mt-1"><SelectValue /></SelectTrigger><SelectContent><SelectItem value="ar">العربية</SelectItem><SelectItem value="en">English</SelectItem></SelectContent></Select></div>
+  4963→                        <div><Label>العملة</Label><Select value={companySettings.currency} onValueChange={(v) => setCompanySettings(prev => ({...prev, currency: v}))}><SelectTrigger className="mt-1"><SelectValue /></SelectTrigger><SelectContent><SelectItem value="egp">جنيه مصري (ج.م)</SelectItem><SelectItem value="sar">ريال سعودي</SelectItem><SelectItem value="aed">درهم إماراتي</SelectItem><SelectItem value="usd">دولار أمريكي</SelectItem></SelectContent></Select></div>
+  4964→                        <div><Label>السنة المالية</Label><Input type="number" className="mt-1" value={companySettings.fiscalYear} onChange={(e) => setCompanySettings(prev => ({...prev, fiscalYear: e.target.value}))} /></div>
+  4965→                        <div><Label>بداية السنة</Label><Input type="month" className="mt-1" value={companySettings.fiscalYearStart} onChange={(e) => setCompanySettings(prev => ({...prev, fiscalYearStart: e.target.value}))} /></div>
+  4966→                      </div>
+  4967→                      <Button 
+  4968→                        className="bg-gradient-to-r from-[#005f73] to-[#0a9396]"
+  4969→                        onClick={() => {
+  4970→                          localStorage.setItem('companySettings', JSON.stringify(companySettings))
+  4971→                          syncDataToServer({ companySettings })
+  4972→                          setSettingsSaved(true)
+  4973→                          setTimeout(() => setSettingsSaved(false), 3000)
+  4974→                          addLogEntry('حفظ الإعدادات', 'تم حفظ الإعدادات العامة')
+  4975→                        }}
+  4976→                      >
+  4977→                        <Save className="ml-2 h-4 w-4" />حفظ الإعدادات
+  4978→                      </Button>
+  4979→                      {settingsSaved && <Badge className="bg-green-500 text-white mr-3">✓ تم الحفظ بنجاح</Badge>}
+  4980→                    </CardContent>
+  4981→                  </Card>
+  4982→                </TabsContent>
+  4983→
+  4984→                <TabsContent value="company">
+  4985→                  <Card>
+  4986→                    <CardHeader><CardTitle>بيانات الشركة</CardTitle></CardHeader>
+  4987→                    <CardContent className="space-y-4">
+  4988→                      <div className="grid grid-cols-2 gap-4">
+  4989→                        <div><Label>اسم الشركة</Label><Input className="mt-1" value={companySettings.nameAr} onChange={(e) => setCompanySettings(prev => ({...prev, nameAr: e.target.value}))} /></div>
+  4990→                        <div><Label>الاسم بالإنجليزية</Label><Input className="mt-1" value={companySettings.nameEn} dir="ltr" onChange={(e) => setCompanySettings(prev => ({...prev, nameEn: e.target.value}))} /></div>
+  4991→                        <div><Label>السجل التجاري</Label><Input className="mt-1" value={companySettings.commercialRegister} onChange={(e) => setCompanySettings(prev => ({...prev, commercialRegister: e.target.value}))} /></div>
+  4992→                        <div><Label>الضريبة</Label><Input className="mt-1" value={companySettings.taxNumber} onChange={(e) => setCompanySettings(prev => ({...prev, taxNumber: e.target.value}))} /></div>
+  4993→                        <div className="col-span-2"><Label>العنوان</Label><Textarea className="mt-1" value={companySettings.address} onChange={(e) => setCompanySettings(prev => ({...prev, address: e.target.value}))} /></div>
+  4994→                        <div><Label>الهاتف</Label><Input className="mt-1" value={companySettings.phone} onChange={(e) => setCompanySettings(prev => ({...prev, phone: e.target.value}))} /></div>
+  4995→                        <div><Label>البريد الإلكتروني</Label><Input className="mt-1" value={companySettings.email} dir="ltr" onChange={(e) => setCompanySettings(prev => ({...prev, email: e.target.value}))} /></div>
+  4996→                      </div>
+  4997→                      <Button 
+  4998→                        className="bg-gradient-to-r from-[#005f73] to-[#0a9396]"
+  4999→                        onClick={() => {
+  5000→                          localStorage.setItem('companySettings', JSON.stringify(companySettings))
+  5001→                          syncDataToServer({ companySettings })
+  5002→                          setSettingsSaved(true)
+  5003→                          setTimeout(() => setSettingsSaved(false), 3000)
+  5004→                          addLogEntry('حفظ بيانات الشركة', `تم تحديث بيانات: ${companySettings.nameAr}`)
+  5005→                        }}
+  5006→                      >
+  5007→                        <Save className="ml-2 h-4 w-4" />حفظ البيانات
+  5008→                      </Button>
+  5009→                      {settingsSaved && <Badge className="bg-green-500 text-white mr-3">✓ تم الحفظ بنجاح</Badge>}
+  5010→                    </CardContent>
+  5011→                  </Card>
+  5012→                </TabsContent>
+  5013→
+  5014→                <TabsContent value="invoice">
+  5015→                  <Card>
+  5016→                    <CardHeader><CardTitle>إعدادات الفواتير</CardTitle></CardHeader>
+  5017→                    <CardContent className="space-y-4">
+  5018→                      <div className="grid grid-cols-2 gap-4">
+  5019→                        <div><Label>بداية ترقيم الفواتير</Label><Input className="mt-1" defaultValue="1" /></div>
+  5020→                        <div><Label>بادئة الفواتير</Label><Input className="mt-1" defaultValue="INV-" /></div>
+  5021→                        <div><Label>شروط الدفع (بالأيام)</Label><Input type="number" className="mt-1" defaultValue="30" /></div>
+  5022→                        <div><Label>الضريبة المضافة %</Label><Input type="number" className="mt-1" defaultValue="15" /></div>
+  5023→                      </div>
+  5024→                      <div><Label>ملاحظات الفاتورة الافتراضية</Label><Textarea className="mt-1" defaultValue="شكراً لتعاملكم معنا" /></div>
+  5025→                      <Button className="bg-gradient-to-r from-[#005f73] to-[#0a9396]"><Save className="ml-2 h-4 w-4" />حفظ الإعدادات</Button>
+  5026→                    </CardContent>
+  5027→                  </Card>
+  5028→                </TabsContent>
+  5029→
+  5030→                <TabsContent value="users">
+  5031→                  <Card>
+  5032→                    <CardHeader className="flex flex-row items-center justify-between">
+  5033→                      <CardTitle>المستخدمون والصلاحيات</CardTitle>
+  5034→                      <Button className="bg-gradient-to-r from-[#005f73] to-[#0a9396]"><Plus className="ml-2 h-4 w-4" />مستخدم جديد</Button>
+  5035→                    </CardHeader>
+  5036→                    <CardContent>
+  5037→                      <div className="overflow-x-auto">
+  5038→                        <table className="w-full text-sm">
+  5039→                          <thead>
+  5040→                            <tr className="border-b bg-gray-50">
+  5041→                              <th className="text-right p-3 font-medium">المستخدم</th>
+  5042→                              <th className="text-right p-3 font-medium">الدور</th>
+  5043→                              <th className="text-right p-3 font-medium">الحالة</th>
+  5044→                              <th className="text-right p-3 font-medium">آخر دخول</th>
+  5045→                              <th className="text-right p-3 font-medium">الإجراءات</th>
+  5046→                            </tr>
+  5047→                          </thead>
+  5048→                          <tbody>
+  5049→                            {[
+  5050→                              { name: 'مدير النظام', role: 'مدير', status: 'نشط', lastLogin: 'الآن' },
+  5051→                              { name: 'أحمد محمد', role: 'محاسب', status: 'نشط', lastLogin: 'منذ ساعة' },
+  5052→                              { name: 'سارة علي', role: 'مندوب مبيعات', status: 'نشط', lastLogin: 'منذ 3 ساعات' }
+  5053→                            ].map((user, idx) => (
+  5054→                              <tr key={idx} className="border-b hover:bg-gray-50">
+  5055→                                <td className="p-3 font-medium">{user.name}</td>
+  5056→                                <td className="p-3"><Badge className="bg-blue-100 text-blue-800">{user.role}</Badge></td>
+  5057→                                <td className="p-3"><Badge className="bg-green-100 text-green-800">{user.status}</Badge></td>
+  5058→                                <td className="p-3 text-gray-500">{user.lastLogin}</td>
+  5059→                                <td className="p-3">
+  5060→                                  <div className="flex items-center gap-1">
+  5061→                                    <Button variant="ghost" size="icon" title="تعديل"><Edit2 className="w-4 h-4" /></Button>
+  5062→                                    <Button variant="ghost" size="icon" title="صلاحيات"><Shield className="w-4 h-4" /></Button>
+  5063→                                    <Button variant="ghost" size="icon" title="حذف"><Trash2 className="w-4 h-4 text-red-600" /></Button>
+  5064→                                  </div>
+  5065→                                </td>
+  5066→                              </tr>
+  5067→                            ))}
+  5068→                          </tbody>
+  5069→                        </table>
+  5070→                      </div>
+  5071→                    </CardContent>
+  5072→                  </Card>
+  5073→                </TabsContent>
+  5074→
+  5075→                <TabsContent value="backup">
+  5076→                  <Card>
+  5077→                    <CardHeader><CardTitle>النسخ الاحتياطي والاستعادة</CardHeader></CardHeader>
+  5078→                    <CardContent className="space-y-4">
+  5079→                      <div className="grid grid-cols-2 gap-4">
+  5080→                        <Card className="border-dashed"><CardContent className="pt-6 text-center"><Database className="w-12 h-12 mx-auto text-gray-400 mb-3" /><p className="font-medium">إنشاء نسخة احتياطية</p><p className="text-sm text-gray-500 mt-1">حفظ نسخة كاملة من البيانات</p><Button className="mt-3 bg-gradient-to-r from-[#005f73] to-[#0a9396]"><Upload className="ml-2 h-4 w-4" />نسخ احتياطي الآن</Button></CardContent></Card>
+  5081→                        <Card className="border-dashed"><CardContent className="pt-6 text-center"><Database className="w-12 h-12 mx-auto text-gray-400 mb-3" /><p className="font-medium">استعادة نسخة احتياطية</p><p className="text-sm text-gray-500 mt-1">استرجاع البيانات من نسخة سابقة</p><Button className="mt-3" variant="outline"><Download className="ml-2 h-4 w-4" />استعادة</Button></CardContent></Card>
+  5082→                      </div>
+  5083→                      <Separator />
+  5084→                      <div>
+  5085→                        <h4 className="font-medium mb-3">النسخ الاحتياطية السابقة</h4>
+  5086→                        <div className="space-y-2">
+  5087→                          {['backup_2024_01_19.zip', 'backup_2024_01_12.zip', 'backup_2024_01_05.zip'].map((backup, idx) => (
+  5088→                            <div key={idx} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
+  5089→                              <div className="flex items-center gap-3"><Archive className="w-5 h-5 text-gray-400" /><span>{backup}</span></div>
+  5090→                              <div className="flex items-center gap-2"><span className="text-sm text-gray-500">{(2.5 - idx * 0.5).toFixed(1)} MB</span><Button variant="ghost" size="sm" title="تحميل"><Download className="w-4 h-4" /></Button><Button variant="ghost" size="sm" title="استعادة"><Upload className="w-4 h-4" /></Button><Button variant="ghost" size="sm" title="حذف"><Trash2 className="w-4 h-4 text-red-600" /></Button></div>
+  5091→                            </div>
+  5092→                          ))}
+  5093→                        </div>
+  5094→                      </div>
+  5095→                    </CardContent>
+  5096→                  </Card>
+  5097→                </TabsContent>
+  5098→              </Tabs>
+  5099→            </div>
+  5100→          )}
+  5101→        </div>
+  5102→      </main>
+  5103→
+  5104→      {/* ============ INVOICE DIALOG (MATCHING SCREENSHOT DESIGN) ============ */}
+  5105→      <Dialog open={showInvoiceDialog} onOpenChange={setShowInvoiceDialog}>
+  5106→        <DialogContent className="max-w-[98%] w-[98%] h-[96vh] max-h-[96vh] overflow-y-auto p-8" dir="rtl" style={{ width: '98vw', maxWidth: '98vw' }}>
+  5107→          <DialogHeader className="flex flex-row items-center justify-between pb-6 border-b-2">
+  5108→            <div>
+  5109→              <DialogTitle className="text-4xl font-bold text-[#005f73]">
+  5110→                {editingInvoice ? '✏️ تعديل فاتورة مبيعات' : '📄 إشعار فاتورة مبيعات جديد'}
+  5111→              </DialogTitle>
+  5112→            </div>
+  5113→            <Button 
+  5114→              type="button"
+  5115→              variant="outline" 
+  5116→              size="lg"
+  5117→              onClick={() => setShowInvoiceDialog(false)}
+  5118→              className="h-14 w-14 text-2xl rounded-xl"
+  5119→            >
+  5120→              ✕
+  5121→            </Button>
+  5122→          </DialogHeader>
+  5123→          
+  5124→          <div className="space-y-8 mt-6">
+  5125→            {/* Top Row: Date | Customer | Tax */}
+  5126→            <div className="grid grid-cols-4 gap-8">
+  5127→              <div>
+  5128→                <Label className="text-2xl font-bold text-gray-800">📅 التاريخ</Label>
+  5129→                <Input 
+  5130→                  type="date" 
+  5131→                  className="mt-3 border-3 border-gray-300 focus:border-[#0a9396] focus:ring-4 focus:ring-[#0a9396]/20 text-2xl p-5 h-18 rounded-2xl"
+  5132→                  value={invoiceForm.date}
+  5133→                  onChange={(e) => setInvoiceForm(prev => ({ ...prev, date: e.target.value }))}
+  5134→                />
+  5135→              </div>
+  5136→              <div>
+  5137→                <Label className="text-2xl font-bold text-gray-800">👤 اختر العميل</Label>
+  5138→                <div className="flex gap-3 mt-3">
+  5139→                  <Select value={invoiceForm.customerId} onValueChange={(value) => setInvoiceForm(prev => ({ ...prev, customerId: value }))}>
+  5140→                    <SelectTrigger className="flex-1 border-3 border-gray-300 focus:border-[#0a9396] focus:ring-4 focus:ring-[#0a9396]/20 h-18 text-2xl rounded-2xl">
+  5141→                      <SelectValue placeholder="اختر العميل" />
+  5142→                    </SelectTrigger>
+  5143→                    <SelectContent>
+  5144→                      {parties.filter(p => p.type === 'customer' || p.type === 'both').map(party => (
+  5145→                        <SelectItem key={party.id} value={party.id}>{party.nameAr}</SelectItem>
+  5146→                      ))}
+  5147→                    </SelectContent>
+  5148→                  </Select>
+  5149→                  <Button 
+  5150→                    type="button"
+  5151→                    variant="outline" 
+  5152→                    size="icon"
+  5153→                    onClick={() => setShowAddCustomerDialog(true)}
+  5154→                    title="إضافة عميل جديد"
+  5155→                    className="border-dashed border-3 border-emerald-400 text-emerald-700 hover:bg-emerald-100 h-18 w-18 rounded-2xl"
+  5156→                  >
+  5157→                    <Plus className="w-7 h-7" />
+  5158→                  </Button>
+  5159→                </div>
+  5160→              </div>
+  5161→              <div>
+  5162→                <Label className="text-2xl font-bold text-gray-800">🧾 الضريبة (%)</Label>
+  5163→                <Select 
+  5164→                  value={invoiceForm.taxRate.toString()} 
+  5165→                  onValueChange={(value) => setInvoiceForm(prev => ({ ...prev, taxRate: parseInt(value) }))}
+  5166→                >
+  5167→                  <SelectTrigger className="mt-3 border-3 border-gray-300 focus:border-[#0a9396] focus:ring-4 focus:ring-[#0a9396]/20 h-18 text-2xl rounded-2xl">
+  5168→                    <SelectValue />
+  5169→                  </SelectTrigger>
+  5170→                  <SelectContent>
+  5171→                    <SelectItem value="0">معفى</SelectItem>
+  5172→                    <SelectItem value="5">5%</SelectItem>
+  5173→                    <SelectItem value="10">10%</SelectItem>
+  5174→                    <SelectItem value="15">15%</SelectItem>
+  5175→                  </SelectContent>
+  5176→                </Select>
+  5177→              </div>
+  5178→              <div>
+  5179→                <Label className="text-2xl font-bold text-gray-800">💳 طريقة السداد</Label>
+  5180→                <Select 
+  5181→                  value={invoiceForm.paymentMethod} 
+  5182→                  onValueChange={(value: any) => setInvoiceForm(prev => ({ ...prev, paymentMethod: value }))}
+  5183→                >
+  5184→                  <SelectTrigger className="mt-3 border-3 border-gray-300 focus:border-[#0a9396] focus:ring-4 focus:ring-[#0a9396]/20 h-18 text-2xl rounded-2xl">
+  5185→                    <SelectValue />
+  5186→                  </SelectTrigger>
+  5187→                  <SelectContent>
+  5188→                    <SelectItem value="cash">💵 نقدى</SelectItem>
+  5189→                    <SelectItem value="bank">🏦 بنك</SelectItem>
+  5190→                    <SelectItem value="check">📝 شيك</SelectItem>
+  5191→                    <SelectItem value="partial">⏳ جزئي</SelectItem>
+  5192→                  </SelectContent>
+  5193→                </Select>
+  5194→              </div>
+  5195→            </div>
+  5196→
+  5197→            {/* Items Section with Summary Side by Side */}
+  5198→            <div className="grid grid-cols-3 gap-10">
+  5199→              {/* Items Table - Takes 2/3 width */}
+  5200→              <div className="col-span-2">
+  5201→                <div className="border-[3px] border-gray-400 rounded-3xl overflow-hidden shadow-lg">
+  5202→                  {/* Table Header */}
+  5203→                  <div className="grid grid-cols-[3fr_1.5fr_1.5fr_1.5fr_auto] bg-gradient-to-l from-[#005f73] to-[#0a9396] p-6">
+  5204→                    <div className="text-white font-bold text-2xl">الصنف</div>
+  5205→                    <div className="text-white font-bold text-2xl text-center">الكمية</div>
+  5206→                    <div className="text-white font-bold text-2xl text-center">السعر</div>
+  5207→                    <div className="text-white font-bold text-2xl text-center">الإجمالي</div>
+  5208→                    <div className="w-14"></div>
+  5209→                  </div>
+  5210→                  
+  5211→                  {/* Items List or Empty State */}
+  5212→                  {invoiceForm.items.length === 0 ? (
+  5213→                    <div className="p-10 text-center bg-gray-50">
+  5214→                      <Package className="w-16 h-16 mx-auto mb-4 text-gray-300" />
+  5215→                      <p className="text-gray-600 text-2xl font-bold mb-8">لم يتم إضافة أصناف بعد</p>
+  5216→                      <div className="space-y-6 max-w-2xl mx-auto">
+  5217→                        <div className="grid grid-cols-4 gap-5 px-4 py-6">
+  5218→                          <Input placeholder="اسم الصنف" className="border-3 border-gray-300 h-20 text-xl rounded-2xl" disabled />
+  5219→                          <Input type="number" placeholder="1" className="border-3 border-gray-300 h-20 text-2xl text-center font-bold rounded-2xl" disabled />
+  5220→                          <Input type="number" placeholder="0.00" className="border-3 border-gray-300 h-20 text-2xl text-center font-bold rounded-2xl" disabled />
+  5221→                          <Input type="number" placeholder="0.00" className="border-3 border-gray-300 h-20 text-2xl text-center font-bold rounded-2xl" disabled />
+  5222→                        </div>
+  5223→                      </div>
+  5224→                    </div>
+  5225→                  ) : (
+  5226→                    <div className="divide-y divide-gray-200 max-h-[500px] overflow-y-auto">
+  5227→                      {invoiceForm.items.map((item, idx) => {
+  5228→                        const lineTotal = item.quantity * item.price
+  5229→                        return (
+  5230→                          <div key={idx} className="grid grid-cols-[3fr_1.5fr_1.5fr_1.5fr_auto] gap-6 p-6 hover:bg-blue-50 items-center transition-colors">
+  5231→                            <div className="flex gap-4">
+  5232→                              <Select value={item.itemId} onValueChange={(value) => {
+  5233→                                updateInvoiceItem(idx, 'itemId', value)
+  5234→                                const selected = items.find(i => i.id === value)
+  5235→                                if (selected) {
+  5236→                                  updateInvoiceItem(idx, 'price', selected.price)
+  5237→                                }
+  5238→                              }}>
+  5239→                                <SelectTrigger className="w-full border-3 border-gray-300 text-xl h-20 rounded-2xl focus:ring-4 focus:ring-[#0a9396]/20">
+  5240→                                  <SelectValue placeholder="اسم الصنف" />
+  5241→                                </SelectTrigger>
+  5242→                                <SelectContent>
+  5243→                                  {items.map(itemOption => (
+  5244→                                    <SelectItem key={itemOption.id} value={itemOption.id}>
+  5245→                                      {itemOption.nameAr}
+  5246→                                    </SelectItem>
+  5247→                                  ))}
+  5248→                                </SelectContent>
+  5249→                              </Select>
+  5250→                              <Button 
+  5251→                                type="button"
+  5252→                                variant="outline" 
+  5253→                                size="icon"
+  5254→                                onClick={() => { setItemEditIndex(idx); setShowAddItemDialog(true); }}
+  5255→                                title="إضافة صنف جديد"
+  5256→                                className="h-20 w-20 border-dashed border-3 border-emerald-400 text-emerald-700 hover:bg-emerald-100 flex-shrink-0 rounded-2xl"
+  5257→                              >
+  5258→                                <Plus className="w-7 h-7" />
+  5259→                              </Button>
+  5260→                            </div>
+  5261→                            <div>
+  5262→                              <Input 
+  5263→                                type="number" 
+  5264→                                min="1"
+  5265→                                className="border-3 border-gray-400 text-2xl h-20 text-center font-bold p-6 rounded-2xl focus:border-[#0a9396] focus:ring-4 focus:ring-[#0a9396]/30 bg-white"
+  5266→                                value={item.quantity || ''}
+  5267→                                onChange={(e) => updateInvoiceItem(idx, 'quantity', parseInt(e.target.value) || 0)}
+  5268→                                placeholder="1"
+  5269→                              />
+  5270→                            </div>
+  5271→                            <div>
+  5272→                              <Input 
+  5273→                                type="number"
+  5274→                                min="0"
+  5275→                                step="0.01"
+  5276→                                className="border-3 border-gray-400 text-2xl h-20 text-center font-bold p-6 rounded-2xl focus:border-[#0a9396] focus:ring-4 focus:ring-[#0a9396]/30 bg-white"
+  5277→                                value={item.price || ''}
+  5278→                                onChange={(e) => updateInvoiceItem(idx, 'price', parseFloat(e.target.value) || 0)}
+  5279→                                placeholder="0.00"
+  5280→                              />
+  5281→                            </div>
+  5282→                            <div className="flex items-center justify-between bg-gray-100 rounded-2xl px-5 py-4">
+  5283→                              <span className="font-bold text-2xl text-[#005f73]">{lineTotal.toLocaleString()}</span>
+  5284→                              <Button 
+  5285→                                type="button"
+  5286→                                variant="ghost" 
+  5287→                                size="icon"
+  5288→                                className="h-14 w-14 text-red-500 hover:text-red-700 hover:bg-red-100"
+  5289→                                onClick={() => removeInvoiceItem(idx)}
+  5290→                              >
+  5291→                                <Trash2 className="w-7 h-7" />
+  5292→                              </Button>
+  5293→                            </div>
+  5294→                          </div>
+  5295→                        )
+  5296→                      })}
+  5297→                    </div>
+  5298→                  )}
+  5299→                  
+  5300→                  {/* Add Item Button */}
+  5301→                  <div className="p-6 border-t-[3px] bg-gradient-to-r from-gray-100 to-emerald-100">
+  5302→                    <Button 
+  5303→                      type="button" 
+  5304→                      variant="ghost" 
+  5305→                      className="text-emerald-700 hover:text-emerald-800 hover:bg-emerald-200 w-full justify-start py-6 text-2xl font-bold"
+  5306→                      onClick={addInvoiceItem}
+  5307→                    >
+  5308→                      <Plus className="ml-3 h-8 w-8" />
+  5309→                      ➕ إضافة صنف جديد
+  5310→                    </Button>
+  5311→                  </div>
+  5312→                </div>
+  5313→              </div>
+  5314→
+  5315→              {/* Summary Section - Takes 1/3 width */}
+  5316→              <div className="bg-gradient-to-br from-blue-50 to-cyan-50 rounded-3xl p-8 space-y-6 h-fit border-[3px] border-gray-300 shadow-lg">
+  5317→                <h3 className="font-bold text-3xl text-gray-800 border-b-[3px] border-gray-300 pb-5 mb-5 flex items-center gap-3">
+  5318→                  📊 ملخص الفاتورة
+  5319→                </h3>
+  5320→                
+  5321→                <div className="space-y-6 text-xl">
+  5322→                  <div className="flex justify-between items-center p-4 bg-white rounded-2xl shadow-md">
+  5323→                    <span className="text-gray-800 font-bold text-xl">المجموع الفرعي:</span>
+  5324→                    <span className="font-bold text-2xl text-gray-900">{getInvoiceTotal().toLocaleString()} ج.م</span>
+  5325→                  </div>
+  5326→
+  5327→                  <div className="flex justify-between items-center p-4 bg-white rounded-2xl shadow-md">
+  5328→                    <span className="text-gray-800 font-bold text-xl">الخصم (%):</span>
+  5329→                    <div className="flex items-center gap-4">
+  5330→                      <Input 
+  5331→                        type="number"
+  5332→                        min="0"
+  5333→                        max="100"
+  5334→                        className="w-28 h-16 text-center border-3 border-gray-400 text-xl font-bold rounded-2xl focus:border-red-400 focus:ring-4 focus:ring-red-200"
+  5335→                        value={invoiceForm.discount || 0}
+  5336→                        onChange={(e) => setInvoiceForm(prev => ({ ...prev, discount: parseFloat(e.target.value) || 0 }))}
+  5337→                        placeholder="0"
+  5338→                      />
+  5339→                      <span className="font-bold text-red-600 text-xl">
+  5340→                        -{((getInvoiceTotal() * invoiceForm.discount) / 100).toLocaleString()} ج.م
+  5341→                      </span>
+  5342→                    </div>
+  5343→                  </div>
+  5344→                  
+  5345→                  <div className="flex justify-between items-center p-4 bg-white rounded-2xl shadow-md">
+  5346→                    <span className="text-gray-800 font-bold text-xl">الضريبة ({invoiceForm.taxRate}%):</span>
+  5347→                    <span className="font-bold text-purple-700 text-xl">
+  5348→                      +{(((getInvoiceTotal() * (100 - invoiceForm.discount)) / 100) * invoiceForm.taxRate / 100).toLocaleString()} ج.م
+  5349→                    </span>
+  5350→                  </div>
+  5351→                  
+  5352→                  <Separator className="my-4" />
+  5353→                  
+  5354→                  <div className="flex justify-between items-center p-6 bg-gradient-to-r from-[#005f73] to-[#0a9396] rounded-2xl text-white shadow-xl">
+  5355→                    <span className="font-bold text-2xl">الإجمالي الكلي:</span>
+  5356→                    <span className="font-bold text-4xl">
+  5357→                      {(
+  5358→                        ((getInvoiceTotal() * (100 - invoiceForm.discount)) / 100) + 
+  5359→                        (((getInvoiceTotal() * (100 - invoiceForm.discount)) / 100) * invoiceForm.taxRate / 100)
+  5360→                      ).toLocaleString()} ج.م
+  5361→                    </span>
+  5362→                  </div>
+  5363→
+  5364→                  <Separator className="my-4" />
+  5365→
+  5366→                  {/* Payment Section */}
+  5367→                  <div className="bg-yellow-100 rounded-2xl p-6 space-y-5 border-[3px] border-yellow-400 shadow-md">
+  5368→                    <h4 className="font-bold text-2xl text-yellow-900 flex items-center gap-3">
+  5369→                      💰 تفاصيل السداد
+  5370→                    </h4>
+  5371→                    
+  5372→                    <div className="flex justify-between items-center">
+  5373→                      <span className="text-gray-800 font-bold text-xl">المبلغ المدفوع:</span>
+  5374→                      <Input 
+  5375→                        type="number"
+  5376→                        min="0"
+  5377→                        step="0.01"
+  5378→                        className="w-40 h-16 text-left font-bold text-green-700 border-3 border-green-500 text-xl rounded-2xl focus:border-green-600 focus:ring-4 focus:ring-green-200"
+  5379→                        value={invoiceForm.paidAmount || ''}
+  5380→                        onChange={(e) => setInvoiceForm(prev => ({ ...prev, paidAmount: parseFloat(e.target.value) || 0 }))}
+  5381→                        placeholder="0.00"
+  5382→                      />
+  5383→                    </div>
+  5384→
+  5385→                    <div className="flex justify-between items-center p-4 bg-white rounded-2xl shadow-md">
+  5386→                      <span className="text-gray-800 font-bold text-xl">المتبقي:</span>
+  5387→                      <span className={`font-bold text-2xl ${
+  5388→                        Math.max(0, (
+  5389→                          ((getInvoiceTotal() * (100 - invoiceForm.discount)) / 100) + 
+  5390→                          (((getInvoiceTotal() * (100 - invoiceForm.discount)) / 100) * invoiceForm.taxRate / 100)
+  5391→                        ) - (invoiceForm.paidAmount || 0)) > 0 ? 'text-orange-600' : 'text-green-600'
+  5392→                      }`}>
+  5393→                        {Math.max(0, (
+  5394→                          ((getInvoiceTotal() * (100 - invoiceForm.discount)) / 100) + 
+  5395→                          (((getInvoiceTotal() * (100 - invoiceForm.discount)) / 100) * invoiceForm.taxRate / 100)
+  5396→                        ) - (invoiceForm.paidAmount || 0)).toLocaleString()} ج.م
+  5397→                      </span>
+  5398→                    </div>
+  5399→
+  5400→                    {invoiceForm.paidAmount > 0 && (
+  5401→                      <div className="flex items-center gap-3 p-4 bg-white rounded-2xl shadow-md">
+  5402→                        {(() => {
+  5403→                          const total = ((getInvoiceTotal() * (100 - invoiceForm.discount)) / 100) + 
+  5404→                                       (((getInvoiceTotal() * (100 - invoiceForm.discount)) / 100) * invoiceForm.taxRate / 100)
+  5405→                          const paid = invoiceForm.paidAmount || 0
+  5406→                          if (paid >= total) {
+  5407→                            return <Badge className="bg-green-200 text-green-900 text-lg py-3 px-4 text-xl">✅ مدفوع بالكامل</Badge>
+  5408→                          } else if (paid > 0) {
+  5409→                            return <Badge className="bg-orange-200 text-orange-900 text-lg py-3 px-4 text-xl">⏳ دفع جزئي</Badge>
+  5410→                          }
+  5411→                          return null
+  5412→                        })()}
+  5413→                      </div>
+  5414→                    )}
+  5415→                  </div>
+  5416→                </div>
+  5417→              </div>
+  5418→            </div>
+  5419→
+  5420→            {/* Notes Section */}
+  5421→            <div>
+  5422→              <Label className="text-2xl font-bold text-gray-800 block mb-4">📝 ملاحظات</Label>
+  5423→              <Textarea 
+  5424→                className="border-3 border-gray-400 focus:border-[#0a9396] focus:ring-4 focus:ring-[#0a9396]/20 min-h-[150px] text-xl p-6 rounded-2xl"
+  5425→                placeholder="أدخل ملاحظات إضافية على الفاتورة..."
+  5426→                value={invoiceForm.notes}
+  5427→                onChange={(e) => setInvoiceForm(prev => ({ ...prev, notes: e.target.value }))}
+  5428→              />
+  5429→            </div>
+  5430→
+  5431→            {/* Action Buttons */}
+  5432→            <div className="flex items-center justify-start gap-6 pt-8 border-t-[3px] border-gray-300 flex-wrap">
+  5433→              <Button 
+  5434→                type="button"
+  5435→                variant="outline" 
+  5436→                className="px-14 border-3 border-gray-400 text-gray-800 hover:bg-gray-100 text-2xl py-6 rounded-2xl h-auto"
+  5437→                onClick={() => {
+  5438→                  setShowInvoiceDialog(false)
+  5439→                  setInvoiceJustSaved(false)
+  5440→                  setCurrentInvoiceForPrint(null)
+  5441→                }}
+  5442→              >
+  5443→                ❌ إلغاء
+  5444→              </Button>
+  5445→              
+  5446→              {invoiceJustSaved || editingInvoice ? (
+  5447→                <Button 
+  5448→                  type="button"
+  5449→                  className="bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white px-14 text-2xl py-6 shadow-2xl rounded-2xl h-auto flex items-center gap-3"
+  5450→                  onClick={printInvoice}
+  5451→                >
+  5452→                  <Printer className="w-8 h-8" />
+  5453→                  🖨️ طباعة الفاتورة
+  5454→                </Button>
+  5455→              ) : (
+  5456→                <Button 
+  5457→                  type="button"
+  5458→                  className="bg-gradient-to-r from-emerald-500 to-emerald-600 hover:from-emerald-600 hover:to-emerald-700 text-white px-16 text-2xl py-6 shadow-2xl rounded-2xl h-auto"
+  5459→                  onClick={saveInvoice}
+  5460→                  disabled={!invoiceForm.customerId || invoiceForm.items.length === 0}
+  5461→                >
+  5462→                  💾 {editingInvoice ? 'تحديث الفاتورة' : 'إنشاء الفاتورة'}
+  5463→                </Button>
+  5464→              )}
+  5465→              
+  5466→              {invoiceJustSaved && (
+  5467→                <Button 
+  5468→                  type="button"
+  5469→                  className="bg-gradient-to-r from-green-500 to-green-600 hover:from-green-600 hover:to-green-700 text-white px-14 text-2xl py-6 shadow-2xl rounded-2xl h-auto"
+  5470→                  onClick={() => {
+  5471→                    setShowInvoiceDialog(false)
+  5472→                    setInvoiceJustSaved(false)
+  5473→                    setCurrentInvoiceForPrint(null)
+  5474→                    setEditingInvoice(null)
+  5475→                  }}
+  5476→                >
+  5477→                  ✅ فاتورة جديدة
+  5478→                </Button>
+  5479→              )}
+  5480→            </div>
+  5481→          </div>
+  5482→        </DialogContent>
+  5483→      </Dialog>
+  5484→
+  5485→      {/* ============ PURCHASE INVOICE DIALOG ============ */}
+  5486→      <Dialog open={showPurchaseDialog} onOpenChange={setShowPurchaseDialog}>
+  5487→        <DialogContent className="max-w-[98%] w-[98%] h-[96vh] max-h-[96vh] overflow-y-auto p-8" dir="rtl" style={{ width: '98vw', maxWidth: '98vw' }}>
+  5488→          <DialogHeader className="flex flex-row items-center justify-between pb-6 border-b-2">
+  5489→            <div>
+  5490→              <DialogTitle className="text-4xl font-bold text-red-700">
+  5491→                {editingPurchase ? '✏️ تعديل فاتورة مشتريات' : '📋 فاتورة مشتريات جديدة'}
+  5492→              </DialogTitle>
+  5493→            </div>
+  5494→            <Button 
+  5495→              type="button"
+  5496→              variant="outline" 
+  5497→              size="lg"
+  5498→              onClick={() => setShowPurchaseDialog(false)}
+  5499→              className="h-14 w-14 text-2xl rounded-xl"
+  5500→            >
+  5501→              ✕
+  5502→            </Button>
+  5503→          </DialogHeader>
+  5504→          
+  5505→          <div className="space-y-8 mt-6">
+  5506→            {/* Top Row: Date | Supplier | Tax | Payment Method */}
+  5507→            <div className="grid grid-cols-4 gap-8">
+  5508→              <div>
+  5509→                <Label className="text-2xl font-bold text-gray-800">📅 التاريخ</Label>
+  5510→                <Input 
+  5511→                  type="date" 
+  5512→                  className="mt-3 border-3 border-gray-300 focus:border-red-500 focus:ring-4 focus:ring-red-500/20 text-2xl p-5 h-18 rounded-2xl"
+  5513→                  value={purchaseForm.date}
+  5514→                  onChange={(e) => setPurchaseForm(prev => ({ ...prev, date: e.target.value }))}
+  5515→                />
+  5516→              </div>
+  5517→              <div>
+  5518→                <Label className="text-2xl font-bold text-gray-800">🏭 اختر المورد</Label>
+  5519→                <div className="flex gap-3 mt-3">
+  5520→                  <Select value={purchaseForm.supplierId} onValueChange={(value) => setPurchaseForm(prev => ({ ...prev, supplierId: value }))}>
+  5521→                    <SelectTrigger className="flex-1 border-3 border-gray-300 focus:border-red-500 focus:ring-4 focus:ring-red-500/20 h-18 text-2xl rounded-2xl">
+  5522→                      <SelectValue placeholder="اختر المورد" />
+  5523→                    </SelectTrigger>
+  5524→                    <SelectContent>
+  5525→                      {parties.filter(p => p.type === 'supplier' || p.type === 'both').map(party => (
+  5526→                        <SelectItem key={party.id} value={party.id}>{party.nameAr}</SelectItem>
+  5527→                      ))}
+  5528→                    </SelectContent>
+  5529→                  </Select>
+  5530→                  <Button 
+  5531→                    type="button"
+  5532→                    variant="outline" 
+  5533→                    size="icon"
+  5534→                    onClick={() => setShowAddSupplierDialog(true)}
+  5535→                    title="إضافة مورد جديد"
+  5536→                    className="border-dashed border-3 border-red-400 text-red-700 hover:bg-red-100 h-18 w-18 rounded-2xl"
+  5537→                  >
+  5538→                    <Plus className="w-7 h-7" />
+  5539→                  </Button>
+  5540→                </div>
+  5541→              </div>
+  5542→              <div>
+  5543→                <Label className="text-2xl font-bold text-gray-800">🧾 الضريبة (%)</Label>
+  5544→                <Select 
+  5545→                  value={purchaseForm.taxRate.toString()} 
+  5546→                  onValueChange={(value) => setPurchaseForm(prev => ({ ...prev, taxRate: parseInt(value) }))}
+  5547→                >
+  5548→                  <SelectTrigger className="mt-3 border-3 border-gray-300 focus:border-red-500 focus:ring-4 focus:ring-red-500/20 h-18 text-2xl rounded-2xl">
+  5549→                    <SelectValue />
+
+[showing lines 4950-5549 of 6445; use offset=5550 with limit to continue reading]

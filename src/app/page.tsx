@@ -363,6 +363,45 @@ function AccountingApp() {
   const [editingAccount, setEditingAccount] = useState<any>(null)
   const [showEditAccountDialog, setShowEditAccountDialog] = useState(false)
 
+  // حالات إدارة المستخدمين
+  interface User {
+    id: string
+    name: string
+    email: string
+    role: 'admin' | 'accountant' | 'sales' | 'viewer'
+    status: 'active' | 'inactive'
+    password: string
+    lastLogin: string
+    createdAt: string
+  }
+  const [users, setUsers] = useState<User[]>([
+    { id: 'user-001', name: 'مدير النظام', email: 'admin@blankwood.com', role: 'admin', status: 'active', password: 'admin123', lastLogin: 'الآن', createdAt: '2026-01-01' },
+    { id: 'user-002', name: 'أحمد محمد', email: 'ahmed@blankwood.com', role: 'accountant', status: 'active', password: 'ahmed123', lastLogin: 'منذ ساعة', createdAt: '2026-01-05' },
+    { id: 'user-003', name: 'سارة علي', email: 'sara@blankwood.com', role: 'sales', status: 'active', password: 'sara123', lastLogin: 'منذ 3 ساعات', createdAt: '2026-01-10' }
+  ])
+  const [showAddUserDialog, setShowAddUserDialog] = useState(false)
+  const [showEditUserDialog, setShowEditUserDialog] = useState(false)
+  const [editingUser, setEditingUser] = useState<User | null>(null)
+  const [newUserForm, setNewUserForm] = useState({
+    name: '',
+    email: '',
+    role: 'viewer' as User['role'],
+    password: '',
+    confirmPassword: ''
+  })
+
+  // حالات النسخ الاحتياطية
+  interface Backup {
+    id: string
+    fileName: string
+    date: string
+    size: string
+    data: any
+  }
+  const [backups, setBackups] = useState<Backup[]>([])
+  const [showRestoreDialog, setShowRestoreDialog] = useState(false)
+  const [selectedBackup, setSelectedBackup] = useState<Backup | null>(null)
+
   // سجل العمليات (يتم مشاركته بين جميع الأجهزة)
   const [activityLogs, setActivityLogs] = useState<{id: string; time: string; action: string; details: string}[]>([])
 
@@ -580,6 +619,196 @@ function AccountingApp() {
       addLogEntry('تعديل حساب', `تم تعديل حساب: ${editingAccount.name}`)
       setShowEditAccountDialog(false)
       alert('✓ تم تحديث الحساب بنجاح')
+    }
+  }
+
+  // ============ دوال إدارة المستخدمين ============
+  
+  // دالة إضافة مستخدم جديد
+  const addNewUser = () => {
+    // التحقق من البيانات
+    if (!newUserForm.name.trim()) {
+      alert('❌ الرجاء إدخال اسم المستخدم')
+      return
+    }
+    if (!newUserForm.email.trim()) {
+      alert('❌ الرجاء إدخال البريد الإلكتروني')
+      return
+    }
+    if (!newUserForm.password) {
+      alert('❌ الرجاء إدخال كلمة المرور')
+      return
+    }
+    if (newUserForm.password !== newUserForm.confirmPassword) {
+      alert('❌ كلمة المرور غير متطابقة')
+      return
+    }
+    // التحقق من عدم تكرار البريد
+    if (users.find(u => u.email === newUserForm.email)) {
+      alert('❌ هذا البريد الإلكتروني مسجل مسبقاً')
+      return
+    }
+
+    const newUser: User = {
+      id: `user-${Date.now()}`,
+      name: newUserForm.name,
+      email: newUserForm.email,
+      role: newUserForm.role,
+      status: 'active',
+      password: newUserForm.password,
+      lastLogin: 'لم يسجل دخوله بعد',
+      createdAt: new Date().toISOString().split('T')[0]
+    }
+
+    setUsers(prev => [...prev, newUser])
+    setNewUserForm({ name: '', email: '', role: 'viewer', password: '', confirmPassword: '' })
+    setShowAddUserDialog(false)
+    addLogEntry('إضافة مستخدم', `تم إضافة مستخدم جديد: ${newUser.name}`)
+    alert('✓ تم إضافة المستخدم بنجاح')
+  }
+
+  // دالة فتح نافذة تعديل مستخدم
+  const openEditUserDialog = (user: User) => {
+    setEditingUser({...user})
+    setShowEditUserDialog(true)
+  }
+
+  // دالة حفظ تعديلات المستخدم
+  const saveUserEdit = () => {
+    if (!editingUser) return
+    const index = users.findIndex(u => u.id === editingUser.id)
+    if (index > -1) {
+      const updatedUsers = [...users]
+      updatedUsers[index] = editingUser
+      setUsers(updatedUsers)
+      addLogEntry('تعديل مستخدم', `تم تعديل بيانات المستخدم: ${editingUser.name}`)
+      setShowEditUserDialog(false)
+      alert('✓ تم تحديث بيانات المستخدم بنجاح')
+    }
+  }
+
+  // دالة حذف مستخدم
+  const deleteUser = (userId: string, userName: string) => {
+    if (userId === 'user-001') {
+      alert('❌ لا يمكن حذف مدير النظام')
+      return
+    }
+    if (confirm(`هل أنت متأكد من حذف المستخدم "${userName}"؟`)) {
+      setUsers(prev => prev.filter(u => u.id !== userId))
+      addLogEntry('حذف مستخدم', `تم حذف المستخدم: ${userName}`)
+      alert('✓ تم حذف المستخدم بنجاح')
+    }
+  }
+
+  // دالة تبديل حالة المستخدم (تفعيل/تعطيل)
+  const toggleUserStatus = (userId: string) => {
+    setUsers(prev => prev.map(u => {
+      if (u.id === userId) {
+        return {...u, status: u.status === 'active' ? 'inactive' : 'active'}
+      }
+      return u
+    }))
+    addLogEntry('تغيير حالة مستخدم', `تم تغيير حالة المستخدم`)
+  }
+
+  // ============ دوال النسخ الاحتياطي ============
+
+  // دالة إنشاء نسخة احتياطية جديدة
+  const createBackup = () => {
+    const backupData = {
+      journalEntries,
+      accounts: mockAccounts,
+      companySettings,
+      activityLogs,
+      users,
+      backupDate: new Date().toISOString(),
+      version: '1.0'
+    }
+
+    const jsonString = JSON.stringify(backupData, null, 2)
+    const sizeInBytes = new Blob([jsonString]).size
+    const sizeInKB = (sizeInBytes / 1024).toFixed(1)
+
+    const newBackup: Backup = {
+      id: `backup-${Date.now()}`,
+      fileName: `backup_${new Date().toISOString().split('T')[0].replace(/-/g, '_')}.json`,
+      date: new Date().toLocaleString('ar-EG'),
+      size: `${sizeInKB} KB`,
+      data: backupData
+    }
+
+    setBackups(prev => [newBackup, ...prev])
+    
+    // حفظ النسخة في localStorage أيضاً
+    localStorage.setItem(`backup_${newBackup.id}`, jsonString)
+    
+    addLogEntry('نسخ احتياطي', `تم إنشاء نسخة احتياطية: ${newBackup.fileName}`)
+    alert(`✓ تم إنشاء النسخة الاحتياطية بنجاح\nالحجم: ${sizeInKB} KB`)
+  }
+
+  // دالة تحميل النسخة الاحتياطية
+  const downloadBackup = (backup: Backup) => {
+    const jsonString = JSON.stringify(backup.data, null, 2)
+    const blob = new Blob([jsonString], { type: 'application/json' })
+    const url = URL.createObjectURL(blob)
+    const link = document.createElement('a')
+    link.href = url
+    link.download = backup.fileName
+    document.body.appendChild(link)
+    link.click()
+    document.body.removeChild(link)
+    URL.revokeObjectURL(url)
+    addLogEntry('تحميل نسخة', `تم تحميل: ${backup.fileName}`)
+  }
+
+  // دالة فتح نافذة استعادة نسخة
+  const openRestoreDialog = (backup: Backup) => {
+    setSelectedBackup(backup)
+    setShowRestoreDialog(true)
+  }
+
+  // دالة استعادة النسخة الاحتياطية
+  const restoreBackup = () => {
+    if (!selectedBackup) return
+    
+    if (confirm('⚠️ تحذير: سيتم استبدال جميع البيانات الحالية بالبيانات من النسخة الاحتياطية. هل أنت متأكد؟')) {
+      const data = selectedBackup.data
+      
+      if (data.journalEntries) setJournalEntries(data.journalEntries)
+      if (data.companySettings) setCompanySettings(data.companySettings)
+      if (data.activityLogs) setActivityLogs(data.activityLogs)
+      if (data.users) setUsers(data.users)
+      
+      // استعادة الحسابات
+      if (data.accounts && Array.isArray(data.accounts)) {
+        data.accounts.forEach((newAcc: any) => {
+          const existingIdx = mockAccounts.findIndex(a => a.id === newAcc.id)
+          if (existingIdx >= 0) {
+            mockAccounts[existingIdx] = newAcc
+          } else {
+            mockAccounts.push(newAcc)
+          }
+        })
+      }
+      
+      // حفظ في localStorage
+      localStorage.setItem('journalEntries', JSON.stringify(data.journalEntries || []))
+      localStorage.setItem('companySettings', JSON.stringify(data.companySettings))
+      
+      setShowRestoreDialog(false)
+      setSelectedBackup(null)
+      addLogEntry('استعادة نسخة', `تم الاستعادة من: ${selectedBackup.fileName}`)
+      alert('✓ تم استعادة النسخة الاحتياطية بنجاح')
+    }
+  }
+
+  // دالة حذف نسخة احتياطية
+  const deleteBackup = (backupId: string, fileName: string) => {
+    if (confirm(`هل أنت متأكد من حذف النسخة "${fileName}"؟`)) {
+      setBackups(prev => prev.filter(b => b.id !== backupId))
+      localStorage.removeItem(`backup_${backupId}`)
+      addLogEntry('حذف نسخة', `تم حذف النسخة: ${fileName}`)
+      alert('✓ تم حذف النسخة الاحتياطية')
     }
   }
 
@@ -3769,6 +3998,216 @@ function AccountingApp() {
                   </div>
                 </DialogContent>
               </Dialog>
+
+              {/* ============ DIALOG إضافة مستخدم جديد ============ */}
+              <Dialog open={showAddUserDialog} onOpenChange={setShowAddUserDialog}>
+                <DialogContent className="max-w-md" dir="rtl">
+                  <DialogHeader>
+                    <DialogTitle className="flex items-center gap-2 text-xl">
+                      <UserCircle className="w-6 h-6 text-[#005f73]" />
+                      إضافة مستخدم جديد
+                    </DialogTitle>
+                    <DialogDescription>أدخل بيانات المستخدم الجديد</DialogDescription>
+                  </DialogHeader>
+                  
+                  <div className="space-y-4 mt-4">
+                    <div>
+                      <Label>اسم المستخدم *</Label>
+                      <Input 
+                        className="mt-1" 
+                        placeholder="أدخل الاسم الكامل"
+                        value={newUserForm.name}
+                        onChange={(e) => setNewUserForm(prev => ({...prev, name: e.target.value}))}
+                      />
+                    </div>
+                    <div>
+                      <Label>البريد الإلكتروني *</Label>
+                      <Input 
+                        type="email"
+                        className="mt-1" 
+                        placeholder="example@email.com"
+                        value={newUserForm.email}
+                        onChange={(e) => setNewUserForm(prev => ({...prev, email: e.target.value}))}
+                      />
+                    </div>
+                    <div>
+                      <Label>دور المستخدم *</Label>
+                      <Select value={newUserForm.role} onValueChange={(value: any) => setNewUserForm(prev => ({...prev, role: value}))}>
+                        <SelectTrigger className="mt-1">
+                          <SelectValue placeholder="اختر الدور" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="admin">مدير - صلاحيات كاملة</SelectItem>
+                          <SelectItem value="accountant">محاسب - إدارة محاسبية</SelectItem>
+                          <SelectItem value="sales">مندوب مبيعات - المبيعات فقط</SelectItem>
+                          <SelectItem value="viewer">مشاهد - قراءة فقط</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
+                    <div>
+                      <Label>كلمة المرور *</Label>
+                      <Input 
+                        type="password"
+                        className="mt-1" 
+                        placeholder="أدخل كلمة المرور"
+                        value={newUserForm.password}
+                        onChange={(e) => setNewUserForm(prev => ({...prev, password: e.target.value}))}
+                      />
+                    </div>
+                    <div>
+                      <Label>تأكيد كلمة المرور *</Label>
+                      <Input 
+                        type="password"
+                        className="mt-1" 
+                        placeholder="أعد إدخال كلمة المرور"
+                        value={newUserForm.confirmPassword}
+                        onChange={(e) => setNewUserForm(prev => ({...prev, confirmPassword: e.target.value}))}
+                      />
+                    </div>
+                  </div>
+
+                  <div className="flex justify-end gap-3 mt-6">
+                    <Button variant="outline" onClick={() => setShowAddUserDialog(false)}>
+                      إلغاء
+                    </Button>
+                    <Button 
+                      className="bg-gradient-to-r from-[#005f73] to-[#0a9396]"
+                      onClick={addNewUser}
+                    >
+                      <Plus className="ml-2 h-4 w-4" />
+                      إضافة المستخدم
+                    </Button>
+                  </div>
+                </DialogContent>
+              </Dialog>
+
+              {/* ============ DIALOG تعديل مستخدم ============ */}
+              <Dialog open={showEditUserDialog} onOpenChange={setShowEditUserDialog}>
+                <DialogContent className="max-w-md" dir="rtl">
+                  <DialogHeader>
+                    <DialogTitle className="flex items-center gap-2 text-xl">
+                      <Edit2 className="w-6 h-6 text-blue-600" />
+                      تعديل بيانات المستخدم
+                    </DialogTitle>
+                    <DialogDescription>تعديل بيانات المستخدم: {editingUser?.name}</DialogDescription>
+                  </DialogHeader>
+                  
+                  {editingUser && (
+                    <div className="space-y-4 mt-4">
+                      <div>
+                        <Label>اسم المستخدم</Label>
+                        <Input 
+                          className="mt-1" 
+                          value={editingUser.name}
+                          onChange={(e) => setEditingUser({...editingUser, name: e.target.value})}
+                        />
+                      </div>
+                      <div>
+                        <Label>البريد الإلكتروني</Label>
+                        <Input 
+                          type="email"
+                          className="mt-1" 
+                          value={editingUser.email}
+                          onChange={(e) => setEditingUser({...editingUser, email: e.target.value})}
+                        />
+                      </div>
+                      <div>
+                        <Label>دور المستخدم</Label>
+                        <Select value={editingUser.role} onValueChange={(value: any) => setEditingUser({...editingUser, role: value})}>
+                          <SelectTrigger className="mt-1">
+                            <SelectValue />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="admin">مدير - صلاحيات كاملة</SelectItem>
+                            <SelectItem value="accountant">محاسب - إدارة محاسبية</SelectItem>
+                            <SelectItem value="sales">مندوب مبيعات - المبيعات فقط</SelectItem>
+                            <SelectItem value="viewer">مشاهد - قراءة فقط</SelectItem>
+                          </SelectContent>
+                        </Select>
+                      </div>
+                      <div>
+                        <Label>الحالة</Label>
+                        <Select value={editingUser.status} onValueChange={(value: any) => setEditingUser({...editingUser, status: value})}>
+                          <SelectTrigger className="mt-1">
+                            <SelectValue />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="active">نشط</SelectItem>
+                            <SelectItem value="inactive">معطل</SelectItem>
+                          </SelectContent>
+                        </Select>
+                      </div>
+                      <div>
+                        <Label>كلمة المرور الجديدة (اترك فارغاً للإبقاء)</Label>
+                        <Input 
+                          type="password"
+                          className="mt-1" 
+                          placeholder="كلمة مرور جديدة (اختياري)"
+                          onChange={(e) => setEditingUser({...editingUser, password: e.target.value || editingUser.password})}
+                        />
+                      </div>
+                    </div>
+                  )}
+
+                  <div className="flex justify-end gap-3 mt-6">
+                    <Button variant="outline" onClick={() => setShowEditUserDialog(false)}>
+                      إلغاء
+                    </Button>
+                    <Button 
+                      className="bg-gradient-to-r from-[#005f73] to-[#0a9396]"
+                      onClick={saveUserEdit}
+                    >
+                      <Save className="ml-2 h-4 w-4" />
+                      حفظ التعديلات
+                    </Button>
+                  </div>
+                </DialogContent>
+              </Dialog>
+
+              {/* ============ DIALOG استعادة نسخة احتياطية ============ */}
+              <Dialog open={showRestoreDialog} onOpenChange={setShowRestoreDialog}>
+                <DialogContent className="max-w-md" dir="rtl">
+                  <DialogHeader>
+                    <DialogTitle className="flex items-center gap-2 text-xl text-orange-600">
+                      <AlertTriangle className="w-6 h-6" />
+                      تأكيد استعادة النسخة الاحتياطية
+                    </DialogTitle>
+                    <DialogDescription>هذا الإجراء سيستبدل جميع البيانات الحالية</DialogDescription>
+                  </DialogHeader>
+                  
+                  {selectedBackup && (
+                    <div className="space-y-4 mt-4">
+                      <div className="bg-orange-50 border border-orange-200 rounded-lg p-4">
+                        <p className="font-medium text-orange-800">⚠️ تحذير مهم:</p>
+                        <ul className="text-sm text-orange-700 mt-2 list-disc list-inside space-y-1">
+                          <li>سيتم حذف جميع البيانات الحالية</li>
+                          <li>سيتم استبدالها ببيانات النسخة الاحتياطية</li>
+                          <li>هذا الإجراء لا يمكن التراجع عنه</li>
+                        </ul>
+                      </div>
+                      
+                      <div className="bg-gray-50 rounded-lg p-4 space-y-2">
+                        <p><strong>اسم الملف:</strong> {selectedBackup.fileName}</p>
+                        <p><strong>تاريخ الإنشاء:</strong> {selectedBackup.date}</p>
+                        <p><strong>الحجم:</strong> {selectedBackup.size}</p>
+                      </div>
+                    </div>
+                  )}
+
+                  <div className="flex justify-end gap-3 mt-6">
+                    <Button variant="outline" onClick={() => setShowRestoreDialog(false)}>
+                      إلغاء
+                    </Button>
+                    <Button 
+                      className="bg-gradient-to-r from-orange-600 to-red-600 hover:from-orange-700 hover:to-red-700"
+                      onClick={restoreBackup}
+                    >
+                      <Upload className="ml-2 h-4 w-4" />
+                      تأكيد الاستعادة
+                    </Button>
+                  </div>
+                </DialogContent>
+              </Dialog>
             </div>
           )}
 
@@ -5031,7 +5470,12 @@ function AccountingApp() {
                   <Card>
                     <CardHeader className="flex flex-row items-center justify-between">
                       <CardTitle>المستخدمون والصلاحيات</CardTitle>
-                      <Button className="bg-gradient-to-r from-[#005f73] to-[#0a9396]"><Plus className="ml-2 h-4 w-4" />مستخدم جديد</Button>
+                      <Button 
+                        className="bg-gradient-to-r from-[#005f73] to-[#0a9396]"
+                        onClick={() => setShowAddUserDialog(true)}
+                      >
+                        <Plus className="ml-2 h-4 w-4" />مستخدم جديد
+                      </Button>
                     </CardHeader>
                     <CardContent>
                       <div className="overflow-x-auto">
@@ -5039,6 +5483,7 @@ function AccountingApp() {
                           <thead>
                             <tr className="border-b bg-gray-50">
                               <th className="text-right p-3 font-medium">المستخدم</th>
+                              <th className="text-right p-3 font-medium">البريد الإلكتروني</th>
                               <th className="text-right p-3 font-medium">الدور</th>
                               <th className="text-right p-3 font-medium">الحالة</th>
                               <th className="text-right p-3 font-medium">آخر دخول</th>
@@ -5046,27 +5491,72 @@ function AccountingApp() {
                             </tr>
                           </thead>
                           <tbody>
-                            {[
-                              { name: 'مدير النظام', role: 'مدير', status: 'نشط', lastLogin: 'الآن' },
-                              { name: 'أحمد محمد', role: 'محاسب', status: 'نشط', lastLogin: 'منذ ساعة' },
-                              { name: 'سارة علي', role: 'مندوب مبيعات', status: 'نشط', lastLogin: 'منذ 3 ساعات' }
-                            ].map((user, idx) => (
-                              <tr key={idx} className="border-b hover:bg-gray-50">
-                                <td className="p-3 font-medium">{user.name}</td>
-                                <td className="p-3"><Badge className="bg-blue-100 text-blue-800">{user.role}</Badge></td>
-                                <td className="p-3"><Badge className="bg-green-100 text-green-800">{user.status}</Badge></td>
-                                <td className="p-3 text-gray-500">{user.lastLogin}</td>
-                                <td className="p-3">
-                                  <div className="flex items-center gap-1">
-                                    <Button variant="ghost" size="icon" title="تعديل"><Edit2 className="w-4 h-4" /></Button>
-                                    <Button variant="ghost" size="icon" title="صلاحيات"><Shield className="w-4 h-4" /></Button>
-                                    <Button variant="ghost" size="icon" title="حذف"><Trash2 className="w-4 h-4 text-red-600" /></Button>
-                                  </div>
+                            {users.length === 0 ? (
+                              <tr>
+                                <td colSpan={6} className="p-8 text-center text-gray-500">
+                                  لا يوجد مستخدمين. أضف مستخدم جديداً للبدء.
                                 </td>
                               </tr>
-                            ))}
+                            ) : (
+                              users.map((user) => (
+                                <tr key={user.id} className="border-b hover:bg-gray-50">
+                                  <td className="p-3 font-medium">{user.name}</td>
+                                  <td className="p-3 text-gray-600">{user.email}</td>
+                                  <td className="p-3">
+                                    <Badge className={
+                                      user.role === 'admin' ? 'bg-purple-100 text-purple-800' :
+                                      user.role === 'accountant' ? 'bg-blue-100 text-blue-800' :
+                                      user.role === 'sales' ? 'bg-orange-100 text-orange-800' :
+                                      'bg-gray-100 text-gray-800'
+                                    }>
+                                      {user.role === 'admin' ? 'مدير' : 
+                                       user.role === 'accountant' ? 'محاسب' :
+                                       user.role === 'sales' ? 'مندوب مبيعات' : 'مشاهد'}
+                                    </Badge>
+                                  </td>
+                                  <td className="p-3">
+                                    <Badge 
+                                      className={user.status === 'active' ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'}
+                                      style={{cursor: 'pointer'}}
+                                      onClick={() => toggleUserStatus(user.id)}
+                                      title="اضغط لتغيير الحالة"
+                                    >
+                                      {user.status === 'active' ? '✓ نشط' : '✕ معطل'}
+                                    </Badge>
+                                  </td>
+                                  <td className="p-3 text-gray-500 text-xs">{user.lastLogin}</td>
+                                  <td className="p-3">
+                                    <div className="flex items-center gap-1">
+                                      <Button 
+                                        variant="ghost" 
+                                        size="icon" 
+                                        title="تعديل"
+                                        onClick={() => openEditUserDialog(user)}
+                                      >
+                                        <Edit2 className="w-4 h-4" />
+                                      </Button>
+                                      <Button 
+                                        variant="ghost" 
+                                        size="icon" 
+                                        title="حذف"
+                                        onClick={() => deleteUser(user.id, user.name)}
+                                      >
+                                        <Trash2 className="w-4 h-4 text-red-600" />
+                                      </Button>
+                                    </div>
+                                  </td>
+                                </tr>
+                              ))
+                            )}
                           </tbody>
                         </table>
+                      </div>
+                      
+                      {/* إحصائيات سريعة */}
+                      <div className="mt-4 flex gap-4 text-sm text-gray-600">
+                        <span>إجمالي المستخدمين: <strong>{users.length}</strong></span>
+                        <span>نشط: <strong className="text-green-600">{users.filter(u => u.status === 'active').length}</strong></span>
+                        <span>معطل: <strong className="text-red-600">{users.filter(u => u.status === 'inactive').length}</strong></span>
                       </div>
                     </CardContent>
                   </Card>
@@ -5074,23 +5564,115 @@ function AccountingApp() {
 
                 <TabsContent value="backup">
                   <Card>
-                    <CardHeader><CardTitle>النسخ الاحتياطي والاستعادة</CardHeader></CardHeader>
+                    <CardHeader><CardTitle>النسخ الاحتياطي والاستعادة</CardTitle></CardHeader>
                     <CardContent className="space-y-4">
                       <div className="grid grid-cols-2 gap-4">
-                        <Card className="border-dashed"><CardContent className="pt-6 text-center"><Database className="w-12 h-12 mx-auto text-gray-400 mb-3" /><p className="font-medium">إنشاء نسخة احتياطية</p><p className="text-sm text-gray-500 mt-1">حفظ نسخة كاملة من البيانات</p><Button className="mt-3 bg-gradient-to-r from-[#005f73] to-[#0a9396]"><Upload className="ml-2 h-4 w-4" />نسخ احتياطي الآن</Button></CardContent></Card>
-                        <Card className="border-dashed"><CardContent className="pt-6 text-center"><Database className="w-12 h-12 mx-auto text-gray-400 mb-3" /><p className="font-medium">استعادة نسخة احتياطية</p><p className="text-sm text-gray-500 mt-1">استرجاع البيانات من نسخة سابقة</p><Button className="mt-3" variant="outline"><Download className="ml-2 h-4 w-4" />استعادة</Button></CardContent></Card>
+                        <Card className="border-dashed border-2 hover:border-[#0a9396] transition-colors cursor-pointer" onClick={createBackup}>
+                          <CardContent className="pt-6 text-center">
+                            <Database className="w-12 h-12 mx-auto text-[#005f73] mb-3" />
+                            <p className="font-bold text-lg">إنشاء نسخة احتياطية</p>
+                            <p className="text-sm text-gray-500 mt-1">حفظ نسخة كاملة من جميع البيانات</p>
+                            <Button className="mt-3 bg-gradient-to-r from-[#005f73] to-[#0a9396]">
+                              <Upload className="ml-2 h-4 w-4" />نسخ احتياطي الآن
+                            </Button>
+                          </CardContent>
+                        </Card>
+                        <Card className="border-dashed border-2 hover:border-blue-400 transition-colors">
+                          <CardContent className="pt-6 text-center">
+                            <Upload className="w-12 h-12 mx-auto text-blue-500 mb-3" />
+                            <p className="font-bold text-lg">استيراد نسخة احتياطية</p>
+                            <p className="text-sm text-gray-500 mt-1">استرجاع البيانات من ملف JSON</p>
+                            <label className="mt-3 inline-block cursor-pointer">
+                              <Button variant="outline" asChild>
+                                <span><Download className="ml-2 h-4 w-4" />اختر ملف</span>
+                              </Button>
+                              <input 
+                                type="file" 
+                                accept=".json" 
+                                className="hidden" 
+                                onChange={(e) => {
+                                  const file = e.target.files?.[0]
+                                  if (file) {
+                                    const reader = new FileReader()
+                                    reader.onload = (event) => {
+                                      try {
+                                        const data = JSON.parse(event.target?.result as string)
+                                        if (confirm('هل تريد استعادة هذه النسخة الاحتياطية؟ سيتم استبدال البيانات الحالية.')) {
+                                          if (data.journalEntries) setJournalEntries(data.journalEntries)
+                                          if (data.companySettings) setCompanySettings(data.companySettings)
+                                          if (data.activityLogs) setActivityLogs(data.activityLogs)
+                                          if (data.users) setUsers(data.users)
+                                          addLogEntry('استيراد نسخة', `تم استيراد نسخة من ملف: ${file.name}`)
+                                          alert('✓ تم استيراد النسخة الاحتياطية بنجاح')
+                                        }
+                                      } catch {
+                                        alert('❌ ملف غير صالح. الرجاء اختيار ملف JSON صحيح.')
+                                      }
+                                    }
+                                    reader.readAsText(file)
+                                  }
+                                }}
+                              />
+                            </label>
+                          </CardContent>
+                        </Card>
                       </div>
                       <Separator />
                       <div>
-                        <h4 className="font-medium mb-3">النسخ الاحتياطية السابقة</h4>
-                        <div className="space-y-2">
-                          {['backup_2024_01_19.zip', 'backup_2024_01_12.zip', 'backup_2024_01_05.zip'].map((backup, idx) => (
-                            <div key={idx} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
-                              <div className="flex items-center gap-3"><Archive className="w-5 h-5 text-gray-400" /><span>{backup}</span></div>
-                              <div className="flex items-center gap-2"><span className="text-sm text-gray-500">{(2.5 - idx * 0.5).toFixed(1)} MB</span><Button variant="ghost" size="sm" title="تحميل"><Download className="w-4 h-4" /></Button><Button variant="ghost" size="sm" title="استعادة"><Upload className="w-4 h-4" /></Button><Button variant="ghost" size="sm" title="حذف"><Trash2 className="w-4 h-4 text-red-600" /></Button></div>
-                            </div>
-                          ))}
+                        <div className="flex items-center justify-between mb-3">
+                          <h4 className="font-medium text-lg">النسخ الاحتياطية المحلية</h4>
+                          {backups.length > 0 && (
+                            <Badge variant="secondary">{backups.length} نسخة</Badge>
+                          )}
                         </div>
+                        {backups.length === 0 ? (
+                          <div className="text-center py-10 text-gray-500 bg-gray-50 rounded-lg">
+                            <Archive className="w-12 h-12 mx-auto mb-3 text-gray-300" />
+                            <p>لا توجد نسخ احتياطية محلية</p>
+                            <p className="text-sm mt-1">أنشئ نسخة احتياطية جديدة للحفظ على الجهاز</p>
+                          </div>
+                        ) : (
+                          <div className="space-y-2">
+                            {backups.map((backup) => (
+                              <div key={backup.id} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors">
+                                <div className="flex items-center gap-3">
+                                  <Archive className="w-5 h-5 text-[#005f73]" />
+                                  <div>
+                                    <span className="font-medium">{backup.fileName}</span>
+                                    <p className="text-xs text-gray-500">{backup.date} • {backup.size}</p>
+                                  </div>
+                                </div>
+                                <div className="flex items-center gap-2">
+                                  <Button 
+                                    variant="ghost" 
+                                    size="sm" 
+                                    title="تحميل"
+                                    onClick={() => downloadBackup(backup)}
+                                  >
+                                    <Download className="w-4 h-4" />
+                                  </Button>
+                                  <Button 
+                                    variant="ghost" 
+                                    size="sm" 
+                                    title="استعادة"
+                                    onClick={() => openRestoreDialog(backup)}
+                                    className="text-blue-600 hover:text-blue-800"
+                                  >
+                                    <Upload className="w-4 h-4" />
+                                  </Button>
+                                  <Button 
+                                    variant="ghost" 
+                                    size="sm" 
+                                    title="حذف"
+                                    onClick={() => deleteBackup(backup.id, backup.fileName)}
+                                  >
+                                    <Trash2 className="w-4 h-4 text-red-600" />
+                                  </Button>
+                                </div>
+                              </div>
+                            ))}
+                          </div>
+                        )}
                       </div>
                     </CardContent>
                   </Card>
