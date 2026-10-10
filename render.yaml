@@ -1,0 +1,15 @@
+services:
+  - type: web
+    name: accounting-app-ar
+    runtime: node
+    buildCommand: npm run build
+    startCommand: npm start
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: DB_PROVIDER
+        value: jsonbin
+      - key: JSONBIN_API_KEY
+        value: $2a$10$HrtiBwlpw9mKpo7mBr7eSunfJPQa.Tx7.1jv5hulFslb/dZ4bqD0G
+      - key: JSONBIN_BIN_ID
+        value: 6ac8aa28ac6210605a21f343
